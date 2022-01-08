@@ -12,7 +12,72 @@
 </a>
 
 # jscan
-High performance JSON iterator for Go
+[jscan](https://github.com/romshark/jscan) provides a high-performance zero-allocation JSON iterator for Go. It's **not** compatible with [encoding/json](https://pkg.go.dev/encoding/json) and doesn't provide the usual Marshal/Unmarshal capabilities, instead it focuses on fast and efficient scanning over JSON strings with on-the-fly validation.
+
+## Example
+https://go.dev/play/p/v-VeiMO2fsJ
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/romshark/jscan"
+)
+
+func main() {
+	j := `{
+		"s": "value",
+		"t": true,
+		"f": false,
+		"0": null,
+		"n": -9.123e3,
+		"o0": {},
+		"a0": [],
+		"o": {
+			"k": "\"v\"",
+			"a": [
+				true,
+				null,
+				"item",
+				-67.02e9,
+				["foo"]
+			]
+		},
+		"a3": [
+			0,
+			{
+				"a3.a3":8
+			}
+		]
+	}`
+
+	err := jscan.Scan(jscan.Options{
+		CachePath:  true,
+		EscapePath: true,
+	}, j, func(i *jscan.Iterator) (err bool) {
+		fmt.Printf("| value:\n")
+		fmt.Printf("|  level:      %d\n", i.Level)
+		if k := i.Key(); k != "" {
+			fmt.Printf("|  key:        %q\n", i.Key())
+		}
+		fmt.Printf("|  valueType:  %s\n", i.ValueType)
+		if v := i.Value(); v != "" {
+			fmt.Printf("|  value:      %q\n", i.Value())
+		}
+		fmt.Printf("|  arrayIndex: %d\n", i.ArrayIndex)
+		fmt.Printf("|  path:       '%s'\n", i.Path())
+		return false // No Error, resume scanning
+	})
+
+	if err.IsErr() {
+		fmt.Printf("ERR: %s\n", err)
+		return
+	}
+
+}
+```
 
 ## Benchmark Results
 
