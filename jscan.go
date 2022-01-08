@@ -62,7 +62,7 @@ func (i *Iterator) Value() string {
 }
 
 // ScanPath calls fn for every element in the path of the value.
-// If key is != "" then the element is a field, otherwise
+// If keyStart is != -1 then the element is a field value, otherwise
 // arrIndex indicates the index of the item in the underlying array.
 func (i *Iterator) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 	for j := i.st.Len() - 1; j >= 0; j-- {
@@ -77,14 +77,12 @@ func (i *Iterator) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 }
 
 // Path returns the stringified path.
-// If escape == true then all '.', '[' and ']' in keys will be escaped.
 func (i *Iterator) Path() (s string) {
 	i.ViewPath(func(p []byte) { s = string(p) })
 	return
 }
 
 // ViewPath calls fn and provides the stringified path.
-// If escape == true then all '.', '[' and ']' in keys will be escaped.
 //
 // WARNING: do not use or alias p after fn returns!
 // Only viewing or copying are considered safe!
