@@ -185,6 +185,9 @@ func (e Error) Error() string {
 // If no value is found for the given path then fn isn't called
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
+//
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
 func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	err := Scan(Options{
 		CachePath:  true,
@@ -214,6 +217,7 @@ type Options struct {
 // reducing their performance penalty.
 //
 // WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
 func Scan(
 	o Options,
 	s string,
