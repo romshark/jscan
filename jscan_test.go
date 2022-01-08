@@ -9,15 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type Record struct {
+	Level      int
+	ValueType  jscan.ValueType
+	Key        string
+	Value      string
+	ArrayIndex int
+	Path       string
+}
+
 func TestScan(t *testing.T) {
-	type Record struct {
-		Level      int
-		ValueType  jscan.ValueType
-		Key        string
-		Value      string
-		ArrayIndex int
-		Path       string
-	}
 
 	for _, tt := range []struct {
 		name       string
@@ -684,4 +685,113 @@ func ForPossibleOptions(fn func(name string, o jscan.Options)) {
 		CachePath:  false,
 		EscapePath: false,
 	})
+}
+
+func TestGet(t *testing.T) {
+	for _, tt := range []struct {
+		json       string
+		path       string
+		escapePath bool
+		expect     Record
+	}{
+		{`{"key":null}`, "key", true, Record{
+			Level:      1,
+			ValueType:  jscan.ValueTypeNull,
+			Key:        "key",
+			Value:      "null",
+			ArrayIndex: -1,
+			Path:       "key",
+		}},
+		{`{"foo.bar":false}`, `foo\.bar`, true, Record{
+			Level:      1,
+			ValueType:  jscan.ValueTypeFalse,
+			Key:        `foo.bar`,
+			Value:      "false",
+			ArrayIndex: -1,
+			Path:       `foo\.bar`,
+		}},
+		{`{"foo.bar":false}`, `foo.bar`, false, Record{
+			Level:      1,
+			ValueType:  jscan.ValueTypeFalse,
+			Key:        `foo.bar`,
+			Value:      "false",
+			ArrayIndex: -1,
+			Path:       `foo.bar`,
+		}},
+		{`[true]`, `[0]`, true, Record{
+			Level:      1,
+			ValueType:  jscan.ValueTypeTrue,
+			Value:      "true",
+			ArrayIndex: 0,
+			Path:       `[0]`,
+		}},
+		{`[false,[[2, 42]]]`, `[1][0][1]`, true, Record{
+			Level:      3,
+			ValueType:  jscan.ValueTypeNumber,
+			Value:      "42",
+			ArrayIndex: 1,
+			Path:       `[1][0][1]`,
+		}},
+		{
+			`[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`,
+			`[1][0][1].\[foo\][0].bar-baz`, true, Record{
+				Level:      6,
+				ValueType:  jscan.ValueTypeString,
+				Key:        "bar-baz",
+				Value:      "fuz",
+				ArrayIndex: -1,
+				Path:       `[1][0][1].\[foo\][0].bar-baz`,
+			},
+		},
+	} {
+		t.Run("", func(t *testing.T) {
+			c := 0
+			err := jscan.Get(
+				tt.json, tt.path, tt.escapePath,
+				func(i *jscan.Iterator) {
+					c++
+					require.Equal(t, tt.expect, Record{
+						Level:      i.Level,
+						ValueType:  i.ValueType,
+						Key:        i.Key(),
+						Value:      i.Value(),
+						ArrayIndex: i.ArrayIndex,
+						Path:       i.Path(),
+					})
+				},
+			)
+			require.False(t, err.IsErr(), "unexpected error: %s", err)
+			require.Equal(t, 1, c)
+		})
+	}
+}
+
+func TestGetNotFound(t *testing.T) {
+	for _, tt := range []struct {
+		json       string
+		path       string
+		escapePath bool
+	}{
+		{`{"key":null}`, "non-existing-key", true},
+		{`{"foo.bar":false}`, `foo.bar`, true},
+		{`{"foo.bar":false}`, `foo\.bar`, false},
+		{`[true]`, `[1]`, true},
+		{`[false,[[2, 42]]]`, `[1][0][2]`, true},
+		{
+			`[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`,
+			`[1][0][1].\[foo\][0].bar-`, true,
+		},
+	} {
+		t.Run("", func(t *testing.T) {
+			c := 0
+			err := jscan.Get(
+				tt.json, tt.path, tt.escapePath,
+				func(i *jscan.Iterator) {
+					c++
+				},
+			)
+			require.False(t, err.IsErr(), "unexpected error: %s", err)
+			require.Zero(t, c, "unexpected call")
+		})
+	}
 }

@@ -326,3 +326,47 @@ func BenchmarkCalcStats(b *testing.B) {
 		})
 	}
 }
+
+func TestBenchGet(t *testing.T) {
+	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+
+	t.Run("jsoniter", func(t *testing.T) {
+		r := jsoniter.Get([]byte(j), 1, 0, 1, "[foo]", 0, "bar-baz")
+		r.MustBeValid()
+		require.NoError(t, r.LastError())
+		require.Equal(t, "fuz", r.ToString())
+	})
+
+	t.Run("jscan", func(t *testing.T) {
+		path := `[1][0][1].\[foo\][0].bar-baz`
+		err := jscan.Get(j, path, true, func(i *jscan.Iterator) {
+			require.Equal(t, jscan.ValueTypeString, i.ValueType)
+			require.Equal(t, "fuz", i.Value())
+		})
+		require.False(t, err.IsErr())
+	})
+}
+
+var gstr string
+
+func BenchmarkGet(b *testing.B) {
+	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+
+	b.Run("jsoniter", func(b *testing.B) {
+		jb := []byte(j)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			gstr = jsoniter.Get(jb, 1, 0, 1, "[foo]", 0, "bar-baz").ToString()
+		}
+	})
+
+	b.Run("jscan", func(b *testing.B) {
+		path := `[1][0][1].\[foo\][0].bar-baz`
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = jscan.Get(j, path, true, func(i *jscan.Iterator) {
+				gstr = i.Value()
+			})
+		}
+	})
+}

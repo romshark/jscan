@@ -179,6 +179,29 @@ func (e Error) Error() string {
 	)
 }
 
+// Get calls fn for the value at the given path.
+// The value path is defined by keys separated by a dot and
+// index access operators for arrays.
+// If no value is found for the given path then fn isn't called
+// and no error is returned.
+// If escapePath then all dots and square brackets are expected to be escaped.
+func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
+	err := Scan(Options{
+		CachePath:  true,
+		EscapePath: escapePath,
+	}, s, func(i *Iterator) (err bool) {
+		if i.Path() != path {
+			return false
+		}
+		fn(i)
+		return true
+	})
+	if err.Code == ErrorCallback {
+		err.Code = 0
+	}
+	return err
+}
+
 type Options struct {
 	CachePath  bool
 	EscapePath bool
