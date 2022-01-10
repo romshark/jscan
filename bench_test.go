@@ -4,10 +4,12 @@ import (
 	_ "embed"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/romshark/jscan"
 
+	gofasterjx "github.com/go-faster/jx"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 )
@@ -228,6 +230,170 @@ func CalcStatsJsoniterWithPath(str string) (s Stats) {
 	return
 }
 
+func CalcStatsGofasterJx(str string) (s Stats) {
+	d := gofasterjx.GetDecoder()
+	defer gofasterjx.PutDecoder(d)
+	d.Reset(strings.NewReader(str))
+
+	var jxParseValue func(lv int, k string, ai int) error
+	jxParseValue = func(
+		level int,
+		key string,
+		arrayIndex int,
+	) error {
+		if level > s.MaxDepth {
+			s.MaxDepth = level
+		}
+		if l := len(key); l > 0 {
+			s.TotalKeys++
+			if l > s.MaxKeyLen {
+				s.MaxKeyLen = l
+			}
+		}
+
+		switch d.Next() {
+		case gofasterjx.String:
+			s.TotalStrings++
+			_, err := d.Str()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Null:
+			s.TotalNulls++
+			if err := d.Null(); err != nil {
+				return err
+			}
+		case gofasterjx.Bool:
+			s.TotalBooleans++
+			_, err := d.Bool()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Number:
+			s.TotalNumbers++
+			_, err := d.Num()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Array:
+			s.TotalArrays++
+			i := 0
+			if err := d.Arr(func(d *gofasterjx.Decoder) error {
+				if err := jxParseValue(level+1, "", i); err != nil {
+					return err
+				}
+				i++
+				if i > s.MaxArrayLen {
+					s.MaxArrayLen = i
+				}
+				return nil
+			}); err != nil {
+				return err
+			}
+		case gofasterjx.Object:
+			s.TotalObjects++
+			if err := d.Obj(func(d *gofasterjx.Decoder, key string) error {
+				return jxParseValue(level+1, key, -1)
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := jxParseValue(0, "", -1); err != nil {
+		panic(err)
+	}
+	return
+}
+
+func CalcStatsGofasterJxWithPath(str string) (s Stats) {
+	d := gofasterjx.GetDecoder()
+	defer gofasterjx.PutDecoder(d)
+	d.Reset(strings.NewReader(str))
+
+	var jxParseValue func(lv int, k, path string, ai int) error
+	jxParseValue = func(
+		level int,
+		key, path string,
+		arrayIndex int,
+	) error {
+		if level > s.MaxDepth {
+			s.MaxDepth = level
+		}
+		if l := len(key); l > 0 {
+			s.TotalKeys++
+			if l > s.MaxKeyLen {
+				s.MaxKeyLen = l
+			}
+		}
+		if key != "" {
+			if path != "" {
+				path += "." + key
+			} else {
+				path += key
+			}
+		} else if arrayIndex > -1 {
+			path += "[" + strconv.Itoa(arrayIndex) + "]"
+		}
+		if l := len(path); l > s.MaxPathLen {
+			s.MaxPathLen = l
+		}
+
+		switch d.Next() {
+		case gofasterjx.String:
+			s.TotalStrings++
+			_, err := d.Str()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Null:
+			s.TotalNulls++
+			if err := d.Null(); err != nil {
+				return err
+			}
+		case gofasterjx.Bool:
+			s.TotalBooleans++
+			_, err := d.Bool()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Number:
+			s.TotalNumbers++
+			_, err := d.Num()
+			if err != nil {
+				return err
+			}
+		case gofasterjx.Array:
+			s.TotalArrays++
+			i := 0
+			if err := d.Arr(func(d *gofasterjx.Decoder) error {
+				if err := jxParseValue(level+1, "", path, i); err != nil {
+					return err
+				}
+				i++
+				if i > s.MaxArrayLen {
+					s.MaxArrayLen = i
+				}
+				return nil
+			}); err != nil {
+				return err
+			}
+		case gofasterjx.Object:
+			s.TotalObjects++
+			if err := d.Obj(func(d *gofasterjx.Decoder, key string) error {
+				return jxParseValue(level+1, key, path, -1)
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := jxParseValue(0, "", "", -1); err != nil {
+		panic(err)
+	}
+	return
+}
+
 func TestImplementations(t *testing.T) {
 	const input = `{"s":"value","t":true,"f":false,"0":null,"n":-9.123e3,` +
 		`"o0":{},"a0":[],"o":{"k":"\"v\"",` +
@@ -250,6 +416,7 @@ func TestImplementations(t *testing.T) {
 	}{
 		{name: "jscan", fn: CalcStatsJscan},
 		{name: "jsoniter", fn: CalcStatsJsoniter},
+		{name: "gofaster-jx", fn: CalcStatsGofasterJx},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, expect, tt.fn(input))
@@ -305,8 +472,10 @@ func BenchmarkCalcStats(b *testing.B) {
 	}{
 		{name: "jscan", fn: CalcStatsJscan},
 		{name: "jsoniter", fn: CalcStatsJsoniter},
+		{name: "gofaster-jx", fn: CalcStatsGofasterJx},
 		{name: "jscan_withpath", fn: CalcStatsJscanWithPath},
 		{name: "jsoniter_withpath", fn: CalcStatsJsoniterWithPath},
+		{name: "gofaster-jx_withpath", fn: CalcStatsGofasterJxWithPath},
 	} {
 		b.Run(bb.name, func(b *testing.B) {
 			for _, b2 := range []struct {

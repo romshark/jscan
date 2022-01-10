@@ -92,33 +92,39 @@ pkg: github.com/romshark/jscan
 Tiny JSON document (`{"x":0}`):
 
 ```
-BenchmarkCalcStats/jscan/tiny-10                17627972        57.67 ns/op        0 B/op          0 allocs/op
-BenchmarkCalcStats/jsoniter/tiny-10.            10658056       111.8 ns/op       168 B/op          3 allocs/op
-BenchmarkCalcStats/jscan_withpath/tiny-10.      15655423        76.27 ns/op        0 B/op          0 allocs/op
-BenchmarkCalcStats/jsoniter_withpath/tiny-10.    9757730       122.3 ns/op       168 B/op          3 allocs/op
+BenchmarkCalcStats/jscan/tiny-10                   17627972     57.67 ns/op      0 B/op    0 allocs/op
+BenchmarkCalcStats/jsoniter/tiny-10                10658056    111.8 ns/op     168 B/op    3 allocs/op
+BenchmarkCalcStats/gofaster-jx/tiny-10              9148058    130.0 ns/op      40 B/op    2 allocs/op
+BenchmarkCalcStats/jscan_withpath/tiny-10          15655423     76.27 ns/op      0 B/op    0 allocs/op
+BenchmarkCalcStats/jsoniter_withpath/tiny-10        9757730    122.3 ns/op     168 B/op    3 allocs/op
+BenchmarkCalcStats/gofaster-jx_withpath/tiny-10     8676548    138.9 ns/op      40 B/op    2 allocs/op
 ```
 
 Small JSON document (335 bytes):
 
 ```
-BenchmarkCalcStats/jscan/small-10               1541143	       777.8 ns/op         0 B/op          0 allocs/op
-BenchmarkCalcStats/jsoniter/small-10            1436154	       828.3 ns/op       576 B/op         13 allocs/op
-BenchmarkCalcStats/jscan_withpath/small-10.     1313886	       903.3 ns/op         0 B/op          0 allocs/op
-BenchmarkCalcStats/jsoniter_withpath/small-10.   978420	      1228 ns/op         640 B/op         22 allocs/op
+BenchmarkCalcStats/jscan/small-10                   1541143     777.8 ns/op      0 B/op     0 allocs/op
+BenchmarkCalcStats/jsoniter/small-10                1436154     828.3 ns/op    576 B/op    13 allocs/op
+BenchmarkCalcStats/gofaster-jx/small-10             1000000    1002 ns/op       80 B/op     8 allocs/op
+BenchmarkCalcStats/jscan_withpath/small-10          1313886     903.3 ns/op      0 B/op     0 allocs/op
+BenchmarkCalcStats/jsoniter_withpath/small-10        978420    1228 ns/op      640 B/op    22 allocs/op
+BenchmarkCalcStats/gofaster-jx_withpath/small-10     855382    1407 ns/op      144 B/op    17 allocs/op
 ```
 
 Large JSON document (26.1 MB):
 
 ```
-BenchmarkCalcStats/jscan/large-10.              27    42554798 ns/op          47 B/op          0 allocs/op
-BenchmarkCalcStats/jsoniter/large-10.           18    60359799 ns/op    59209093 B/op    1108612 allocs/op
-BenchmarkCalcStats/jscan_withpath/large-10.     24    45549453 ns/op         177 B/op          3 allocs/op
-BenchmarkCalcStats/jsoniter_withpath/large-10.  13    85553199 ns/op    81954372 B/op    1757457 allocs/op
+BenchmarkCalcStats/jscan/large-10                   27     42554798 ns/op          47 B/op          0 allocs/op
+BenchmarkCalcStats/jsoniter/large-10                18     60359799 ns/op    59209093 B/op    1108612 allocs/op
+BenchmarkCalcStats/gofaster-jx/large-10             14     82380768 ns/op    35167540 B/op    1117362 allocs/op
+BenchmarkCalcStats/jscan_withpath/large-10          24     45549453 ns/op         177 B/op          3 allocs/op
+BenchmarkCalcStats/jsoniter_withpath/large-10       13     85553199 ns/op    81954372 B/op    1757457 allocs/op
+BenchmarkCalcStats/gofaster-jx_withpath/large-10    10    109315817 ns/op    57892535 B/op    1766207 allocs/op
 ```
 
 Get by path:
 
 ```
-BenchmarkGet/jsoniter-10	1253300	       960.2 ns/op       512 B/op         21 allocs/op
-BenchmarkGet/jscan-10		3115696	       386.1 ns/op       128 B/op         10 allocs/op
+BenchmarkGet/jsoniter-10    1253300        960.2 ns/op       512 B/op         21 allocs/op
+BenchmarkGet/jscan-10       3115696        386.1 ns/op       128 B/op         10 allocs/op
 ```
