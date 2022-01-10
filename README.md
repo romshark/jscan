@@ -136,27 +136,24 @@ Validation:
 
 ```
 BenchmarkValid/tiny
-BenchmarkValid/tiny/jscan-10                       23285302         51.39 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/tiny/jsoniter-10                    19864123         60.38 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/tiny/gofaster-jx-10                 15638914         76.54 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/tiny/encoding-json-10               26987947         44.10 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/tiny/valyala-fastjson-10            41702926         28.73 ns/op           0 B/op       0 allocs/op
-
-BenchmarkValid/small/jscan-10                       1540806        777.4 ns/op            0 B/op       0 allocs/op
-BenchmarkValid/small/jsoniter-10                    1551792        772.8 ns/op           56 B/op       7 allocs/op
-BenchmarkValid/small/gofaster-jx-10                 1404654        853.8 ns/op           16 B/op       2 allocs/op
-BenchmarkValid/small/encoding-json-10               1000000       1007 ns/op              0 B/op       0 allocs/op
-BenchmarkValid/small/valyala-fastjson-10            2757339        435.6 ns/op            0 B/op       0 allocs/op
-
-BenchmarkValid/large/jscan-10                      23176705         51.43 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/large/jsoniter-10                   19786484         60.18 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/large/gofaster-jx-10                15631351         76.56 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/large/encoding-json-10              27338146         44.16 ns/op           0 B/op       0 allocs/op
-BenchmarkValid/large/valyala-fastjson-10           41679328         28.77 ns/op           0 B/op       0 allocs/op
-
-BenchmarkValid/unwind_stack/jscan-10                 169131       6998 ns/op              0 B/op       0 allocs/op
-BenchmarkValid/unwind_stack/jsoniter-10               15855      75387 ns/op          33145 B/op    1033 allocs/op
-BenchmarkValid/unwind_stack/gofaster-jx-10             1569     762668 ns/op         131117 B/op    2048 allocs/op
-BenchmarkValid/unwind_stack/encoding-json-10         212806       5525 ns/op             24 B/op       1 allocs/op
-BenchmarkValid/unwind_stack/valyala-fastjson-10         218    5456765 ns/op       52468093 B/op    4132 allocs/op
+BenchmarkValid/tiny/jscan-10                       23285302          51.39 ns/op           0 B/op         0 allocs/op
+BenchmarkValid/tiny/jsoniter-10                    19864123          60.38 ns/op           0 B/op         0 allocs/op
+BenchmarkValid/tiny/gofaster-jx-10                 15638914          76.54 ns/op           0 B/op         0 allocs/op
+BenchmarkValid/tiny/encoding-json-10               26987947          44.10 ns/op           0 B/op         0 allocs/op
+BenchmarkValid/tiny/valyala-fastjson-10            41702926          28.73 ns/op           0 B/op         0 allocs/op
+BenchmarkValid/small/jscan-10                       1540806         777.4 ns/op            0 B/op         0 allocs/op
+BenchmarkValid/small/jsoniter-10                    1551792         772.8 ns/op           56 B/op         7 allocs/op
+BenchmarkValid/small/gofaster-jx-10                 1404654         853.8 ns/op           16 B/op         2 allocs/op
+BenchmarkValid/small/encoding-json-10               1000000        1007 ns/op              0 B/op         0 allocs/op
+BenchmarkValid/small/valyala-fastjson-10            2757339         435.6 ns/op            0 B/op         0 allocs/op
+BenchmarkValid/large/jscan-10                            27    41861076 ns/op            148 B/op         2 allocs/op
+BenchmarkValid/large/jsoniter-10                         24    46747641 ns/op       13791527 B/op    644453 allocs/op
+BenchmarkValid/large/gofaster-jx-10                      25    45416868 ns/op             54 B/op         0 allocs/op
+BenchmarkValid/large/encoding-json-10                    16    70370383 ns/op             92 B/op         0 allocs/op
+BenchmarkValid/large/valyala-fastjson-10                 40    29149781 ns/op              0 B/op         0 allocs/op
+BenchmarkValid/unwind_stack/jscan-10                 169131        6998 ns/op              0 B/op         0 allocs/op
+BenchmarkValid/unwind_stack/jsoniter-10               15855       75387 ns/op          33145 B/op      1033 allocs/op
+BenchmarkValid/unwind_stack/gofaster-jx-10             1569      762668 ns/op         131117 B/op      2048 allocs/op
+BenchmarkValid/unwind_stack/encoding-json-10         212806        5525 ns/op             24 B/op         1 allocs/op
+BenchmarkValid/unwind_stack/valyala-fastjson-10         218     5456765 ns/op       52468093 B/op      4132 allocs/op
 ```

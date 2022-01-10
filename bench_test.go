@@ -571,7 +571,7 @@ func BenchmarkValid(b *testing.B) {
 	}{
 		{"tiny", jsonTiny},
 		{"small", jsonSmall},
-		{"large", jsonTiny},
+		{"large", jsonLarge},
 		{"unwind_stack", MakeRepeated("[", 1024)},
 	} {
 		b.Run(bb.name, func(b *testing.B) {
