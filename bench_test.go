@@ -4,9 +4,11 @@ import (
 	_ "embed"
 	encodingjson "encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/romshark/jscan"
 
@@ -232,15 +234,20 @@ func CalcStatsJsoniterWithPath(str string) (s Stats) {
 	return
 }
 
+// strToBytes returns byte slice from string without allocations.
+func strToBytes(s string) []byte {
+	return unsafe.Slice((*byte)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data)), len(s))
+}
+
 func CalcStatsGofasterJx(str string) (s Stats) {
 	d := gofasterjx.GetDecoder()
 	defer gofasterjx.PutDecoder(d)
-	d.Reset(strings.NewReader(str))
+	d.ResetBytes(strToBytes(str))
 
-	var jxParseValue func(lv int, k string, ai int) error
+	var jxParseValue func(lv int, k []byte, ai int) error
 	jxParseValue = func(
 		level int,
-		key string,
+		key []byte,
 		arrayIndex int,
 	) error {
 		if level > s.MaxDepth {
@@ -256,32 +263,29 @@ func CalcStatsGofasterJx(str string) (s Stats) {
 		switch d.Next() {
 		case gofasterjx.String:
 			s.TotalStrings++
-			_, err := d.Str()
-			if err != nil {
+			if err := d.Skip(); err != nil {
 				return err
 			}
 		case gofasterjx.Null:
 			s.TotalNulls++
-			if err := d.Null(); err != nil {
+			if err := d.Skip(); err != nil {
 				return err
 			}
 		case gofasterjx.Bool:
 			s.TotalBooleans++
-			_, err := d.Bool()
-			if err != nil {
+			if err := d.Skip(); err != nil {
 				return err
 			}
 		case gofasterjx.Number:
 			s.TotalNumbers++
-			_, err := d.Num()
-			if err != nil {
+			if err := d.Skip(); err != nil {
 				return err
 			}
 		case gofasterjx.Array:
 			s.TotalArrays++
 			i := 0
 			if err := d.Arr(func(d *gofasterjx.Decoder) error {
-				if err := jxParseValue(level+1, "", i); err != nil {
+				if err := jxParseValue(level+1, nil, i); err != nil {
 					return err
 				}
 				i++
@@ -294,7 +298,7 @@ func CalcStatsGofasterJx(str string) (s Stats) {
 			}
 		case gofasterjx.Object:
 			s.TotalObjects++
-			if err := d.Obj(func(d *gofasterjx.Decoder, key string) error {
+			if err := d.ObjBytes(func(d *gofasterjx.Decoder, key []byte) error {
 				return jxParseValue(level+1, key, -1)
 			}); err != nil {
 				return err
@@ -302,7 +306,7 @@ func CalcStatsGofasterJx(str string) (s Stats) {
 		}
 		return nil
 	}
-	if err := jxParseValue(0, "", -1); err != nil {
+	if err := jxParseValue(0, nil, -1); err != nil {
 		panic(err)
 	}
 	return
@@ -311,7 +315,7 @@ func CalcStatsGofasterJx(str string) (s Stats) {
 func CalcStatsGofasterJxWithPath(str string) (s Stats) {
 	d := gofasterjx.GetDecoder()
 	defer gofasterjx.PutDecoder(d)
-	d.Reset(strings.NewReader(str))
+	d.ResetBytes(strToBytes(str))
 
 	var jxParseValue func(lv int, k, path string, ai int) error
 	jxParseValue = func(
