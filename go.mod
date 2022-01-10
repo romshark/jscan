@@ -6,6 +6,7 @@ require (
 	github.com/go-faster/jx v0.25.0
 	github.com/json-iterator/go v1.1.12
 	github.com/stretchr/testify v1.7.0
+	github.com/valyala/fastjson v1.6.3
 )
 
 require (

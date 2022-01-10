@@ -468,6 +468,9 @@ func TestScan(t *testing.T) {
 				}
 			}
 
+			t.Run("valid", func(t *testing.T) {
+				require.True(t, jscan.Valid(tt.input))
+			})
 			t.Run("cachepath", func(t *testing.T) {
 				err := jscan.Scan(jscan.Options{
 					CachePath: true, EscapePath: tt.escapePath,
@@ -567,6 +570,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0 ('"'): unexpected EOF`,
 		},
 		{
+			name:   `missing closing quotes`,
+			input:  `"string\\\"`,
+			expect: `error at index 0 ('"'): unexpected EOF`,
+		},
+		{
 			name:   `missing value`,
 			input:  `{"key"}`,
 			expect: `error at index 6 ('}'): unexpected token`,
@@ -591,13 +599,27 @@ func TestScanError(t *testing.T) {
 			input:  `[null false]`,
 			expect: `error at index 6 ('f'): unexpected token`,
 		},
+		{
+			name:   `error at end`,
+			input:  `{"foo":"bar"}{`,
+			expect: `error at index 13 ('{'): unexpected token`,
+		},
+		{
+			name:   `unexpected comma`,
+			input:  `"okay",null`,
+			expect: `error at index 6 (','): unexpected token`,
+		},
 	} {
-		t.Run(tt.name, func(t *testing.T) {
-			require.False(t, json.Valid([]byte(tt.input)))
+		require.False(t, json.Valid([]byte(tt.input)))
 
+		t.Run(tt.name, func(t *testing.T) {
 			check := func(t *testing.T) func(i *jscan.Iterator) bool {
 				return func(i *jscan.Iterator) (err bool) { return false }
 			}
+
+			t.Run("valid", func(t *testing.T) {
+				require.False(t, jscan.Valid(tt.input))
+			})
 
 			t.Run("cachepath", func(t *testing.T) {
 				err := jscan.Scan(jscan.Options{

@@ -2,6 +2,7 @@ package jscan_test
 
 import (
 	_ "embed"
+	encodingjson "encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	gofasterjx "github.com/go-faster/jx"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
+	valyalafastjson "github.com/valyala/fastjson"
 )
 
 type Stats struct {
@@ -521,14 +523,6 @@ var gstr string
 func BenchmarkGet(b *testing.B) {
 	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
 
-	b.Run("jsoniter", func(b *testing.B) {
-		jb := []byte(j)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			gstr = jsoniter.Get(jb, 1, 0, 1, "[foo]", 0, "bar-baz").ToString()
-		}
-	})
-
 	b.Run("jscan", func(b *testing.B) {
 		path := `[1][0][1].\[foo\][0].bar-baz`
 		b.ResetTimer()
@@ -538,4 +532,93 @@ func BenchmarkGet(b *testing.B) {
 			})
 		}
 	})
+
+	b.Run("jsoniter", func(b *testing.B) {
+		jb := []byte(j)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			gstr = jsoniter.Get(jb, 1, 0, 1, "[foo]", 0, "bar-baz").ToString()
+		}
+	})
+}
+
+func TestValid(t *testing.T) {
+	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+
+	t.Run("jscan", func(t *testing.T) {
+		require.True(t, jscan.Valid(j))
+	})
+
+	t.Run("jsoniter", func(t *testing.T) {
+		require.True(t, jsoniter.Valid([]byte(j)))
+	})
+
+	t.Run("encoding-json", func(t *testing.T) {
+		require.True(t, encodingjson.Valid([]byte(j)))
+	})
+
+	t.Run("fast-json", func(t *testing.T) {
+		require.NoError(t, valyalafastjson.Validate(j))
+	})
+}
+
+var gbool bool
+
+func BenchmarkValid(b *testing.B) {
+	for _, bb := range []struct {
+		name  string
+		input string
+	}{
+		{"tiny", jsonTiny},
+		{"small", jsonSmall},
+		{"large", jsonTiny},
+		{"unwind_stack", MakeRepeated("[", 1024)},
+	} {
+		b.Run(bb.name, func(b *testing.B) {
+			b.Run("jscan", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gbool = jscan.Valid(bb.input)
+				}
+			})
+
+			b.Run("jsoniter", func(b *testing.B) {
+				jb := []byte(bb.input)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gbool = jsoniter.Valid(jb)
+				}
+			})
+
+			b.Run("gofaster-jx", func(b *testing.B) {
+				jb := []byte(bb.input)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gbool = gofasterjx.Valid(jb)
+				}
+			})
+
+			b.Run("encoding-json", func(b *testing.B) {
+				jb := []byte(bb.input)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gbool = encodingjson.Valid(jb)
+				}
+			})
+
+			b.Run("valyala-fastjson", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gbool = (valyalafastjson.Validate(bb.input) != nil)
+				}
+			})
+		})
+	}
+}
+
+func MakeRepeated(s string, n int) string {
+	var b strings.Builder
+	b.Grow(len(s) * n)
+	for i := 0; i < n; i++ {
+		b.WriteString(s)
+	}
+	return b.String()
 }

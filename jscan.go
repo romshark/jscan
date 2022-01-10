@@ -203,6 +203,15 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	return err
 }
 
+// Valid returns true if s is valid JSON, otherwise returns false.
+func Valid(s string) bool {
+	err := Scan(Options{
+		CachePath:  false,
+		EscapePath: false,
+	}, s, func(*Iterator) (err bool) { return false })
+	return !err.IsErr()
+}
+
 type Options struct {
 	CachePath  bool
 	EscapePath bool
