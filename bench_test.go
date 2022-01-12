@@ -1,14 +1,12 @@
 package jscan_test
 
 import (
+	"bytes"
 	_ "embed"
 	encodingjson "encoding/json"
 	"fmt"
-	"reflect"
 	"strconv"
-	"strings"
 	"testing"
-	"unsafe"
 
 	"github.com/romshark/jscan"
 
@@ -32,11 +30,11 @@ type Stats struct {
 	MaxPathLen    int
 }
 
-func CalcStatsJscan(str string) (s Stats) {
-	if err := jscan.Scan(
+func CalcStatsJscan(str []byte) (s Stats) {
+	if err := jscan.ScanBytes(
 		jscan.Options{},
 		str,
-		func(i *jscan.Iterator) (err bool) {
+		func(i *jscan.IteratorBytes) (err bool) {
 			if l := i.KeyEnd - i.KeyStart; l > 0 {
 				s.TotalKeys++
 				if l > s.MaxKeyLen {
@@ -71,11 +69,11 @@ func CalcStatsJscan(str string) (s Stats) {
 	return
 }
 
-func CalcStatsJscanWithPath(str string) (s Stats) {
-	if err := jscan.Scan(jscan.Options{
+func CalcStatsJscanWithPath(str []byte) (s Stats) {
+	if err := jscan.ScanBytes(jscan.Options{
 		CachePath:  true,
 		EscapePath: false,
-	}, str, func(i *jscan.Iterator) (err bool) {
+	}, str, func(i *jscan.IteratorBytes) (err bool) {
 		if l := i.KeyEnd - i.KeyStart; l > 0 {
 			s.TotalKeys++
 			if l > s.MaxKeyLen {
@@ -114,8 +112,8 @@ func CalcStatsJscanWithPath(str string) (s Stats) {
 	return
 }
 
-func CalcStatsJsoniter(str string) (s Stats) {
-	i := jsoniter.ParseString(jsoniter.ConfigDefault, str)
+func CalcStatsJsoniter(str []byte) (s Stats) {
+	i := jsoniter.ParseBytes(jsoniter.ConfigDefault, str)
 	var readValue func(lv int, k string, ai int, i *jsoniter.Iterator)
 	readValue = func(
 		level int,
@@ -168,8 +166,8 @@ func CalcStatsJsoniter(str string) (s Stats) {
 	return
 }
 
-func CalcStatsJsoniterWithPath(str string) (s Stats) {
-	i := jsoniter.ParseString(jsoniter.ConfigDefault, str)
+func CalcStatsJsoniterWithPath(str []byte) (s Stats) {
+	i := jsoniter.ParseBytes(jsoniter.ConfigDefault, str)
 	var readValue func(lv int, k, p string, ai int, i *jsoniter.Iterator)
 	readValue = func(
 		level int,
@@ -234,15 +232,10 @@ func CalcStatsJsoniterWithPath(str string) (s Stats) {
 	return
 }
 
-// strToBytes returns byte slice from string without allocations.
-func strToBytes(s string) []byte {
-	return unsafe.Slice((*byte)(unsafe.Pointer((*reflect.StringHeader)(unsafe.Pointer(&s)).Data)), len(s))
-}
-
-func CalcStatsGofasterJx(str string) (s Stats) {
+func CalcStatsGofasterJx(str []byte) (s Stats) {
 	d := gofasterjx.GetDecoder()
 	defer gofasterjx.PutDecoder(d)
-	d.ResetBytes(strToBytes(str))
+	d.ResetBytes(str)
 
 	var jxParseValue func(lv int, k []byte, ai int) error
 	jxParseValue = func(
@@ -312,10 +305,10 @@ func CalcStatsGofasterJx(str string) (s Stats) {
 	return
 }
 
-func CalcStatsGofasterJxWithPath(str string) (s Stats) {
+func CalcStatsGofasterJxWithPath(str []byte) (s Stats) {
 	d := gofasterjx.GetDecoder()
 	defer gofasterjx.PutDecoder(d)
-	d.ResetBytes(strToBytes(str))
+	d.ResetBytes(str)
 
 	var jxParseValue func(lv int, k, path string, ai int) error
 	jxParseValue = func(
@@ -418,14 +411,14 @@ func TestImplementations(t *testing.T) {
 	}
 	for _, tt := range []struct {
 		name string
-		fn   func(string) Stats
+		fn   func([]byte) Stats
 	}{
 		{name: "jscan", fn: CalcStatsJscan},
 		{name: "jsoniter", fn: CalcStatsJsoniter},
 		{name: "gofaster-jx", fn: CalcStatsGofasterJx},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, expect, tt.fn(input))
+			require.Equal(t, expect, tt.fn([]byte(input)))
 		})
 	}
 }
@@ -449,13 +442,13 @@ func TestImplementationsWithPath(t *testing.T) {
 	}
 	for _, tt := range []struct {
 		name string
-		fn   func(string) Stats
+		fn   func([]byte) Stats
 	}{
 		{name: "jscan", fn: CalcStatsJscanWithPath},
 		{name: "jsoniter", fn: CalcStatsJsoniterWithPath},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, expect, tt.fn(input))
+			require.Equal(t, expect, tt.fn([]byte(input)))
 		})
 	}
 }
@@ -463,18 +456,18 @@ func TestImplementationsWithPath(t *testing.T) {
 var gs Stats
 
 //go:embed tiny.json
-var jsonTiny string
+var jsonTiny []byte
 
 //go:embed small.json
-var jsonSmall string
+var jsonSmall []byte
 
 //go:embed large.json
-var jsonLarge string
+var jsonLarge []byte
 
 func BenchmarkCalcStats(b *testing.B) {
 	for _, bb := range []struct {
 		name string
-		fn   func(string) Stats
+		fn   func([]byte) Stats
 	}{
 		{name: "jscan", fn: CalcStatsJscan},
 		{name: "jsoniter", fn: CalcStatsJsoniter},
@@ -486,7 +479,7 @@ func BenchmarkCalcStats(b *testing.B) {
 		b.Run(bb.name, func(b *testing.B) {
 			for _, b2 := range []struct {
 				name string
-				json string
+				json []byte
 			}{
 				{"tiny", jsonTiny},
 				{"small", jsonSmall},
@@ -571,7 +564,7 @@ var gbool bool
 func BenchmarkValid(b *testing.B) {
 	for _, bb := range []struct {
 		name  string
-		input string
+		input []byte
 	}{
 		{"tiny", jsonTiny},
 		{"small", jsonSmall},
@@ -581,7 +574,7 @@ func BenchmarkValid(b *testing.B) {
 		b.Run(bb.name, func(b *testing.B) {
 			b.Run("jscan", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = jscan.Valid(bb.input)
+					gbool = jscan.ValidBytes(bb.input)
 				}
 			})
 
@@ -611,18 +604,18 @@ func BenchmarkValid(b *testing.B) {
 
 			b.Run("valyala-fastjson", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = (valyalafastjson.Validate(bb.input) != nil)
+					gbool = (valyalafastjson.ValidateBytes(bb.input) != nil)
 				}
 			})
 		})
 	}
 }
 
-func MakeRepeated(s string, n int) string {
-	var b strings.Builder
+func MakeRepeated(s string, n int) []byte {
+	var b bytes.Buffer
 	b.Grow(len(s) * n)
 	for i := 0; i < n; i++ {
 		b.WriteString(s)
 	}
-	return b.String()
+	return b.Bytes()
 }
