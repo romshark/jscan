@@ -613,25 +613,54 @@ func TestScanError(t *testing.T) {
 		require.False(t, json.Valid([]byte(tt.input)))
 
 		t.Run(tt.name, func(t *testing.T) {
-			check := func(t *testing.T) func(i *jscan.Iterator) bool {
-				return func(i *jscan.Iterator) (err bool) { return false }
-			}
+			t.Run("string", func(t *testing.T) {
+				check := func(t *testing.T) func(i *jscan.Iterator) bool {
+					return func(i *jscan.Iterator) (err bool) { return false }
+				}
 
-			t.Run("valid", func(t *testing.T) {
-				require.False(t, jscan.Valid(tt.input))
+				t.Run("valid", func(t *testing.T) {
+					require.False(t, jscan.Valid(tt.input))
+				})
+
+				t.Run("cachepath", func(t *testing.T) {
+					err := jscan.Scan(jscan.Options{
+						CachePath: true,
+					}, tt.input, check(t))
+					require.True(t, err.IsErr())
+					require.Equal(t, tt.expect, err.Error())
+				})
+				t.Run("nocachepath", func(t *testing.T) {
+					err := jscan.Scan(jscan.Options{}, tt.input, check(t))
+					require.True(t, err.IsErr())
+					require.Equal(t, tt.expect, err.Error())
+				})
 			})
 
-			t.Run("cachepath", func(t *testing.T) {
-				err := jscan.Scan(jscan.Options{
-					CachePath: true,
-				}, tt.input, check(t))
-				require.True(t, err.IsErr())
-				require.Equal(t, tt.expect, err.Error())
-			})
-			t.Run("nocachepath", func(t *testing.T) {
-				err := jscan.Scan(jscan.Options{}, tt.input, check(t))
-				require.True(t, err.IsErr())
-				require.Equal(t, tt.expect, err.Error())
+			t.Run("bytes", func(t *testing.T) {
+				check := func(t *testing.T) func(i *jscan.IteratorBytes) bool {
+					return func(i *jscan.IteratorBytes) (err bool) {
+						return false
+					}
+				}
+
+				t.Run("valid", func(t *testing.T) {
+					require.False(t, jscan.ValidBytes([]byte(tt.input)))
+				})
+
+				t.Run("cachepath", func(t *testing.T) {
+					err := jscan.ScanBytes(jscan.Options{
+						CachePath: true,
+					}, []byte(tt.input), check(t))
+					require.True(t, err.IsErr())
+					require.Equal(t, tt.expect, err.Error())
+				})
+				t.Run("nocachepath", func(t *testing.T) {
+					err := jscan.ScanBytes(
+						jscan.Options{}, []byte(tt.input), check(t),
+					)
+					require.True(t, err.IsErr())
+					require.Equal(t, tt.expect, err.Error())
+				})
 			})
 		})
 	}
@@ -648,20 +677,41 @@ func TestCachePathUnescaped(t *testing.T) {
 		{"nocachepath_escape", false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			j := 0
-			err := jscan.Scan(jscan.Options{
-				CachePath:  tt.cachePath,
-				EscapePath: false,
-			}, `{"x.y[0]":{"z":null}}`, func(i *jscan.Iterator) (err bool) {
-				if j >= len(expect) {
-					t.Fatalf("unexpected call: %d", j)
-					return true
-				}
-				require.Equal(t, expect[j], i.Path())
-				j++
-				return false
+			input := `{"x.y[0]":{"z":null}}`
+
+			t.Run("string", func(t *testing.T) {
+				j := 0
+				err := jscan.Scan(jscan.Options{
+					CachePath:  tt.cachePath,
+					EscapePath: false,
+				}, input, func(i *jscan.Iterator) (err bool) {
+					if j >= len(expect) {
+						t.Fatalf("unexpected call: %d", j)
+						return true
+					}
+					require.Equal(t, expect[j], i.Path())
+					j++
+					return false
+				})
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
 			})
-			require.False(t, err.IsErr(), "unexpected error: %s", err)
+
+			t.Run("bytes", func(t *testing.T) {
+				j := 0
+				err := jscan.ScanBytes(jscan.Options{
+					CachePath:  tt.cachePath,
+					EscapePath: false,
+				}, []byte(input), func(i *jscan.IteratorBytes) (err bool) {
+					if j >= len(expect) {
+						t.Fatalf("unexpected call: %d", j)
+						return true
+					}
+					require.Equal(t, expect[j], string(i.Path()))
+					j++
+					return false
+				})
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+			})
 		})
 	}
 }
@@ -669,22 +719,41 @@ func TestCachePathUnescaped(t *testing.T) {
 func TestReturnErrorTrue(t *testing.T) {
 	ForPossibleOptions(func(name string, o jscan.Options) {
 		t.Run(name, func(t *testing.T) {
-			j := 0
-			err := jscan.Scan(
-				o,
-				`{"foo":"bar","baz":null}`,
-				func(i *jscan.Iterator) (err bool) {
-					require.Equal(t, jscan.ValueTypeObject, i.ValueType)
-					j++
-					return true // Expect immediate return
-				},
-			)
-			require.Equal(t, 1, j)
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCallback, err.Code)
-			require.Equal(
-				t, "error at index 0 ('{'): callback error", err.Error(),
-			)
+			input := `{"foo":"bar","baz":null}`
+
+			t.Run("string", func(t *testing.T) {
+				j := 0
+				err := jscan.Scan(
+					o, input, func(i *jscan.Iterator) (err bool) {
+						require.Equal(t, jscan.ValueTypeObject, i.ValueType)
+						j++
+						return true // Expect immediate return
+					},
+				)
+				require.Equal(t, 1, j)
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCallback, err.Code)
+				require.Equal(
+					t, "error at index 0 ('{'): callback error", err.Error(),
+				)
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				j := 0
+				err := jscan.ScanBytes(
+					o, []byte(input), func(i *jscan.IteratorBytes) (err bool) {
+						require.Equal(t, jscan.ValueTypeObject, i.ValueType)
+						j++
+						return true // Expect immediate return
+					},
+				)
+				require.Equal(t, 1, j)
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCallback, err.Code)
+				require.Equal(
+					t, "error at index 0 ('{'): callback error", err.Error(),
+				)
+			})
 		})
 	})
 }
@@ -767,23 +836,45 @@ func TestGet(t *testing.T) {
 		},
 	} {
 		t.Run("", func(t *testing.T) {
-			c := 0
-			err := jscan.Get(
-				tt.json, tt.path, tt.escapePath,
-				func(i *jscan.Iterator) {
-					c++
-					require.Equal(t, tt.expect, Record{
-						Level:      i.Level,
-						ValueType:  i.ValueType,
-						Key:        i.Key(),
-						Value:      i.Value(),
-						ArrayIndex: i.ArrayIndex,
-						Path:       i.Path(),
-					})
-				},
-			)
-			require.False(t, err.IsErr(), "unexpected error: %s", err)
-			require.Equal(t, 1, c)
+			t.Run("string", func(t *testing.T) {
+				c := 0
+				err := jscan.Get(
+					tt.json, tt.path, tt.escapePath,
+					func(i *jscan.Iterator) {
+						c++
+						require.Equal(t, tt.expect, Record{
+							Level:      i.Level,
+							ValueType:  i.ValueType,
+							Key:        i.Key(),
+							Value:      i.Value(),
+							ArrayIndex: i.ArrayIndex,
+							Path:       i.Path(),
+						})
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Equal(t, 1, c)
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				c := 0
+				err := jscan.GetBytes(
+					[]byte(tt.json), []byte(tt.path), tt.escapePath,
+					func(i *jscan.IteratorBytes) {
+						c++
+						require.Equal(t, tt.expect, Record{
+							Level:      i.Level,
+							ValueType:  i.ValueType,
+							Key:        string(i.Key()),
+							Value:      string(i.Value()),
+							ArrayIndex: i.ArrayIndex,
+							Path:       string(i.Path()),
+						})
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Equal(t, 1, c)
+			})
 		})
 	}
 }
@@ -805,15 +896,29 @@ func TestGetNotFound(t *testing.T) {
 		},
 	} {
 		t.Run("", func(t *testing.T) {
-			c := 0
-			err := jscan.Get(
-				tt.json, tt.path, tt.escapePath,
-				func(i *jscan.Iterator) {
-					c++
-				},
-			)
-			require.False(t, err.IsErr(), "unexpected error: %s", err)
-			require.Zero(t, c, "unexpected call")
+			t.Run("string", func(t *testing.T) {
+				c := 0
+				err := jscan.Get(
+					tt.json, tt.path, tt.escapePath,
+					func(i *jscan.Iterator) {
+						c++
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Zero(t, c, "unexpected call")
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				c := 0
+				err := jscan.GetBytes(
+					[]byte(tt.json), []byte(tt.path), tt.escapePath,
+					func(i *jscan.IteratorBytes) {
+						c++
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Zero(t, c, "unexpected call")
+			})
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package jscan
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"sync"
@@ -11,14 +12,15 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
-// Iterator provides access to the recently scanned value.
-type Iterator struct {
+// IteratorBytes provides access to the recently scanned value.
+type IteratorBytes struct {
 	st         *stack.Stack
-	src        string
+	src        []byte
 	escapePath bool
 	cachedPath []byte
 	expect     expectation
 	errCode    ErrorCode
+	keyBuf     []byte
 
 	ValueType                       ValueType
 	Level                           int
@@ -27,30 +29,18 @@ type Iterator struct {
 	ArrayIndex                      int
 }
 
-// ErrorCode defines the error type.
-type ErrorCode int8
-
-// All error codes
-const (
-	_ ErrorCode = iota
-	ErrorCodeUnexpectedToken
-	ErrorCodeMalformedNumber
-	ErrorCodeUnexpectedEOF
-	ErrorCallback
-)
-
 // Key returns the field key if any.
-func (i *Iterator) Key() string {
+func (i *IteratorBytes) Key() []byte {
 	if i.KeyStart < 0 {
-		return ""
+		return nil
 	}
 	return i.src[i.KeyStart:i.KeyEnd]
 }
 
 // Value returns the value if any.
-func (i *Iterator) Value() string {
+func (i *IteratorBytes) Value() []byte {
 	if i.ValueEnd < 0 || i.ValueEnd < i.ValueStart {
-		return ""
+		return nil
 	}
 	return i.src[i.ValueStart:i.ValueEnd]
 }
@@ -58,7 +48,7 @@ func (i *Iterator) Value() string {
 // ScanPath calls fn for every element in the path of the value.
 // If keyStart is != -1 then the element is a field value, otherwise
 // arrIndex indicates the index of the item in the underlying array.
-func (i *Iterator) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
+func (i *IteratorBytes) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 	for j := i.st.Len() - 1; j >= 0; j-- {
 		t := i.st.TopOffset(j)
 		if t.KeyStart > -1 {
@@ -71,8 +61,11 @@ func (i *Iterator) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 }
 
 // Path returns the stringified path.
-func (i *Iterator) Path() (s string) {
-	i.ViewPath(func(p []byte) { s = string(p) })
+func (i *IteratorBytes) Path() (s []byte) {
+	i.ViewPath(func(p []byte) {
+		s = make([]byte, len(p))
+		copy(s, p)
+	})
 	return
 }
 
@@ -80,8 +73,8 @@ func (i *Iterator) Path() (s string) {
 //
 // WARNING: do not use or alias p after fn returns!
 // Only viewing or copying are considered safe!
-// Use (*Iterator).Path instead for a safer and more convenient API.
-func (i *Iterator) ViewPath(fn func(p []byte)) {
+// Use (*IteratorBytes).Path instead for a safer and more convenient API.
+func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 	if len(i.cachedPath) > 0 {
 		// The path is already cached
 		fn(i.cachedPath[1:])
@@ -97,7 +90,7 @@ func (i *Iterator) ViewPath(fn func(p []byte)) {
 			}
 			k := i.src[keyStart:keyEnd]
 			if i.escapePath {
-				k = keyescape.Escape(k)
+				k = keyescape.EscapeAppend(nil, k)
 			}
 			b = append(b, k...)
 			needDelim = true
@@ -114,40 +107,41 @@ func (i *Iterator) ViewPath(fn func(p []byte)) {
 		}
 		k := i.src[i.KeyStart:i.KeyEnd]
 		if i.escapePath {
-			k = keyescape.Escape(k)
+			k = keyescape.EscapeAppend(nil, k)
 		}
 		b = append(b, k...)
 	}
 	fn(b)
 }
 
-var itrPool = sync.Pool{
+var itrPoolBytes = sync.Pool{
 	New: func() interface{} {
-		return &Iterator{
-			st: stack.New(64),
+		return &IteratorBytes{
+			st:     stack.New(64),
+			keyBuf: make([]byte, 0, 4096),
 		}
 	},
 }
 
 // getError returns the stringified error, if any.
-func (i *Iterator) getError() Error {
-	return Error{
+func (i *IteratorBytes) getError() ErrorBytes {
+	return ErrorBytes{
 		Src:   i.src,
 		Index: i.ValueStart,
 		Code:  i.errCode,
 	}
 }
 
-type Error struct {
-	Src   string
+type ErrorBytes struct {
+	Src   []byte
 	Index int
 	Code  ErrorCode
 }
 
 // IsErr returns true if there is an error, otherwise returns false.
-func (e Error) IsErr() bool { return e.Code != 0 }
+func (e ErrorBytes) IsErr() bool { return e.Code != 0 }
 
-func (e Error) Error() string {
+func (e ErrorBytes) Error() string {
 	errMsg := ""
 	switch e.Code {
 	case ErrorCodeUnexpectedToken:
@@ -178,14 +172,18 @@ func (e Error) Error() string {
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
-func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
-	err := Scan(Options{
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func GetBytes(
+	s, path []byte,
+	escapePath bool,
+	fn func(*IteratorBytes),
+) ErrorBytes {
+	err := ScanBytes(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
-	}, s, func(i *Iterator) (err bool) {
-		if i.Path() != path {
+	}, s, func(i *IteratorBytes) (err bool) {
+		if !bytes.Equal(i.Path(), path) {
 			return false
 		}
 		fn(i)
@@ -197,35 +195,30 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	return err
 }
 
-// Valid returns true if s is valid JSON, otherwise returns false.
-func Valid(s string) bool {
-	err := Scan(Options{
+// ValidBytes returns true if s is valid JSON, otherwise returns false.
+func ValidBytes(s []byte) bool {
+	err := ScanBytes(Options{
 		CachePath:  false,
 		EscapePath: false,
-	}, s, func(*Iterator) (err bool) { return false })
+	}, s, func(*IteratorBytes) (err bool) { return false })
 	return !err.IsErr()
 }
 
-type Options struct {
-	CachePath  bool
-	EscapePath bool
-}
-
-// Scan calls fn for every scanned value including objects and arrays.
+// ScanBytes calls fn for every scanned value including objects and arrays.
 // Scan returns true if there was an error or if fn returned true,
 // otherwise it returns false.
 // If cachePath == true then paths are generated and cached on the fly
 // reducing their performance penalty.
 //
-// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
-func Scan(
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func ScanBytes(
 	o Options,
-	s string,
-	fn func(*Iterator) (err bool),
-) Error {
-	i := itrPool.Get().(*Iterator)
-	defer itrPool.Put(i)
+	s []byte,
+	fn func(*IteratorBytes) (err bool),
+) ErrorBytes {
+	i := itrPoolBytes.Get().(*IteratorBytes)
+	defer itrPoolBytes.Put(i)
 	i.st.Reset()
 	i.escapePath = o.EscapePath
 	i.cachedPath = i.cachedPath[:0]
@@ -236,6 +229,7 @@ func Scan(
 	i.ValueStart, i.ValueEnd = 0, -1
 	i.ArrayIndex = 0
 	i.expect = expectVal
+	i.keyBuf = i.keyBuf[:0]
 
 	if o.CachePath {
 		if i.scanWithCachedPath(s, fn) {
@@ -245,10 +239,10 @@ func Scan(
 	if i.scan(s, fn) {
 		return i.getError()
 	}
-	return Error{}
+	return ErrorBytes{}
 }
 
-func (i *Iterator) onComma() (err bool) {
+func (i *IteratorBytes) onComma() (err bool) {
 	switch i.expect {
 	case expectCommaOrArrTerm:
 		i.expect = expectValOrArrTerm
@@ -261,7 +255,7 @@ func (i *Iterator) onComma() (err bool) {
 	return true
 }
 
-func (i *Iterator) onObjectTerm() (err bool) {
+func (i *IteratorBytes) onObjectTerm() (err bool) {
 	if i.expect != expectCommaOrObjTerm && i.expect != expectKeyOrObjTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -280,7 +274,7 @@ func (i *Iterator) onObjectTerm() (err bool) {
 	return false
 }
 
-func (i *Iterator) onArrayTerm() (err bool) {
+func (i *IteratorBytes) onArrayTerm() (err bool) {
 	if i.expect != expectCommaOrArrTerm && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -299,7 +293,7 @@ func (i *Iterator) onArrayTerm() (err bool) {
 	return false
 }
 
-func (i *Iterator) onObjectBegin() (err bool) {
+func (i *IteratorBytes) onObjectBegin() (err bool) {
 	if i.expect != expectVal && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -308,7 +302,7 @@ func (i *Iterator) onObjectBegin() (err bool) {
 	return false
 }
 
-func (i *Iterator) onArrayBegin() (err bool) {
+func (i *IteratorBytes) onArrayBegin() (err bool) {
 	if i.expect != expectVal && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -317,7 +311,7 @@ func (i *Iterator) onArrayBegin() (err bool) {
 	return false
 }
 
-func (i *Iterator) onNumber() (top *stack.Node, err bool) {
+func (i *IteratorBytes) onNumber() (top *stack.Node, err bool) {
 	if i.expect != expectVal && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return nil, true
@@ -333,7 +327,7 @@ func (i *Iterator) onNumber() (top *stack.Node, err bool) {
 		}
 	}
 
-	i.ValueEnd, err = jsonnum.Parse(i.src[i.ValueStart:])
+	i.ValueEnd, err = jsonnum.ParseBytes(i.src[i.ValueStart:])
 	if err {
 		i.errCode = ErrorCodeMalformedNumber
 		return nil, true
@@ -343,7 +337,7 @@ func (i *Iterator) onNumber() (top *stack.Node, err bool) {
 	return t, false
 }
 
-func (i *Iterator) onStringArrayItem() (err bool) {
+func (i *IteratorBytes) onStringArrayItem() (err bool) {
 	if i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -352,7 +346,7 @@ func (i *Iterator) onStringArrayItem() (err bool) {
 	return false
 }
 
-func (i *Iterator) onStringFieldValue(t *stack.Node) (err bool) {
+func (i *IteratorBytes) onStringFieldValue(t *stack.Node) (err bool) {
 	if i.expect != expectVal {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -368,7 +362,7 @@ func (i *Iterator) onStringFieldValue(t *stack.Node) (err bool) {
 	return false
 }
 
-func (i *Iterator) onKey() (err bool) {
+func (i *IteratorBytes) onKey() (err bool) {
 	if i.expect != expectKeyOrObjTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
@@ -377,7 +371,7 @@ func (i *Iterator) onKey() (err bool) {
 	return false
 }
 
-func (i *Iterator) onNull() (t *stack.Node, err bool) {
+func (i *IteratorBytes) onNull() (t *stack.Node, err bool) {
 	if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 		i.expect3(i.ValueStart+1, 'u', 'l', 'l') {
 		i.errCode = ErrorCodeUnexpectedToken
@@ -395,7 +389,7 @@ func (i *Iterator) onNull() (t *stack.Node, err bool) {
 	return t, false
 }
 
-func (i *Iterator) onFalse() (t *stack.Node, err bool) {
+func (i *IteratorBytes) onFalse() (t *stack.Node, err bool) {
 	if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 		i.read4(i.ValueStart+1, 'a', 'l', 's', 'e') {
 		i.errCode = ErrorCodeUnexpectedToken
@@ -413,7 +407,7 @@ func (i *Iterator) onFalse() (t *stack.Node, err bool) {
 	return t, false
 }
 
-func (i *Iterator) onTrue() (t *stack.Node, err bool) {
+func (i *IteratorBytes) onTrue() (t *stack.Node, err bool) {
 	if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 		i.expect3(i.ValueStart+1, 'r', 'u', 'e') {
 		i.errCode = ErrorCodeUnexpectedToken
@@ -431,9 +425,9 @@ func (i *Iterator) onTrue() (t *stack.Node, err bool) {
 	return t, false
 }
 
-func (i *Iterator) scan(
-	s string,
-	fn func(*Iterator) (err bool),
+func (i *IteratorBytes) scan(
+	s []byte,
+	fn func(*IteratorBytes) (err bool),
 ) (err bool) {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
@@ -509,7 +503,7 @@ func (i *Iterator) scan(
 		case '"': // String
 			i.ValueStart++
 			i.ArrayIndex = -1
-			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart)
+			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart)
 			if i.ValueEnd < 0 {
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
@@ -614,14 +608,14 @@ func (i *Iterator) scan(
 	return false
 }
 
-func (i *Iterator) expect3(at int, a, b, c byte) (err bool) {
+func (i *IteratorBytes) expect3(at int, a, b, c byte) (err bool) {
 	return len(i.src)-at < 3 ||
 		i.src[at] != a ||
 		i.src[at+1] != b ||
 		i.src[at+2] != c
 }
 
-func (i *Iterator) read4(at int, a, b, c, d byte) (err bool) {
+func (i *IteratorBytes) read4(at int, a, b, c, d byte) (err bool) {
 	return len(i.src)-at < 4 ||
 		i.src[at] != a ||
 		i.src[at+1] != b ||
@@ -629,20 +623,9 @@ func (i *Iterator) read4(at int, a, b, c, d byte) (err bool) {
 		i.src[at+3] != d
 }
 
-type expectation int8
-
-const (
-	_ expectation = iota
-	expectVal
-	expectCommaOrObjTerm
-	expectCommaOrArrTerm
-	expectKeyOrObjTerm
-	expectValOrArrTerm
-)
-
-func (i *Iterator) scanWithCachedPath(
-	s string,
-	fn func(*Iterator) bool,
+func (i *IteratorBytes) scanWithCachedPath(
+	s []byte,
+	fn func(*IteratorBytes) bool,
 ) (err bool) {
 	i.cachedPath = append(i.cachedPath, '.')
 
@@ -726,7 +709,7 @@ func (i *Iterator) scanWithCachedPath(
 		case '"': // String
 			i.ValueStart++
 			i.ArrayIndex = -1
-			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart)
+			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart)
 			if i.ValueEnd < 0 {
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
@@ -787,9 +770,9 @@ func (i *Iterator) scanWithCachedPath(
 				if len(i.cachedPath) > 1 {
 					i.cachedPath = append(i.cachedPath, '.')
 				}
-				var e string
+				var e []byte
 				if i.escapePath {
-					e = keyescape.Escape(s[i.KeyStart:i.KeyEnd])
+					e = keyescape.EscapeAppend(nil, s[i.KeyStart:i.KeyEnd])
 				} else {
 					e = s[i.KeyStart:i.KeyEnd]
 				}
@@ -850,49 +833,14 @@ func (i *Iterator) scanWithCachedPath(
 	return false
 }
 
-// ValueType defines a JSON value type
-type ValueType int
-
-// JSON value types
-const (
-	_ ValueType = iota
-	ValueTypeObject
-	ValueTypeArray
-	ValueTypeNull
-	ValueTypeFalse
-	ValueTypeTrue
-	ValueTypeString
-	ValueTypeNumber
-)
-
-func (t ValueType) String() string {
-	switch t {
-	case ValueTypeObject:
-		return "object"
-	case ValueTypeArray:
-		return "array"
-	case ValueTypeNull:
-		return "null"
-	case ValueTypeFalse:
-		return "false"
-	case ValueTypeTrue:
-		return "true"
-	case ValueTypeString:
-		return "string"
-	case ValueTypeNumber:
-		return "number"
-	}
-	return ""
-}
-
-func (i *Iterator) parseColumn(s string) (index int, err bool) {
+func (i *IteratorBytes) parseColumn(s []byte) (index int, err bool) {
 	if len(s) > 0 && s[0] == ':' {
 		return 0, false
 	}
 	for j, c := range s {
 		if c == ':' {
 			return j, false
-		} else if !isSpace(c) {
+		} else if !isSpaceByte(c) {
 			break
 		}
 	}
@@ -900,7 +848,7 @@ func (i *Iterator) parseColumn(s string) (index int, err bool) {
 	return -1, true
 }
 
-func isSpace(b rune) bool {
+func isSpaceByte(b byte) bool {
 	switch b {
 	case ' ', '\r', '\n', '\t':
 		return true
@@ -908,7 +856,7 @@ func isSpace(b rune) bool {
 	return false
 }
 
-func (i *Iterator) cacheCleanupAfterContainer() {
+func (i *IteratorBytes) cacheCleanupAfterContainer() {
 	if l := len(i.cachedPath) - 1; l > -1 {
 		switch i.cachedPath[l] {
 		case ']':
@@ -926,7 +874,10 @@ func (i *Iterator) cacheCleanupAfterContainer() {
 	}
 }
 
-func (i *Iterator) callFn(t *stack.Node, fn func(i *Iterator) (err bool)) bool {
+func (i *IteratorBytes) callFn(
+	t *stack.Node,
+	fn func(i *IteratorBytes) (err bool),
+) bool {
 	i.ArrayIndex = -1
 	if t != nil && t.Type == stack.NodeTypeArray {
 		i.ArrayIndex = t.ArrLen
@@ -942,10 +893,10 @@ func (i *Iterator) callFn(t *stack.Node, fn func(i *Iterator) (err bool)) bool {
 	return false
 }
 
-func (i *Iterator) callFnWithPathCache(
+func (i *IteratorBytes) callFnWithPathCache(
 	t *stack.Node,
 	nonComposite bool,
-	fn func(i *Iterator) bool,
+	fn func(i *IteratorBytes) bool,
 ) bool {
 	i.ArrayIndex = -1
 	initArrIndex := -1

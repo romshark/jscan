@@ -20,12 +20,25 @@ func BenchmarkValid(b *testing.B) {
 		"-1234567890.123123424234234e-123456789,",
 	} {
 		b.Run("", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				gend, err = jsonnum.Parse(bb)
-				if err {
-					b.Fatal("unexpected error")
+			b.Run("string", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gend, err = jsonnum.Parse(bb)
+					if err {
+						b.Fatal("unexpected error")
+					}
 				}
-			}
+			})
+
+			b.Run("bytes", func(b *testing.B) {
+				bb := []byte(bb)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gend, err = jsonnum.ParseBytes(bb)
+					if err {
+						b.Fatal("unexpected error")
+					}
+				}
+			})
 		})
 	}
 }
@@ -46,12 +59,25 @@ func BenchmarkInvalid(b *testing.B) {
 		"0.1234567890e",
 	} {
 		b.Run("", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				gend, err = jsonnum.Parse(bb)
-				if !err {
-					b.Fatal("error expected")
+			b.Run("string", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gend, err = jsonnum.Parse(bb)
+					if !err {
+						b.Fatal("error expected")
+					}
 				}
-			}
+			})
+
+			b.Run("bytes", func(b *testing.B) {
+				bb := []byte(bb)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gend, err = jsonnum.ParseBytes(bb)
+					if !err {
+						b.Fatal("error expected")
+					}
+				}
+			})
 		})
 	}
 }

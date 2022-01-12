@@ -22,8 +22,15 @@ func TestIndexTerm(t *testing.T) {
 		{`abcd\\\""`, 3, 8},
 	} {
 		t.Run("", func(t *testing.T) {
-			a := strfind.IndexTerm(tt.in, tt.i)
-			require.Equal(t, tt.exp, a)
+			t.Run("string", func(t *testing.T) {
+				a := strfind.IndexTerm(tt.in, tt.i)
+				require.Equal(t, tt.exp, a)
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				a := strfind.IndexTermBytes([]byte(tt.in), tt.i)
+				require.Equal(t, tt.exp, a)
+			})
 		})
 	}
 }

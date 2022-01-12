@@ -71,6 +71,20 @@ func TestParse(t *testing.T) {
 						require.False(t, err)
 						require.Equal(t, tt.expectEnd+1, end)
 					})
+
+					t.Run("bytes", func(t *testing.T) {
+						end, err := jsonnum.ParseBytes([]byte(tt.in + t2.term))
+						require.False(t, err)
+						require.Equal(t, tt.expectEnd, end)
+
+						t.Run("negative", func(t *testing.T) {
+							end, err := jsonnum.ParseBytes(
+								[]byte("-" + tt.in + t2.term),
+							)
+							require.False(t, err)
+							require.Equal(t, tt.expectEnd+1, end)
+						})
+					})
 				})
 			}
 		})
@@ -105,9 +119,17 @@ func TestParseErr(t *testing.T) {
 				{"\r", "carriage return"},
 			} {
 				t.Run("terminated by "+t2.name, func(t *testing.T) {
-					end, err := jsonnum.Parse(tt + t2.term)
-					require.True(t, err)
-					require.Zero(t, end)
+					t.Run("string", func(t *testing.T) {
+						end, err := jsonnum.Parse(tt + t2.term)
+						require.True(t, err)
+						require.Zero(t, end)
+					})
+
+					t.Run("bytes", func(t *testing.T) {
+						end, err := jsonnum.ParseBytes([]byte(tt + t2.term))
+						require.True(t, err)
+						require.Zero(t, end)
+					})
 				})
 			}
 
