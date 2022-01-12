@@ -103,6 +103,9 @@ func TestParseErr(t *testing.T) {
 		"e1",
 		"1234567890e",
 		"1e-",
+		"-1x",
+		"-1.1x",
+		"1ex",
 	} {
 		t.Run(tt, func(t *testing.T) {
 
@@ -132,7 +135,6 @@ func TestParseErr(t *testing.T) {
 					})
 				})
 			}
-
 		})
 	}
 }
