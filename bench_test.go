@@ -13,6 +13,7 @@ import (
 	gofasterjx "github.com/go-faster/jx"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
+	tidwallgjson "github.com/tidwall/gjson"
 	valyalafastjson "github.com/valyala/fastjson"
 )
 
@@ -496,45 +497,70 @@ func BenchmarkCalcStats(b *testing.B) {
 }
 
 func TestBenchGet(t *testing.T) {
-	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+	j := `[false,[[2, {"[foo]":[{"bar-baz":true}]}]]]`
+
+	t.Run("jscan", func(t *testing.T) {
+		path := `[1][0][1].\[foo\][0].bar-baz`
+		err := jscan.GetBytes(
+			[]byte(j), []byte(path), true, func(i *jscan.IteratorBytes) {
+				require.Equal(t, jscan.ValueTypeTrue, i.ValueType)
+				require.Equal(t, "true", string(i.Value()))
+			},
+		)
+		require.False(t, err.IsErr())
+	})
 
 	t.Run("jsoniter", func(t *testing.T) {
 		r := jsoniter.Get([]byte(j), 1, 0, 1, "[foo]", 0, "bar-baz")
 		r.MustBeValid()
 		require.NoError(t, r.LastError())
-		require.Equal(t, "fuz", r.ToString())
+		require.Equal(t, true, r.ToBool())
+		r.ToBool()
 	})
 
-	t.Run("jscan", func(t *testing.T) {
-		path := `[1][0][1].\[foo\][0].bar-baz`
-		err := jscan.Get(j, path, true, func(i *jscan.Iterator) {
-			require.Equal(t, jscan.ValueTypeString, i.ValueType)
-			require.Equal(t, "fuz", i.Value())
-		})
-		require.False(t, err.IsErr())
+	t.Run("tidwallgjson", func(t *testing.T) {
+		r := tidwallgjson.GetBytes([]byte(j), `1.0.1.\[foo\].0.bar-baz`)
+		require.True(t, r.Exists())
+		require.Equal(t, true, r.Bool())
 	})
 }
 
-var gstr string
-
 func BenchmarkGet(b *testing.B) {
-	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+	json := `[false,[[2, {"[foo]":[{"bar-baz":true}]}]]]`
 
 	b.Run("jscan", func(b *testing.B) {
-		path := `[1][0][1].\[foo\][0].bar-baz`
+		bytesTrue := []byte("true")
+		path := []byte(`[1][0][1].\[foo\][0].bar-baz`)
+		json := []byte(json)
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
-			_ = jscan.Get(j, path, true, func(i *jscan.Iterator) {
-				gstr = i.Value()
-			})
+			_ = jscan.GetBytes(
+				json, path, true, func(i *jscan.IteratorBytes) {
+					gbool = bytes.Equal(i.Value(), bytesTrue)
+				},
+			)
 		}
 	})
 
 	b.Run("jsoniter", func(b *testing.B) {
-		jb := []byte(j)
+		json := []byte(json)
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
-			gstr = jsoniter.Get(jb, 1, 0, 1, "[foo]", 0, "bar-baz").ToString()
+			gbool = jsoniter.Get(
+				json, 1, 0, 1, "[foo]", 0, "bar-baz",
+			).ToBool()
+		}
+	})
+
+	b.Run("tidwallgjson", func(b *testing.B) {
+		json := []byte(json)
+		path := `1.0.1.\[foo\].0.bar-baz`
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			gbool = tidwallgjson.GetBytes(json, path).Bool()
 		}
 	})
 }

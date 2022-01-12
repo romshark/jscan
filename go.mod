@@ -6,6 +6,7 @@ require (
 	github.com/go-faster/jx v0.25.0
 	github.com/json-iterator/go v1.1.12
 	github.com/stretchr/testify v1.7.0
+	github.com/tidwall/gjson v1.12.1
 	github.com/valyala/fastjson v1.6.3
 )
 
@@ -15,5 +16,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
