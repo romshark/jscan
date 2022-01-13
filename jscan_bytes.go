@@ -183,11 +183,15 @@ func GetBytes(
 		CachePath:  true,
 		EscapePath: escapePath,
 	}, s, func(i *IteratorBytes) (err bool) {
-		if !bytes.Equal(i.Path(), path) {
-			return false
-		}
-		fn(i)
-		return true
+		i.ViewPath(func(p []byte) {
+			if !bytes.Equal(p, path) {
+				return
+			}
+
+			fn(i)
+			err = true
+		})
+		return
 	})
 	if err.Code == ErrorCallback {
 		err.Code = 0

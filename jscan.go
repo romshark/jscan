@@ -185,11 +185,20 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 		CachePath:  true,
 		EscapePath: escapePath,
 	}, s, func(i *Iterator) (err bool) {
-		if i.Path() != path {
-			return false
-		}
-		fn(i)
-		return true
+		i.ViewPath(func(p []byte) {
+			if len(p) != len(path) {
+				return
+			}
+			for i := range p {
+				if p[i] != path[i] {
+					return
+				}
+			}
+
+			fn(i)
+			err = true
+		})
+		return
 	})
 	if err.Code == ErrorCallback {
 		err.Code = 0
