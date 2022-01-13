@@ -127,9 +127,9 @@ BenchmarkCalcStats/gofaster-jx_withpath/large-10    10    109315817 ns/op    578
 Get by path:
 
 ```
-BenchmarkGet/jscan-10           2991093    393.7 ns/op    144 B/op    10 allocs/op
-BenchmarkGet/jsoniter-10        1267372    956.6 ns/op    496 B/op    19 allocs/op
-BenchmarkGet/tidwallgjson-10    6257602    190.0 ns/op     16 B/op     2 allocs/op
+BenchmarkGet/jscan-10           4125115    287.7 ns/op     16 B/op     2 allocs/op
+BenchmarkGet/jsoniter-10        1283280    932.2 ns/op    496 B/op    19 allocs/op
+BenchmarkGet/tidwallgjson-10    6280434    190.4 ns/op     16 B/op     2 allocs/op
 ```
 
 Validation:
