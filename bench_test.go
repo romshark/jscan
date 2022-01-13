@@ -307,92 +307,97 @@ func CalcStatsGofasterJx(str []byte) (s Stats) {
 	return
 }
 
-func CalcStatsGofasterJxWithPath(str []byte) (s Stats) {
-	d := gofasterjx.GetDecoder()
-	defer gofasterjx.PutDecoder(d)
-	d.ResetBytes(str)
+func CalcStatsGofasterJxWithPath() func(str []byte) Stats {
+	// Reuse current path buffer to reduce unrelated allocations.
+	currentPath := make([]byte, 0, 1024)
 
-	var jxParseValue func(lv int, k, path string, ai int) error
-	jxParseValue = func(
-		level int,
-		key, path string,
-		arrayIndex int,
-	) error {
-		if level > s.MaxDepth {
-			s.MaxDepth = level
-		}
-		if l := len(key); l > 0 {
-			s.TotalKeys++
-			if l > s.MaxKeyLen {
-				s.MaxKeyLen = l
-			}
-		}
-		if key != "" {
-			if path != "" {
-				path += "." + key
-			} else {
-				path += key
-			}
-		} else if arrayIndex > -1 {
-			path += "[" + strconv.Itoa(arrayIndex) + "]"
-		}
-		if l := len(path); l > s.MaxPathLen {
-			s.MaxPathLen = l
-		}
+	return func(str []byte) (s Stats) {
+		d := gofasterjx.GetDecoder()
+		defer gofasterjx.PutDecoder(d)
+		d.ResetBytes(str)
 
-		switch d.Next() {
-		case gofasterjx.String:
-			s.TotalStrings++
-			_, err := d.Str()
-			if err != nil {
-				return err
+		var jxParseValue func(lv int, k, path []byte, ai int) error
+		jxParseValue = func(
+			level int,
+			key, path []byte,
+			arrayIndex int,
+		) error {
+			if level > s.MaxDepth {
+				s.MaxDepth = level
 			}
-		case gofasterjx.Null:
-			s.TotalNulls++
-			if err := d.Null(); err != nil {
-				return err
+			if l := len(key); l > 0 {
+				s.TotalKeys++
+				if l > s.MaxKeyLen {
+					s.MaxKeyLen = l
+				}
 			}
-		case gofasterjx.Bool:
-			s.TotalBooleans++
-			_, err := d.Bool()
-			if err != nil {
-				return err
+			if len(key) > 0 {
+				if len(path) != 0 {
+					path = append(path, '.')
+					path = append(path, key...)
+				} else {
+					path = append(path, key...)
+				}
+			} else if arrayIndex > -1 {
+				path = append(path, '[')
+				path = strconv.AppendInt(path, int64(arrayIndex), 10)
+				path = append(path, ']')
 			}
-		case gofasterjx.Number:
-			s.TotalNumbers++
-			_, err := d.Num()
-			if err != nil {
-				return err
+			if l := len(path); l > s.MaxPathLen {
+				s.MaxPathLen = l
 			}
-		case gofasterjx.Array:
-			s.TotalArrays++
-			i := 0
-			if err := d.Arr(func(d *gofasterjx.Decoder) error {
-				if err := jxParseValue(level+1, "", path, i); err != nil {
+
+			switch d.Next() {
+			case gofasterjx.String:
+				s.TotalStrings++
+				if err := d.Skip(); err != nil {
 					return err
 				}
-				i++
-				if i > s.MaxArrayLen {
-					s.MaxArrayLen = i
+			case gofasterjx.Null:
+				s.TotalNulls++
+				if err := d.Skip(); err != nil {
+					return err
 				}
-				return nil
-			}); err != nil {
-				return err
+			case gofasterjx.Bool:
+				s.TotalBooleans++
+				if err := d.Skip(); err != nil {
+					return err
+				}
+			case gofasterjx.Number:
+				s.TotalNumbers++
+				if err := d.Skip(); err != nil {
+					return err
+				}
+			case gofasterjx.Array:
+				s.TotalArrays++
+				i := 0
+				if err := d.Arr(func(d *gofasterjx.Decoder) error {
+					if err := jxParseValue(level+1, nil, path, i); err != nil {
+						return err
+					}
+					i++
+					if i > s.MaxArrayLen {
+						s.MaxArrayLen = i
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
+			case gofasterjx.Object:
+				s.TotalObjects++
+				if err := d.ObjBytes(func(d *gofasterjx.Decoder, key []byte) error {
+					return jxParseValue(level+1, key, path, -1)
+				}); err != nil {
+					return err
+				}
 			}
-		case gofasterjx.Object:
-			s.TotalObjects++
-			if err := d.Obj(func(d *gofasterjx.Decoder, key string) error {
-				return jxParseValue(level+1, key, path, -1)
-			}); err != nil {
-				return err
-			}
+			return nil
 		}
-		return nil
+		if err := jxParseValue(0, nil, currentPath[:0], -1); err != nil {
+			panic(err)
+		}
+		return s
 	}
-	if err := jxParseValue(0, "", "", -1); err != nil {
-		panic(err)
-	}
-	return
 }
 
 var valyalafastjsonPool = new(valyalafastjson.ParserPool)
@@ -620,7 +625,7 @@ func TestImplementationsWithPath(t *testing.T) {
 	}{
 		{name: "jscan", fn: CalcStatsJscanWithPath},
 		{name: "jsoniter", fn: CalcStatsJsoniterWithPath},
-		{name: "gofaster-jx", fn: CalcStatsGofasterJxWithPath},
+		{name: "gofaster-jx", fn: CalcStatsGofasterJxWithPath()},
 		{name: "valyala-fastjson", fn: CalcStatsValyalaFastjsonWithPath},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -679,7 +684,7 @@ func BenchmarkCalcStats(b *testing.B) {
 		},
 		{
 			name: "gofaster-jx_withpath",
-			fn:   CalcStatsGofasterJxWithPath,
+			fn:   CalcStatsGofasterJxWithPath(),
 		},
 		{
 			name: "valyala-fastjson",
