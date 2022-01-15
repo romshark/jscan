@@ -303,8 +303,6 @@ func Validate(s string) Error {
 			}
 			i.expect = expectValOrArrTerm
 
-			i.ValueEnd = -1
-
 			i.KeyStart, i.KeyEnd = -1, -1
 
 			i.st.Push(stack.NodeTypeArray, 0, 0, 0)
@@ -331,16 +329,12 @@ func Validate(s string) Error {
 				i.errCode = ErrorCodeMalformedNumber
 				return i.getError()
 			}
-			i.ValueEnd += i.ValueStart
-
+			i.ValueStart += i.ValueEnd
 			i.KeyStart, i.KeyEnd = -1, -1
-			i.ValueStart = i.ValueEnd
 
 		case '"': // String
-			i.ValueStart++
-			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart)
+			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart+1)
 			if i.ValueEnd < 0 {
-				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return i.getError()
 			}
@@ -350,7 +344,6 @@ func Validate(s string) Error {
 				// Array item string value
 				if i.expect != expectValOrArrTerm {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				i.expect = expectCommaOrArrTerm
@@ -359,7 +352,6 @@ func Validate(s string) Error {
 				// String field value
 				if i.expect != expectVal {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				if t != nil {
@@ -376,7 +368,6 @@ func Validate(s string) Error {
 				// Key
 				if i.expect != expectKeyOrObjTerm {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				i.expect = expectVal

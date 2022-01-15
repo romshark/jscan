@@ -297,8 +297,6 @@ func ValidateBytes(s []byte) ErrorBytes {
 			}
 			i.expect = expectValOrArrTerm
 
-			i.ValueEnd = -1
-
 			i.KeyStart, i.KeyEnd = -1, -1
 
 			i.st.Push(stack.NodeTypeArray, 0, 0, 0)
@@ -325,16 +323,12 @@ func ValidateBytes(s []byte) ErrorBytes {
 				i.errCode = ErrorCodeMalformedNumber
 				return i.getError()
 			}
-			i.ValueEnd += i.ValueStart
-
+			i.ValueStart += i.ValueEnd
 			i.KeyStart, i.KeyEnd = -1, -1
-			i.ValueStart = i.ValueEnd
 
 		case '"': // String
-			i.ValueStart++
-			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart)
+			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart+1)
 			if i.ValueEnd < 0 {
-				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return i.getError()
 			}
@@ -344,7 +338,6 @@ func ValidateBytes(s []byte) ErrorBytes {
 				// Array item string value
 				if i.expect != expectValOrArrTerm {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				i.expect = expectCommaOrArrTerm
@@ -353,7 +346,6 @@ func ValidateBytes(s []byte) ErrorBytes {
 				// String field value
 				if i.expect != expectVal {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				if t != nil {
@@ -370,7 +362,6 @@ func ValidateBytes(s []byte) ErrorBytes {
 				// Key
 				if i.expect != expectKeyOrObjTerm {
 					i.errCode = ErrorCodeUnexpectedToken
-					i.ValueStart--
 					return i.getError()
 				}
 				i.expect = expectVal
