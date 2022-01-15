@@ -447,6 +447,7 @@ func TestImplementationsWithPath(t *testing.T) {
 	}{
 		{name: "jscan", fn: CalcStatsJscanWithPath},
 		{name: "jsoniter", fn: CalcStatsJsoniterWithPath},
+		{name: "gofaster-jx", fn: CalcStatsGofasterJxWithPath},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, expect, tt.fn([]byte(input)))
