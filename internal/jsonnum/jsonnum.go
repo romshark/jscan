@@ -267,18 +267,8 @@ FRACTION:
 		// Number (with fraction but) without exponent
 		return end + i + 1, false
 	}
-	// Exponent
-	switch s[0] {
-	case 'e', 'E':
-		s = s[1:]
-		end++
-	default:
-		// Unexpected rune
-		return 0, true
-	}
 
 	// Exponent sign
-	i = 0
 EXPONENT_SIGN:
 	if len(s) < 1 {
 		// Missing exponent value
