@@ -444,45 +444,88 @@ func TestScan(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			q := require.New(t)
-			q.True(json.Valid([]byte(tt.input)))
+			require.True(t, json.Valid([]byte(tt.input)))
 
-			j := 0
-			check := func(t *testing.T) func(i *jscan.Iterator) bool {
-				q := require.New(t)
-				return func(i *jscan.Iterator) bool {
-					if j >= len(tt.expect) {
-						t.Errorf("unexpected value at %d", j)
+			t.Run("string", func(t *testing.T) {
+				j := 0
+				check := func(t *testing.T) func(i *jscan.Iterator) bool {
+					q := require.New(t)
+					return func(i *jscan.Iterator) bool {
+						if j >= len(tt.expect) {
+							t.Errorf("unexpected value at %d", j)
+							j++
+							return false
+						}
+						e := tt.expect[j]
+						q.Equal(e.ValueType, i.ValueType, "ValueType at %d", i)
+						q.Equal(e.Level, i.Level, "Level at %d", i)
+						q.Equal(e.Value, i.Value(), "Value at %d", i)
+						q.Equal(e.Key, i.Key(), "Key at %d", i)
+						q.Equal(e.ArrayIndex, i.ArrayIndex, "ArrayIndex at %d", i)
+						q.Equal(e.Path, i.Path(), "Path at %d", i)
 						j++
 						return false
 					}
-					e := tt.expect[j]
-					q.Equal(e.ValueType, i.ValueType, "ValueType at %d", i)
-					q.Equal(e.Level, i.Level, "Level at %d", i)
-					q.Equal(e.Value, i.Value(), "Value at %d", i)
-					q.Equal(e.Key, i.Key(), "Key at %d", i)
-					q.Equal(e.ArrayIndex, i.ArrayIndex, "ArrayIndex at %d", i)
-					q.Equal(e.Path, i.Path(), "Path at %d", i)
-					j++
-					return false
 				}
-			}
 
-			t.Run("valid", func(t *testing.T) {
-				require.True(t, jscan.Valid(tt.input))
+				t.Run("valid", func(t *testing.T) {
+					require.True(t, jscan.Valid(tt.input))
+				})
+				t.Run("cachepath", func(t *testing.T) {
+					err := jscan.Scan(jscan.Options{
+						CachePath: true, EscapePath: tt.escapePath,
+					}, tt.input, check(t))
+					require.False(t, err.IsErr(), "unexpected error: %s", err)
+				})
+				t.Run("nocachepath", func(t *testing.T) {
+					j = 0
+					err := jscan.Scan(jscan.Options{
+						CachePath: false, EscapePath: tt.escapePath,
+					}, tt.input, check(t))
+					require.False(t, err.IsErr(), "unexpected error: %s", err)
+				})
 			})
-			t.Run("cachepath", func(t *testing.T) {
-				err := jscan.Scan(jscan.Options{
-					CachePath: true, EscapePath: tt.escapePath,
-				}, tt.input, check(t))
-				require.False(t, err.IsErr(), "unexpected error: %s", err)
-			})
-			t.Run("nocachepath", func(t *testing.T) {
-				j = 0
-				err := jscan.Scan(jscan.Options{
-					CachePath: false, EscapePath: tt.escapePath,
-				}, tt.input, check(t))
-				require.False(t, err.IsErr(), "unexpected error: %s", err)
+
+			t.Run("bytes", func(t *testing.T) {
+				j := 0
+				check := func(t *testing.T) func(i *jscan.IteratorBytes) bool {
+					q := require.New(t)
+					return func(i *jscan.IteratorBytes) bool {
+						if j >= len(tt.expect) {
+							t.Errorf("unexpected value at %d", j)
+							j++
+							return false
+						}
+						e := tt.expect[j]
+						q.Equal(e.ValueType, i.ValueType, "ValueType at %d", i)
+						q.Equal(e.Level, i.Level, "Level at %d", i)
+						q.Equal(e.Value, string(i.Value()), "Value at %d", i)
+						q.Equal(e.Key, string(i.Key()), "Key at %d", i)
+						q.Equal(
+							e.ArrayIndex, i.ArrayIndex, "ArrayIndex at %d", i,
+						)
+						q.Equal(e.Path, string(i.Path()), "Path at %d", i)
+						j++
+						return false
+					}
+				}
+
+				t.Run("valid", func(t *testing.T) {
+					require.True(t, jscan.ValidBytes([]byte(tt.input)))
+				})
+				t.Run("cachepath", func(t *testing.T) {
+					err := jscan.ScanBytes(jscan.Options{
+						CachePath: true, EscapePath: tt.escapePath,
+					}, []byte(tt.input), check(t))
+					require.False(t, err.IsErr(), "unexpected error: %s", err)
+				})
+				t.Run("nocachepath", func(t *testing.T) {
+					j = 0
+					err := jscan.ScanBytes(jscan.Options{
+						CachePath: false, EscapePath: tt.escapePath,
+					}, []byte(tt.input), check(t))
+					require.False(t, err.IsErr(), "unexpected error: %s", err)
+				})
 			})
 		})
 	}
