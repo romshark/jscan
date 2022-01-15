@@ -234,7 +234,6 @@ func ParseBytes(s []byte) (end int, err bool) {
 	}
 
 	// Fraction
-	i = 0
 FRACTION:
 	for i, c = range s {
 		switch c {
