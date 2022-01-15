@@ -76,8 +76,6 @@ func Parse(s string) (end int, err bool) {
 		return end + i + 1, false
 	}
 
-	// Fraction
-	i = 0
 FRACTION:
 	for i, c = range s {
 		switch c {
@@ -110,18 +108,7 @@ FRACTION:
 		// Number (with fraction but) without exponent
 		return end + i + 1, false
 	}
-	// Exponent
-	switch s[0] {
-	case 'e', 'E':
-		s = s[1:]
-		end++
-	default:
-		// Unexpected rune
-		return 0, true
-	}
 
-	// Exponent sign
-	i = 0
 EXPONENT_SIGN:
 	if s == "" {
 		// Missing exponent value
@@ -233,7 +220,6 @@ func ParseBytes(s []byte) (end int, err bool) {
 		return end + i + 1, false
 	}
 
-	// Fraction
 FRACTION:
 	for i, c = range s {
 		switch c {
@@ -267,7 +253,6 @@ FRACTION:
 		return end + i + 1, false
 	}
 
-	// Exponent sign
 EXPONENT_SIGN:
 	if len(s) < 1 {
 		// Missing exponent value
