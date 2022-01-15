@@ -394,6 +394,173 @@ func CalcStatsGofasterJxWithPath(str []byte) (s Stats) {
 	return
 }
 
+var valyalafastjsonPool = new(valyalafastjson.ParserPool)
+
+func CalcStatsValyalaFastjson(str []byte) (s Stats) {
+	p := valyalafastjsonPool.Get()
+	defer valyalafastjsonPool.Put(p)
+	v, err := p.ParseBytes(str)
+	if err != nil {
+		panic(err)
+	}
+
+	var parseValue func(v *valyalafastjson.Value, lv int, k []byte, a int) error
+	parseValue = func(
+		v *valyalafastjson.Value,
+		level int,
+		key []byte,
+		arrayIndex int,
+	) error {
+		if level > s.MaxDepth {
+			s.MaxDepth = level
+		}
+		if l := len(key); l > 0 && arrayIndex == -1 {
+			s.TotalKeys++
+			if l > s.MaxKeyLen {
+				s.MaxKeyLen = l
+			}
+		}
+
+		switch v.Type() {
+		case valyalafastjson.TypeString:
+			s.TotalStrings++
+
+		case valyalafastjson.TypeNull:
+			s.TotalNulls++
+
+		case valyalafastjson.TypeTrue, valyalafastjson.TypeFalse:
+			s.TotalBooleans++
+
+		case valyalafastjson.TypeNumber:
+			s.TotalNumbers++
+
+		case valyalafastjson.TypeArray:
+			s.TotalArrays++
+			values, err := v.Array()
+			if err != nil {
+				return err
+			}
+			lv := level + 1
+			for i, v := range values {
+				parseValue(v, lv, key, i)
+				if i := i + 1; i > s.MaxArrayLen {
+					s.MaxArrayLen = i
+				}
+			}
+			return nil
+
+		case valyalafastjson.TypeObject:
+			s.TotalObjects++
+			o, err := v.Object()
+			if err != nil {
+				return err
+			}
+			lv := level + 1
+			o.Visit(func(key []byte, v *valyalafastjson.Value) {
+				if err = parseValue(v, lv, key, -1); err != nil {
+					return
+				}
+			})
+			return nil
+		}
+		return nil
+	}
+	if err := parseValue(v, 0, nil, -1); err != nil {
+		panic(err)
+	}
+	return
+}
+
+func CalcStatsValyalaFastjsonWithPath(str []byte) (s Stats) {
+	p := valyalafastjsonPool.Get()
+	defer valyalafastjsonPool.Put(p)
+	v, err := p.ParseBytes(str)
+	if err != nil {
+		panic(err)
+	}
+
+	var parseValue func(v *valyalafastjson.Value, lv int, k, p []byte, a int) error
+	parseValue = func(
+		v *valyalafastjson.Value,
+		level int,
+		key, path []byte,
+		arrayIndex int,
+	) error {
+		if level > s.MaxDepth {
+			s.MaxDepth = level
+		}
+		if l := len(key); l > 0 && arrayIndex == -1 {
+			s.TotalKeys++
+			if l > s.MaxKeyLen {
+				s.MaxKeyLen = l
+			}
+		}
+		if key != nil && arrayIndex < 0 {
+			if path != nil {
+				path = append(path, '.')
+				path = append(path, key...)
+			} else {
+				path = append(path, key...)
+			}
+		} else if arrayIndex > -1 {
+			path = append(path, '[')
+			path = strconv.AppendInt(path, int64(arrayIndex), 10)
+			path = append(path, ']')
+		}
+		if l := len(path); l > s.MaxPathLen {
+			s.MaxPathLen = l
+		}
+
+		switch v.Type() {
+		case valyalafastjson.TypeString:
+			s.TotalStrings++
+
+		case valyalafastjson.TypeNull:
+			s.TotalNulls++
+
+		case valyalafastjson.TypeTrue, valyalafastjson.TypeFalse:
+			s.TotalBooleans++
+
+		case valyalafastjson.TypeNumber:
+			s.TotalNumbers++
+
+		case valyalafastjson.TypeArray:
+			s.TotalArrays++
+			values, err := v.Array()
+			if err != nil {
+				return err
+			}
+			lv := level + 1
+			for i, v := range values {
+				parseValue(v, lv, key, path, i)
+				if i := i + 1; i > s.MaxArrayLen {
+					s.MaxArrayLen = i
+				}
+			}
+			return nil
+
+		case valyalafastjson.TypeObject:
+			s.TotalObjects++
+			o, err := v.Object()
+			if err != nil {
+				return err
+			}
+			lv := level + 1
+			o.Visit(func(key []byte, v *valyalafastjson.Value) {
+				if err = parseValue(v, lv, key, path, -1); err != nil {
+					return
+				}
+			})
+			return nil
+		}
+		return nil
+	}
+	if err := parseValue(v, 0, nil, nil, -1); err != nil {
+		panic(err)
+	}
+	return
+}
+
 func TestImplementations(t *testing.T) {
 	const input = `{"s":"value","t":true,"f":false,"0":null,"n":-9.123e3,` +
 		`"o0":{},"a0":[],"o":{"k":"\"v\"",` +
@@ -417,6 +584,7 @@ func TestImplementations(t *testing.T) {
 		{name: "jscan", fn: CalcStatsJscan},
 		{name: "jsoniter", fn: CalcStatsJsoniter},
 		{name: "gofaster-jx", fn: CalcStatsGofasterJx},
+		{name: "valyala-fastjson", fn: CalcStatsValyalaFastjson},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, expect, tt.fn([]byte(input)))
@@ -448,6 +616,7 @@ func TestImplementationsWithPath(t *testing.T) {
 		{name: "jscan", fn: CalcStatsJscanWithPath},
 		{name: "jsoniter", fn: CalcStatsJsoniterWithPath},
 		{name: "gofaster-jx", fn: CalcStatsGofasterJxWithPath},
+		{name: "valyala-fastjson", fn: CalcStatsValyalaFastjsonWithPath},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, expect, tt.fn([]byte(input)))
@@ -471,12 +640,38 @@ func BenchmarkCalcStats(b *testing.B) {
 		name string
 		fn   func([]byte) Stats
 	}{
-		{name: "jscan", fn: CalcStatsJscan},
-		{name: "jsoniter", fn: CalcStatsJsoniter},
-		{name: "gofaster-jx", fn: CalcStatsGofasterJx},
-		{name: "jscan_withpath", fn: CalcStatsJscanWithPath},
-		{name: "jsoniter_withpath", fn: CalcStatsJsoniterWithPath},
-		{name: "gofaster-jx_withpath", fn: CalcStatsGofasterJxWithPath},
+		{
+			name: "jscan",
+			fn:   CalcStatsJscan,
+		},
+		{
+			name: "jsoniter",
+			fn:   CalcStatsJsoniter,
+		},
+		{
+			name: "gofaster-jx",
+			fn:   CalcStatsGofasterJx,
+		},
+		{
+			name: "jscan_withpath",
+			fn:   CalcStatsJscanWithPath,
+		},
+		{
+			name: "jsoniter_withpath",
+			fn:   CalcStatsJsoniterWithPath,
+		},
+		{
+			name: "gofaster-jx_withpath",
+			fn:   CalcStatsGofasterJxWithPath,
+		},
+		{
+			name: "valyala-fastjson",
+			fn:   CalcStatsValyalaFastjson,
+		},
+		{
+			name: "valyala-fastjson_withpath",
+			fn:   CalcStatsValyalaFastjsonWithPath,
+		},
 	} {
 		b.Run(bb.name, func(b *testing.B) {
 			for _, b2 := range []struct {
