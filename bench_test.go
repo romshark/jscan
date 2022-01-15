@@ -580,6 +580,10 @@ func TestValid(t *testing.T) {
 		require.True(t, encodingjson.Valid([]byte(j)))
 	})
 
+	t.Run("tidwallgjson", func(t *testing.T) {
+		require.True(t, tidwallgjson.Valid(j))
+	})
+
 	t.Run("fast-json", func(t *testing.T) {
 		require.NoError(t, valyalafastjson.Validate(j))
 	})
@@ -625,6 +629,14 @@ func BenchmarkValid(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gbool = encodingjson.Valid(jb)
+				}
+			})
+
+			b.Run("tidwallgjson", func(b *testing.B) {
+				j := string(bb.input)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gbool = tidwallgjson.Valid(j)
 				}
 			})
 
