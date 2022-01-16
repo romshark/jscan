@@ -958,6 +958,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
 				if i.onStringArrayItem() {
+					i.ValueStart--
 					return true
 				}
 
@@ -983,11 +984,13 @@ func (i *IteratorBytes) scanWithCachedPath(
 			} else if i.KeyStart != -1 || i.Level == 0 {
 				// String field value
 				if i.onStringFieldValue(t) {
+					i.ValueStart--
 					return true
 				}
 
 				i.ValueType = ValueTypeString
 				if i.callFnWithPathCache(nil, true, fn) {
+					i.ValueStart--
 					return true
 				}
 				i.ValueStart = i.ValueEnd + 1
