@@ -60,6 +60,7 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 		exp int
 	}{
 		{"", 0},
+		{"e", 0},
 		{" ", 1},
 		{" \r\n\t", 4},
 
