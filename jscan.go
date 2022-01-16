@@ -477,6 +477,7 @@ func Scan(
 		if i.scanWithCachedPath(s, fn) {
 			return i.getError()
 		}
+		return Error{}
 	}
 	if i.scan(s, fn) {
 		return i.getError()

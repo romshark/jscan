@@ -466,6 +466,7 @@ func ScanBytes(
 		if i.scanWithCachedPath(s, fn) {
 			return i.getError()
 		}
+		return ErrorBytes{}
 	}
 	if i.scan(s, fn) {
 		return i.getError()
