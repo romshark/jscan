@@ -19,7 +19,6 @@ type Record struct {
 }
 
 func TestScan(t *testing.T) {
-
 	for _, tt := range []struct {
 		name       string
 		escapePath bool
@@ -289,7 +288,7 @@ func TestScan(t *testing.T) {
 			escapePath: true,
 			input: `{"s":"value","t":true,"f":false,"0":null,"n":-9.123e3,` +
 				`"o0":{},"a0":[],"o":{"k":"\"v\"",` +
-				`"a":[true,null,"item",-67.02e9,["foo"]]},"a3":[0,{"a3":8}]}`,
+				`"a":[true,false,null,"item",-67.02e9,["foo"]]},"a3":[0,{"a3":8}]}`,
 			expect: []Record{
 				{
 					ValueType:  jscan.ValueTypeObject,
@@ -380,37 +379,44 @@ func TestScan(t *testing.T) {
 				},
 				{
 					Level:      3,
-					ValueType:  jscan.ValueTypeNull,
-					Value:      "null",
+					ValueType:  jscan.ValueTypeFalse,
+					Value:      "false",
 					ArrayIndex: 1,
 					Path:       "o.a[1]",
 				},
 				{
 					Level:      3,
-					ValueType:  jscan.ValueTypeString,
-					Value:      "item",
+					ValueType:  jscan.ValueTypeNull,
+					Value:      "null",
 					ArrayIndex: 2,
 					Path:       "o.a[2]",
 				},
 				{
 					Level:      3,
-					ValueType:  jscan.ValueTypeNumber,
-					Value:      "-67.02e9",
+					ValueType:  jscan.ValueTypeString,
+					Value:      "item",
 					ArrayIndex: 3,
 					Path:       "o.a[3]",
 				},
 				{
 					Level:      3,
-					ValueType:  jscan.ValueTypeArray,
+					ValueType:  jscan.ValueTypeNumber,
+					Value:      "-67.02e9",
 					ArrayIndex: 4,
 					Path:       "o.a[4]",
+				},
+				{
+					Level:      3,
+					ValueType:  jscan.ValueTypeArray,
+					ArrayIndex: 5,
+					Path:       "o.a[5]",
 				},
 				{
 					Level:      4,
 					ValueType:  jscan.ValueTypeString,
 					Value:      "foo",
 					ArrayIndex: 0,
-					Path:       "o.a[4][0]",
+					Path:       "o.a[5][0]",
 				},
 				{
 					Level:      1,
@@ -457,12 +463,30 @@ func TestScan(t *testing.T) {
 							return false
 						}
 						e := tt.expect[j]
-						q.Equal(e.ValueType, i.ValueType, "ValueType at %d", i)
-						q.Equal(e.Level, i.Level, "Level at %d", i)
-						q.Equal(e.Value, i.Value(), "Value at %d", i)
-						q.Equal(e.Key, i.Key(), "Key at %d", i)
-						q.Equal(e.ArrayIndex, i.ArrayIndex, "ArrayIndex at %d", i)
-						q.Equal(e.Path, i.Path(), "Path at %d", i)
+						q.Equal(
+							e.ValueType, i.ValueType,
+							"ValueType at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Level, i.Level,
+							"Level at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Value, i.Value(),
+							"Value at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Key, i.Key(),
+							"Key at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.ArrayIndex, i.ArrayIndex,
+							"ArrayIndex at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Path, i.Path(),
+							"Path at %d", i.ValueStart,
+						)
 						j++
 						return false
 					}
@@ -497,14 +521,30 @@ func TestScan(t *testing.T) {
 							return false
 						}
 						e := tt.expect[j]
-						q.Equal(e.ValueType, i.ValueType, "ValueType at %d", i)
-						q.Equal(e.Level, i.Level, "Level at %d", i)
-						q.Equal(e.Value, string(i.Value()), "Value at %d", i)
-						q.Equal(e.Key, string(i.Key()), "Key at %d", i)
 						q.Equal(
-							e.ArrayIndex, i.ArrayIndex, "ArrayIndex at %d", i,
+							e.ValueType, i.ValueType,
+							"ValueType at %d", i.ValueStart,
 						)
-						q.Equal(e.Path, string(i.Path()), "Path at %d", i)
+						q.Equal(
+							e.Level, i.Level,
+							"Level at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Value, string(i.Value()),
+							"Value at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Key, string(i.Key()),
+							"Key at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.ArrayIndex, i.ArrayIndex,
+							"ArrayIndex at %d", i.ValueStart,
+						)
+						q.Equal(
+							e.Path, string(i.Path()),
+							"Path at %d", i.ValueStart,
+						)
 						j++
 						return false
 					}
