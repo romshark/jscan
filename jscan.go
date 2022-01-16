@@ -129,6 +129,21 @@ var itrPool = sync.Pool{
 	},
 }
 
+func getItrFromPool(s string, escapePath bool) *Iterator {
+	i := itrPool.Get().(*Iterator)
+	i.st.Reset()
+	i.escapePath = escapePath
+	i.cachedPath = i.cachedPath[:0]
+	i.src = s
+	i.ValueType = 0
+	i.Level = 0
+	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
+	i.ValueStart, i.ValueEnd = 0, -1
+	i.ArrayIndex = 0
+	i.expect = expectVal
+	return i
+}
+
 // getError returns the stringified error, if any.
 func (i *Iterator) getError() Error {
 	return Error{
@@ -206,13 +221,240 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	return err
 }
 
+// Validate returns an error if s is invalid JSON.
+func Validate(s string) Error {
+	i := getItrFromPool(s, false)
+	defer itrPool.Put(i)
+
+	for i.ValueStart < len(s) {
+		switch s[i.ValueStart] {
+		case ' ', '\t', '\r', '\n':
+			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+
+		case ',':
+			switch i.expect {
+			case expectCommaOrArrTerm:
+				i.expect = expectValOrArrTerm
+			case expectCommaOrObjTerm:
+				i.expect = expectKeyOrObjTerm
+			default:
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			i.ValueStart++
+
+		case '}':
+			if i.expect != expectCommaOrObjTerm &&
+				i.expect != expectKeyOrObjTerm {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+
+			i.st.Pop()
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			i.ValueStart++
+			i.KeyStart, i.KeyEnd = -1, -1
+
+		case ']':
+			if i.expect != expectCommaOrArrTerm &&
+				i.expect != expectValOrArrTerm {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+
+			i.st.Pop()
+
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			i.ValueStart++
+			i.KeyStart, i.KeyEnd = -1, -1
+
+		case '{': // Object
+			if i.expect != expectVal && i.expect != expectValOrArrTerm {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			i.expect = expectKeyOrObjTerm
+
+			i.KeyStart, i.KeyEnd = -1, -1
+
+			i.st.Push(stack.NodeTypeObject, 0, 0, 0)
+			i.ValueStart++
+
+		case '[': // Array
+			if i.expect != expectVal && i.expect != expectValOrArrTerm {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			i.expect = expectValOrArrTerm
+
+			i.KeyStart, i.KeyEnd = -1, -1
+
+			i.st.Push(stack.NodeTypeArray, 0, 0, 0)
+			i.ValueStart++
+
+		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			if i.expect != expectVal && i.expect != expectValOrArrTerm {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			var err bool
+			i.ValueEnd, err = jsonnum.Parse(i.src[i.ValueStart:])
+			if err {
+				i.errCode = ErrorCodeMalformedNumber
+				return i.getError()
+			}
+			i.ValueStart += i.ValueEnd
+			i.KeyStart, i.KeyEnd = -1, -1
+
+		case '"': // String
+			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart+1)
+			if i.ValueEnd < 0 {
+				i.errCode = ErrorCodeUnexpectedEOF
+				return i.getError()
+			}
+			i.ValueStart = i.ValueEnd + 1
+			t := i.st.Top()
+			if t != nil && t.Type == stack.NodeTypeArray {
+				// Array item string value
+				if i.expect != expectValOrArrTerm {
+					i.errCode = ErrorCodeUnexpectedToken
+					return i.getError()
+				}
+				i.expect = expectCommaOrArrTerm
+				i.KeyStart, i.KeyEnd = -1, -1
+			} else if i.KeyStart != -1 || i.st.Len() == 0 {
+				// String field value
+				if i.expect != expectVal {
+					i.errCode = ErrorCodeUnexpectedToken
+					return i.getError()
+				}
+				if t != nil {
+					switch t.Type {
+					case stack.NodeTypeArray:
+						i.expect = expectCommaOrArrTerm
+					case stack.NodeTypeObject:
+						i.expect = expectCommaOrObjTerm
+					}
+				}
+
+				i.KeyStart, i.KeyEnd = -1, -1
+			} else {
+				// Key
+				if i.expect != expectKeyOrObjTerm {
+					i.errCode = ErrorCodeUnexpectedToken
+					return i.getError()
+				}
+				i.expect = expectVal
+
+				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
+				if i.ValueEnd > len(s) {
+					i.errCode = ErrorCodeUnexpectedEOF
+					return i.getError()
+				}
+				if x, err := i.parseColumn(s[i.ValueStart:]); err {
+					return i.getError()
+				} else {
+					i.ValueStart += x + 1
+				}
+			}
+
+		case 'n': // Null
+			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
+				i.expect3(i.ValueStart+1, 'u', 'l', 'l') {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			i.KeyStart, i.KeyEnd = -1, -1
+			i.ValueStart += len("null")
+
+		case 'f': // False
+			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
+				i.read4(i.ValueStart+1, 'a', 'l', 's', 'e') {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			i.KeyStart, i.KeyEnd = -1, -1
+			i.ValueStart += len("false")
+
+		case 't': // True
+			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
+				i.expect3(i.ValueStart+1, 'r', 'u', 'e') {
+				i.errCode = ErrorCodeUnexpectedToken
+				return i.getError()
+			}
+			if t := i.st.Top(); t != nil {
+				switch t.Type {
+				case stack.NodeTypeArray:
+					i.expect = expectCommaOrArrTerm
+				case stack.NodeTypeObject:
+					i.expect = expectCommaOrObjTerm
+				}
+			}
+
+			i.KeyStart, i.KeyEnd = -1, -1
+			i.ValueStart += len("true")
+
+		default:
+			i.errCode = ErrorCodeUnexpectedToken
+			return i.getError()
+		}
+	}
+
+	if i.st.Len() > 0 {
+		i.errCode = ErrorCodeUnexpectedEOF
+		return i.getError()
+	}
+
+	return Error{}
+}
+
 // Valid returns true if s is valid JSON, otherwise returns false.
 func Valid(s string) bool {
-	err := Scan(Options{
-		CachePath:  false,
-		EscapePath: false,
-	}, s, func(*Iterator) (err bool) { return false })
-	return !err.IsErr()
+	return !Validate(s).IsErr()
 }
 
 type Options struct {
@@ -233,18 +475,8 @@ func Scan(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
-	i := itrPool.Get().(*Iterator)
+	i := getItrFromPool(s, o.EscapePath)
 	defer itrPool.Put(i)
-	i.st.Reset()
-	i.escapePath = o.EscapePath
-	i.cachedPath = i.cachedPath[:0]
-	i.src = s
-	i.ValueType = 0
-	i.Level = 0
-	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-	i.ValueStart, i.ValueEnd = 0, -1
-	i.ArrayIndex = 0
-	i.expect = expectVal
 
 	if o.CachePath {
 		if i.scanWithCachedPath(s, fn) {
