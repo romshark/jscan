@@ -644,6 +644,26 @@ func TestScanError(t *testing.T) {
 		},
 		{
 			name:   `missing comma`,
+			input:  `["okay"[`,
+			expect: `error at index 7 ('['): unexpected token`,
+		},
+		{
+			name:   `missing comma`,
+			input:  `["okay"-12`,
+			expect: `error at index 7 ('-'): unexpected token`,
+		},
+		{
+			name:   `missing comma`,
+			input:  `["okay"0`,
+			expect: `error at index 7 ('0'): unexpected token`,
+		},
+		{
+			name:   `missing comma`,
+			input:  `["okay""not okay"]`,
+			expect: `error at index 7 ('"'): unexpected token`,
+		},
+		{
+			name:   `missing comma`,
 			input:  `{"foo":"bar" "baz":"fuz"}`,
 			expect: `error at index 13 ('"'): unexpected token`,
 		},
