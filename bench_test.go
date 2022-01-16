@@ -442,7 +442,9 @@ func CalcStatsValyalaFastjson(str []byte) (s Stats) {
 			}
 			lv := level + 1
 			for i, v := range values {
-				parseValue(v, lv, key, i)
+				if err := parseValue(v, lv, key, i); err != nil {
+					return err
+				}
 				if i := i + 1; i > s.MaxArrayLen {
 					s.MaxArrayLen = i
 				}
@@ -532,7 +534,9 @@ func CalcStatsValyalaFastjsonWithPath(str []byte) (s Stats) {
 			}
 			lv := level + 1
 			for i, v := range values {
-				parseValue(v, lv, key, path, i)
+				if err := parseValue(v, lv, key, path, i); err != nil {
+					return err
+				}
 				if i := i + 1; i > s.MaxArrayLen {
 					s.MaxArrayLen = i
 				}
