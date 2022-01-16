@@ -48,6 +48,7 @@ func IndexTermBytes(s []byte, i int) int {
 }
 
 func LastIndexUnescaped(path []byte, b byte) (i int) {
+MAIN:
 	for i = len(path); i >= 0; {
 		path = path[:i]
 		i = bytes.LastIndexByte(path, b)
@@ -63,7 +64,7 @@ func LastIndexUnescaped(path []byte, b byte) (i int) {
 					i = z
 					break
 				}
-				return
+				break MAIN
 			}
 		}
 	}
