@@ -234,9 +234,9 @@ func Validate(s string) Error {
 		case ',':
 			switch i.expect {
 			case expectCommaOrArrTerm:
-				i.expect = expectValOrArrTerm
+				i.expect = expectVal
 			case expectCommaOrObjTerm:
-				i.expect = expectKeyOrObjTerm
+				i.expect = expectKey
 			default:
 				i.errCode = ErrorCodeUnexpectedToken
 				return i.getError()
@@ -342,7 +342,7 @@ func Validate(s string) Error {
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
-				if i.expect != expectValOrArrTerm {
+				if i.expect != expectVal && i.expect != expectValOrArrTerm {
 					i.errCode = ErrorCodeUnexpectedToken
 					return i.getError()
 				}
@@ -366,7 +366,7 @@ func Validate(s string) Error {
 				i.KeyStart, i.KeyEnd = -1, -1
 			} else {
 				// Key
-				if i.expect != expectKeyOrObjTerm {
+				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.errCode = ErrorCodeUnexpectedToken
 					return i.getError()
 				}
@@ -492,10 +492,10 @@ func Scan(
 func (i *Iterator) onComma() (err bool) {
 	switch i.expect {
 	case expectCommaOrArrTerm:
-		i.expect = expectValOrArrTerm
+		i.expect = expectVal
 		return false
 	case expectCommaOrObjTerm:
-		i.expect = expectKeyOrObjTerm
+		i.expect = expectKey
 		return false
 	}
 	i.errCode = ErrorCodeUnexpectedToken
@@ -585,7 +585,7 @@ func (i *Iterator) onNumber() (top *stack.Node, err bool) {
 }
 
 func (i *Iterator) onStringArrayItem() (err bool) {
-	if i.expect != expectValOrArrTerm {
+	if i.expect != expectVal && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
 	}
@@ -610,7 +610,7 @@ func (i *Iterator) onStringFieldValue(t *stack.Node) (err bool) {
 }
 
 func (i *Iterator) onKey() (err bool) {
-	if i.expect != expectKeyOrObjTerm {
+	if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
 	}
@@ -879,6 +879,7 @@ const (
 	expectCommaOrArrTerm
 	expectKeyOrObjTerm
 	expectValOrArrTerm
+	expectKey
 )
 
 func (i *Iterator) scanWithCachedPath(

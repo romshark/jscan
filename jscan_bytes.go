@@ -228,9 +228,9 @@ func ValidateBytes(s []byte) ErrorBytes {
 		case ',':
 			switch i.expect {
 			case expectCommaOrArrTerm:
-				i.expect = expectValOrArrTerm
+				i.expect = expectVal
 			case expectCommaOrObjTerm:
-				i.expect = expectKeyOrObjTerm
+				i.expect = expectKey
 			default:
 				i.errCode = ErrorCodeUnexpectedToken
 				return i.getError()
@@ -336,7 +336,7 @@ func ValidateBytes(s []byte) ErrorBytes {
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
-				if i.expect != expectValOrArrTerm {
+				if i.expect != expectVal && i.expect != expectValOrArrTerm {
 					i.errCode = ErrorCodeUnexpectedToken
 					return i.getError()
 				}
@@ -360,7 +360,7 @@ func ValidateBytes(s []byte) ErrorBytes {
 				i.KeyStart, i.KeyEnd = -1, -1
 			} else {
 				// Key
-				if i.expect != expectKeyOrObjTerm {
+				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.errCode = ErrorCodeUnexpectedToken
 					return i.getError()
 				}
@@ -481,10 +481,10 @@ func ScanBytes(
 func (i *IteratorBytes) onComma() (err bool) {
 	switch i.expect {
 	case expectCommaOrArrTerm:
-		i.expect = expectValOrArrTerm
+		i.expect = expectVal
 		return false
 	case expectCommaOrObjTerm:
-		i.expect = expectKeyOrObjTerm
+		i.expect = expectKey
 		return false
 	}
 	i.errCode = ErrorCodeUnexpectedToken
@@ -574,7 +574,7 @@ func (i *IteratorBytes) onNumber() (top *stack.Node, err bool) {
 }
 
 func (i *IteratorBytes) onStringArrayItem() (err bool) {
-	if i.expect != expectValOrArrTerm {
+	if i.expect != expectVal && i.expect != expectValOrArrTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
 	}
@@ -599,7 +599,7 @@ func (i *IteratorBytes) onStringFieldValue(t *stack.Node) (err bool) {
 }
 
 func (i *IteratorBytes) onKey() (err bool) {
-	if i.expect != expectKeyOrObjTerm {
+	if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 		i.errCode = ErrorCodeUnexpectedToken
 		return true
 	}

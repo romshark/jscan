@@ -618,17 +618,17 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0 ('"'): unexpected EOF`,
 		},
 		{
-			name:   `missing value`,
+			name:   `missing column`,
 			input:  `{"key"}`,
 			expect: `error at index 6 ('}'): unexpected token`,
 		},
 		{
-			name:   `missing column`,
+			name:   `invalid content before column`,
 			input:  `{"key"1 :}`,
 			expect: `error at index 6 ('1'): unexpected token`,
 		},
 		{
-			name:   `missing column`,
+			name:   `invalid column`,
 			input:  `{"key";1}`,
 			expect: `error at index 6 (';'): unexpected token`,
 		},
@@ -636,6 +636,11 @@ func TestScanError(t *testing.T) {
 			name:   `missing field value`,
 			input:  `{"okay":}`,
 			expect: `error at index 8 ('}'): unexpected token`,
+		},
+		{
+			name:   `missing array item`,
+			input:  `["okay",]`,
+			expect: `error at index 8 (']'): unexpected token`,
 		},
 		{
 			name:   `missing comma`,
