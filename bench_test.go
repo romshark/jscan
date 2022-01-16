@@ -12,6 +12,7 @@ import (
 
 	gofasterjx "github.com/go-faster/jx"
 	jsoniter "github.com/json-iterator/go"
+	sinhashubham95jsonic "github.com/sinhashubham95/jsonic"
 	"github.com/stretchr/testify/require"
 	tidwallgjson "github.com/tidwall/gjson"
 	valyalafastjson "github.com/valyala/fastjson"
@@ -745,6 +746,14 @@ func TestBenchGet(t *testing.T) {
 		v := valyalafastjson.GetBool([]byte(j), path...)
 		require.True(t, v)
 	})
+
+	t.Run("sinhashubham95jsonic", func(t *testing.T) {
+		p, err := sinhashubham95jsonic.New([]byte(j))
+		require.NoError(t, err)
+		v, err := p.GetBool(`[1].[0].[1].[foo].[0].bar-baz`)
+		require.NoError(t, err)
+		require.True(t, v)
+	})
 }
 
 func BenchmarkGet(b *testing.B) {
@@ -794,6 +803,18 @@ func BenchmarkGet(b *testing.B) {
 			gbool = valyalafastjson.GetBool(
 				jb, "1", "0", "1", `\[foo\]`, "0", `bar-baz`,
 			)
+		}
+	})
+
+	b.Run("sinhashubham95jsonic", func(b *testing.B) {
+		p, err := sinhashubham95jsonic.New([]byte(json))
+		if err != nil {
+			panic(err)
+		}
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			gbool, _ = p.GetBool(`[1].[0].[1].[foo].[0].bar-baz`)
 		}
 	})
 }

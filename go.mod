@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/go-faster/jx v0.25.0
 	github.com/json-iterator/go v1.1.12
+	github.com/sinhashubham95/jsonic v1.1.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.12.1
 	github.com/valyala/fastjson v1.6.3
