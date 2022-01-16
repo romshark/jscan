@@ -757,7 +757,10 @@ func (i *IteratorBytes) scan(
 				t.ArrLen++
 				i.ValueType = ValueTypeString
 				i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-				fn(i)
+				if fn(i) {
+					i.ValueStart--
+					return true
+				}
 				i.ValueStart = i.ValueEnd + 1
 			} else if i.KeyStart != -1 || i.Level == 0 {
 				// String field value
@@ -969,7 +972,10 @@ func (i *IteratorBytes) scanWithCachedPath(
 				)
 				i.cachedPath = append(i.cachedPath, ']')
 
-				fn(i)
+				if fn(i) {
+					i.ValueStart--
+					return true
+				}
 				// Remove index
 				i.cachedPath = i.cachedPath[:initArrIndex]
 
