@@ -618,6 +618,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0 ('"'): unexpected EOF`,
 		},
 		{
+			name:   `unfinished key`,
+			input:  `{"key`,
+			expect: `error at index 1 ('"'): unexpected EOF`,
+		},
+		{
 			name:   `missing column`,
 			input:  `{"key"}`,
 			expect: `error at index 6 ('}'): unexpected token`,
