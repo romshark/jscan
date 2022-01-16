@@ -730,14 +730,20 @@ func TestBenchGet(t *testing.T) {
 		r := jsoniter.Get([]byte(j), 1, 0, 1, "[foo]", 0, "bar-baz")
 		r.MustBeValid()
 		require.NoError(t, r.LastError())
-		require.Equal(t, true, r.ToBool())
-		r.ToBool()
+		require.True(t, r.ToBool())
 	})
 
 	t.Run("tidwallgjson", func(t *testing.T) {
 		r := tidwallgjson.GetBytes([]byte(j), `1.0.1.\[foo\].0.bar-baz`)
 		require.True(t, r.Exists())
-		require.Equal(t, true, r.Bool())
+		require.True(t, r.Bool())
+	})
+
+	t.Run("valyalafastjson", func(t *testing.T) {
+		path := []string{"1", "0", "1", "[foo]", "0", "bar-baz"}
+		require.True(t, valyalafastjson.Exists([]byte(j), path...))
+		v := valyalafastjson.GetBool([]byte(j), path...)
+		require.True(t, v)
 	})
 }
 
@@ -777,6 +783,17 @@ func BenchmarkGet(b *testing.B) {
 
 		for i := 0; i < b.N; i++ {
 			gbool = tidwallgjson.GetBytes(json, path).Bool()
+		}
+	})
+
+	b.Run("valyalafastjson", func(b *testing.B) {
+		jb := []byte(json)
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			gbool = valyalafastjson.GetBool(
+				jb, "1", "0", "1", `\[foo\]`, "0", `bar-baz`,
+			)
 		}
 	})
 }
