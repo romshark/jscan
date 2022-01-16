@@ -639,6 +639,18 @@ var jsonSmall []byte
 //go:embed large.json
 var jsonLarge []byte
 
+//go:embed array_int_1024.json
+var jsonArrayInt1024 []byte
+
+//go:embed array_dec_1024.json
+var jsonArrayDec1024 []byte
+
+//go:embed array_nullbool_1024.json
+var jsonArrayNullBool1024 []byte
+
+//go:embed array_str_1024.json
+var jsonArrayStr1024 []byte
+
 func BenchmarkCalcStats(b *testing.B) {
 	for _, bb := range []struct {
 		name string
@@ -685,6 +697,10 @@ func BenchmarkCalcStats(b *testing.B) {
 				{"tiny", jsonTiny},
 				{"small", jsonSmall},
 				{"large", jsonLarge},
+				{"array_int_1024", jsonArrayInt1024},
+				{"array_dec_1024", jsonArrayDec1024},
+				{"array_nullbool_1024", jsonArrayNullBool1024},
+				{"array_str_1024", jsonArrayStr1024},
 			} {
 				b.Run(b2.name, func(b *testing.B) {
 					for i := 0; i < b.N; i++ {
@@ -800,6 +816,10 @@ func BenchmarkValid(b *testing.B) {
 		{"small", jsonSmall},
 		{"large", jsonLarge},
 		{"unwind_stack", MakeRepeated("[", 1024)},
+		{"array_int_1024", jsonArrayInt1024},
+		{"array_dec_1024", jsonArrayDec1024},
+		{"array_nullbool_1024", jsonArrayNullBool1024},
+		{"array_str_1024", jsonArrayStr1024},
 	} {
 		b.Run(bb.name, func(b *testing.B) {
 			b.Run("jscan", func(b *testing.B) {
