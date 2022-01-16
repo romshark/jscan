@@ -668,7 +668,7 @@ func (i *IteratorBytes) scan(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart++
+			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
 
 		case ',':
 			if i.onComma() {
@@ -868,7 +868,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart++
+			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
 
 		case ',':
 			if i.onComma() {

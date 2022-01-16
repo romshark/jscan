@@ -53,3 +53,41 @@ func TestLastIndexUnescaped(t *testing.T) {
 		})
 	}
 }
+
+func TestEndOfWhitespaceSeq(t *testing.T) {
+	for _, tt := range []struct {
+		in  string
+		exp int
+	}{
+		{"", 0},
+		{"e", 0},
+		{" ", 1},
+		{" \r\n\t", 4},
+
+		{"\n", 1},
+		{"\t", 1},
+		{"\r", 1},
+
+		{" e", 1},
+		{"\ne", 1},
+		{"\te", 1},
+		{"\re", 1},
+
+		{"   abc", 3},
+		{"  \nabc", 3},
+		{"  \tabc", 3},
+		{"  \rabc", 3},
+	} {
+		t.Run("", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				a := strfind.EndOfWhitespaceSeq(tt.in)
+				require.Equal(t, tt.exp, a)
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				a := strfind.EndOfWhitespaceSeqBytes([]byte(tt.in))
+				require.Equal(t, tt.exp, a)
+			})
+		})
+	}
+}
