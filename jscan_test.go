@@ -633,6 +633,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 6 (';'): unexpected token`,
 		},
 		{
+			name:   `missing field value`,
+			input:  `{"okay":}`,
+			expect: `error at index 8 ('}'): unexpected token`,
+		},
+		{
 			name:   `missing comma`,
 			input:  `{"foo":"bar" "baz":"fuz"}`,
 			expect: `error at index 13 ('"'): unexpected token`,
