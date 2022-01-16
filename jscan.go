@@ -355,12 +355,7 @@ func Validate(s string) Error {
 					return i.getError()
 				}
 				if t != nil {
-					switch t.Type {
-					case stack.NodeTypeArray:
-						i.expect = expectCommaOrArrTerm
-					case stack.NodeTypeObject:
-						i.expect = expectCommaOrObjTerm
-					}
+					i.expect = expectCommaOrObjTerm
 				}
 
 				i.KeyStart, i.KeyEnd = -1, -1
@@ -599,12 +594,7 @@ func (i *Iterator) onStringFieldValue(t *stack.Node) (err bool) {
 		return true
 	}
 	if t != nil {
-		switch t.Type {
-		case stack.NodeTypeArray:
-			i.expect = expectCommaOrArrTerm
-		case stack.NodeTypeObject:
-			i.expect = expectCommaOrObjTerm
-		}
+		i.expect = expectCommaOrObjTerm
 	}
 	return false
 }
