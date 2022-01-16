@@ -447,7 +447,7 @@ func (i *Iterator) scan(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart++
+			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 
 		case ',':
 			if i.onComma() {

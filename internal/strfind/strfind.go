@@ -69,3 +69,47 @@ func LastIndexUnescaped(path []byte, b byte) (i int) {
 	}
 	return
 }
+
+// EndOfWhitespaceSeq returns the index of the end of
+// the whitespace sequence
+func EndOfWhitespaceSeq(s string) int {
+	if len(s) == 0 {
+		return 0
+	}
+	switch s[0] {
+	case ' ', '\n', '\t', '\r':
+	default:
+		return 0
+	}
+	i := 1
+	for ; i < len(s); i++ {
+		switch s[i] {
+		case ' ', '\n', '\t', '\r':
+		default:
+			return i
+		}
+	}
+	return i
+}
+
+// EndOfWhitespaceSeqBytes returns the index of the end of
+// the whitespace sequence
+func EndOfWhitespaceSeqBytes(s []byte) int {
+	if len(s) == 0 {
+		return 0
+	}
+	switch s[0] {
+	case ' ', '\n', '\t', '\r':
+	default:
+		return 0
+	}
+	i := 1
+	for ; i < len(s); i++ {
+		switch s[i] {
+		case ' ', '\n', '\t', '\r':
+		default:
+			return i
+		}
+	}
+	return i
+}
