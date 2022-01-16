@@ -229,7 +229,7 @@ func Validate(s string) Error {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart++
+			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 
 		case ',':
 			switch i.expect {

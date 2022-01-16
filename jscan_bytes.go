@@ -223,7 +223,7 @@ func ValidateBytes(s []byte) ErrorBytes {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart++
+			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
 
 		case ',':
 			switch i.expect {
