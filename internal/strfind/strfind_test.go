@@ -63,7 +63,6 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 		{" ", 1},
 		{" \r\n\t", 4},
 
-		{" ", 1},
 		{"\n", 1},
 		{"\t", 1},
 		{"\r", 1},
