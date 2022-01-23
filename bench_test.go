@@ -670,6 +670,10 @@ func BenchmarkCalcStats(b *testing.B) {
 			fn:   CalcStatsGofasterJx,
 		},
 		{
+			name: "valyala-fastjson",
+			fn:   CalcStatsValyalaFastjson,
+		},
+		{
 			name: "jscan_withpath",
 			fn:   CalcStatsJscanWithPath,
 		},
@@ -680,10 +684,6 @@ func BenchmarkCalcStats(b *testing.B) {
 		{
 			name: "gofaster-jx_withpath",
 			fn:   CalcStatsGofasterJxWithPath,
-		},
-		{
-			name: "valyala-fastjson",
-			fn:   CalcStatsValyalaFastjson,
 		},
 		{
 			name: "valyala-fastjson_withpath",
