@@ -130,7 +130,11 @@ var itrPool = sync.Pool{
 	},
 }
 
-func getItrFromPool(s string, escapePath bool) *Iterator {
+func getItrFromPool(
+	s string,
+	escapePath bool,
+	startIndex int,
+) *Iterator {
 	i := itrPool.Get().(*Iterator)
 	i.st.Reset()
 	i.escapePath = escapePath
@@ -139,7 +143,7 @@ func getItrFromPool(s string, escapePath bool) *Iterator {
 	i.ValueType = 0
 	i.Level = 0
 	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-	i.ValueStart, i.ValueEnd = 0, -1
+	i.ValueStart, i.ValueEnd = startIndex, -1
 	i.ArrayIndex = 0
 	i.expect = expectVal
 	return i
@@ -208,11 +212,24 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 
 // Validate returns an error if s is invalid JSON.
 func Validate(s string) Error {
-	if s == "" {
-		return Error{Code: ErrorCodeUnexpectedEOF}
+	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
+	if illegal {
+		return Error{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeIllegalControlCharacter,
+		}
 	}
 
-	i := getItrFromPool(s, false)
+	if startIndex >= len(s) {
+		return Error{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
+	i := getItrFromPool(s, false, startIndex)
 	defer itrPool.Put(i)
 
 	for i.ValueStart < len(s) {
@@ -455,11 +472,24 @@ func Scan(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
-	if s == "" {
-		return Error{Code: ErrorCodeUnexpectedEOF}
+	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
+	if illegal {
+		return Error{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeIllegalControlCharacter,
+		}
 	}
 
-	i := getItrFromPool(s, o.EscapePath)
+	if startIndex >= len(s) {
+		return Error{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
+	i := getItrFromPool(s, o.EscapePath, startIndex)
 	defer itrPool.Put(i)
 
 	if o.CachePath {

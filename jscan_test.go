@@ -585,6 +585,16 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0: unexpected EOF`,
 		},
 		{
+			name:   "empty input",
+			input:  " ",
+			expect: `error at index 1: unexpected EOF`,
+		},
+		{
+			name:   "empty input",
+			input:  "\t\r\n ",
+			expect: `error at index 4: unexpected EOF`,
+		},
+		{
 			name:   "invalid literal",
 			input:  "nul",
 			expect: `error at index 0 ('n'): unexpected token`,
@@ -751,13 +761,13 @@ func TestScanError(t *testing.T) {
 					err := jscan.Scan(jscan.Options{
 						CachePath: true,
 					}, tt.input, check(t))
-					require.True(t, err.IsErr())
 					require.Equal(t, tt.expect, err.Error())
+					require.True(t, err.IsErr())
 				})
 				t.Run("nocachepath", func(t *testing.T) {
 					err := jscan.Scan(jscan.Options{}, tt.input, check(t))
-					require.True(t, err.IsErr())
 					require.Equal(t, tt.expect, err.Error())
+					require.True(t, err.IsErr())
 				})
 			})
 
@@ -776,15 +786,15 @@ func TestScanError(t *testing.T) {
 					err := jscan.ScanBytes(jscan.Options{
 						CachePath: true,
 					}, []byte(tt.input), check(t))
-					require.True(t, err.IsErr())
 					require.Equal(t, tt.expect, err.Error())
+					require.True(t, err.IsErr())
 				})
 				t.Run("nocachepath", func(t *testing.T) {
 					err := jscan.ScanBytes(
 						jscan.Options{}, []byte(tt.input), check(t),
 					)
-					require.True(t, err.IsErr())
 					require.Equal(t, tt.expect, err.Error())
+					require.True(t, err.IsErr())
 				})
 			})
 		})
@@ -877,6 +887,15 @@ func TestControlCharacters(t *testing.T) {
 
 	// Control characters outside of strings
 	t.Run("nonstring", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(func(b byte) {
+			var buf bytes.Buffer
+			buf.WriteByte(b)
+			buf.WriteString("null")
+			test(t, buf.String(), fmt.Sprintf(
+				"error at index 0 (0x%x): illegal control character", b,
+			))
+		})
+
 		ForASCIIControlCharsExceptTRN(func(b byte) {
 			var buf bytes.Buffer
 			buf.WriteString("[")
@@ -1140,6 +1159,17 @@ func TestGet(t *testing.T) {
 		})
 	}
 }
+
+// func TestX(t *testing.T) {
+// 	for _, v := range []string{
+// 		" ",
+// 		"0 0",
+// 	} {
+// 		if json.Valid([]byte(v)) != jscan.Valid(v) {
+// 			t.Errorf("%#v", v)
+// 		}
+// 	}
+// }
 
 func TestGetNotFound(t *testing.T) {
 	for _, tt := range []struct {

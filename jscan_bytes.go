@@ -122,7 +122,11 @@ var itrPoolBytes = sync.Pool{
 	},
 }
 
-func getItrBytesFromPool(s []byte, escapePath bool) *IteratorBytes {
+func getItrBytesFromPool(
+	s []byte,
+	escapePath bool,
+	startIndex int,
+) *IteratorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
 	i.st.Reset()
 	i.escapePath = escapePath
@@ -131,7 +135,7 @@ func getItrBytesFromPool(s []byte, escapePath bool) *IteratorBytes {
 	i.ValueType = 0
 	i.Level = 0
 	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-	i.ValueStart, i.ValueEnd = 0, -1
+	i.ValueStart, i.ValueEnd = startIndex, -1
 	i.ArrayIndex = 0
 	i.expect = expectVal
 	i.keyBuf = i.keyBuf[:0]
@@ -200,11 +204,24 @@ func GetBytes(
 
 // ValidateBytes returns an error if s is invalid JSON.
 func ValidateBytes(s []byte) ErrorBytes {
-	if len(s) < 1 {
-		return ErrorBytes{Code: ErrorCodeUnexpectedEOF}
+	startIndex, illegal := strfind.EndOfWhitespaceSeqBytes(s)
+	if illegal {
+		return ErrorBytes{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeIllegalControlCharacter,
+		}
 	}
 
-	i := getItrBytesFromPool(s, false)
+	if startIndex >= len(s) {
+		return ErrorBytes{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
+	i := getItrBytesFromPool(s, false, startIndex)
 	defer itrPoolBytes.Put(i)
 
 	for i.ValueStart < len(s) {
@@ -442,11 +459,24 @@ func ScanBytes(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
-	if len(s) < 1 {
-		return ErrorBytes{Code: ErrorCodeUnexpectedEOF}
+	startIndex, illegal := strfind.EndOfWhitespaceSeqBytes(s)
+	if illegal {
+		return ErrorBytes{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeIllegalControlCharacter,
+		}
 	}
 
-	i := getItrBytesFromPool(s, o.EscapePath)
+	if startIndex >= len(s) {
+		return ErrorBytes{
+			Src:   s,
+			Index: startIndex,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
+	i := getItrBytesFromPool(s, o.EscapePath, startIndex)
 	defer itrPoolBytes.Put(i)
 
 	if o.CachePath {
