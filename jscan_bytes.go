@@ -204,6 +204,14 @@ func GetBytes(
 
 // ValidateBytes returns an error if s is invalid JSON.
 func ValidateBytes(s []byte) ErrorBytes {
+	if len(s) < 1 {
+		return ErrorBytes{
+			Src:   nil,
+			Index: 0,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
 	i := getItrBytesFromPool(s, false)
 	defer itrPoolBytes.Put(i)
 
@@ -462,6 +470,14 @@ func ScanBytes(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
+	if len(s) < 1 {
+		return ErrorBytes{
+			Src:   nil,
+			Index: 0,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
 	i := getItrBytesFromPool(s, o.EscapePath)
 	defer itrPoolBytes.Put(i)
 

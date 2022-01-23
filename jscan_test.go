@@ -580,6 +580,11 @@ func TestScanError(t *testing.T) {
 		expect string
 	}{
 		{
+			name:   "empty input",
+			input:  "",
+			expect: `error at index 0: unexpected EOF`,
+		},
+		{
 			name:   "invalid literal",
 			input:  "nul",
 			expect: `error at index 0 ('n'): unexpected token`,

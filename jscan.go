@@ -209,6 +209,14 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 
 // Validate returns an error if s is invalid JSON.
 func Validate(s string) Error {
+	if s == "" {
+		return Error{
+			Src:   "",
+			Index: 0,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
 	i := getItrFromPool(s, false)
 	defer itrPool.Put(i)
 
@@ -472,6 +480,14 @@ func Scan(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
+	if s == "" {
+		return Error{
+			Src:   "",
+			Index: 0,
+			Code:  ErrorCodeUnexpectedEOF,
+		}
+	}
+
 	i := getItrFromPool(s, o.EscapePath)
 	defer itrPool.Put(i)
 
