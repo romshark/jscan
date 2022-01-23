@@ -72,45 +72,45 @@ MAIN:
 }
 
 // EndOfWhitespaceSeq returns the index of the end of
-// the whitespace sequence
-func EndOfWhitespaceSeq(s string) int {
-	if len(s) == 0 {
-		return 0
+// the whitespace sequence.
+// If the returned stoppedAtIllegalChar == true then index points at an
+// illegal character that was encountered during the scan.
+func EndOfWhitespaceSeq(s string) (index int, hasIllegalChars bool) {
+	if len(s) == 0 || s[0] > 32 {
+		return 0, false
 	}
-	switch s[0] {
-	case ' ', '\n', '\t', '\r':
-	default:
-		return 0
-	}
-	i := 1
+	i := 0
 	for ; i < len(s); i++ {
 		switch s[i] {
 		case ' ', '\n', '\t', '\r':
 		default:
-			return i
+			if s[i] < 0x20 {
+				return i, true
+			}
+			return i, false
 		}
 	}
-	return i
+	return i, false
 }
 
 // EndOfWhitespaceSeqBytes returns the index of the end of
-// the whitespace sequence
-func EndOfWhitespaceSeqBytes(s []byte) int {
-	if len(s) == 0 {
-		return 0
+// the whitespace sequence.
+// If the returned stoppedAtIllegalChar == true then index points at an
+// illegal character that was encountered during the scan.
+func EndOfWhitespaceSeqBytes(s []byte) (index int, stoppedAtIllegalChar bool) {
+	if len(s) == 0 || s[0] > 32 {
+		return 0, false
 	}
-	switch s[0] {
-	case ' ', '\n', '\t', '\r':
-	default:
-		return 0
-	}
-	i := 1
+	i := 0
 	for ; i < len(s); i++ {
 		switch s[i] {
 		case ' ', '\n', '\t', '\r':
 		default:
-			return i
+			if s[i] < 0x20 {
+				return i, true
+			}
+			return i, false
 		}
 	}
-	return i
+	return i, false
 }

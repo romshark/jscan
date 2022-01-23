@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/romshark/jscan/internal/jsonnum"
 	"github.com/romshark/jscan/internal/keyescape"
@@ -36,6 +37,7 @@ const (
 	ErrorCodeUnexpectedToken
 	ErrorCodeMalformedNumber
 	ErrorCodeUnexpectedEOF
+	ErrorCodeIllegalControlCharacter
 	ErrorCallback
 )
 
@@ -163,27 +165,11 @@ type Error struct {
 func (e Error) IsErr() bool { return e.Code != 0 }
 
 func (e Error) Error() string {
-	errMsg := ""
-	switch e.Code {
-	case ErrorCodeUnexpectedToken:
-		errMsg = "unexpected token"
-	case ErrorCodeMalformedNumber:
-		errMsg = "malformed number"
-	case ErrorCodeUnexpectedEOF:
-		errMsg = "unexpected EOF"
-	case ErrorCallback:
-		errMsg = "callback error"
-	default:
-		return ""
-	}
-	r := ""
 	if e.Index < len(e.Src) {
-		r = " ('" + string(e.Src[e.Index]) + "')"
+		r, _ := utf8.DecodeRuneInString(e.Src[e.Index:])
+		return errorMessage(e.Code, e.Index, r)
 	}
-	return fmt.Sprintf(
-		"error at index %d%s: %s",
-		e.Index, r, errMsg,
-	)
+	return errorMessage(e.Code, e.Index, 0)
 }
 
 // Get calls fn for the value at the given path.
@@ -229,7 +215,12 @@ func Validate(s string) Error {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return i.getError()
+			}
 
 		case ',':
 			switch i.expect {
@@ -333,10 +324,17 @@ func Validate(s string) Error {
 			i.KeyStart, i.KeyEnd = -1, -1
 
 		case '"': // String
-			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart+1)
+			i.ValueStart++
+			i.ValueEnd = strfind.IndexTerm(s, i.ValueStart)
 			if i.ValueEnd < 0 {
 				i.errCode = ErrorCodeUnexpectedEOF
 				return i.getError()
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return i.getError()
+				}
 			}
 			i.ValueStart = i.ValueEnd + 1
 			t := i.st.Top()
@@ -434,7 +432,11 @@ func Validate(s string) Error {
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return i.getError()
 		}
 	}
@@ -668,9 +670,18 @@ func (i *Iterator) scan(
 	fn func(*Iterator) (err bool),
 ) (err bool) {
 	for i.ValueStart < len(s) {
+		if s[i.ValueStart] < 0x20 {
+			i.errCode = ErrorCodeIllegalControlCharacter
+			return true
+		}
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return true
+			}
 
 		case ',':
 			if i.onComma() {
@@ -746,6 +757,12 @@ func (i *Iterator) scan(
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return true
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return true
+				}
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -836,7 +853,11 @@ func (i *Iterator) scan(
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return true
 		}
 	}
@@ -885,7 +906,12 @@ func (i *Iterator) scanWithCachedPath(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return true
+			}
 
 		case ',':
 			if i.onComma() {
@@ -967,6 +993,12 @@ func (i *Iterator) scanWithCachedPath(
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return true
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return true
+				}
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -1079,7 +1111,11 @@ func (i *Iterator) scanWithCachedPath(
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return true
 		}
 	}
@@ -1224,4 +1260,44 @@ func (i *Iterator) callFnWithPathCache(
 	}
 	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
 	return false
+}
+
+func errorMessage(c ErrorCode, index int, atIndex rune) string {
+	errMsg := ""
+	switch c {
+	case ErrorCodeUnexpectedToken:
+		errMsg = "unexpected token"
+	case ErrorCodeMalformedNumber:
+		errMsg = "malformed number"
+	case ErrorCodeUnexpectedEOF:
+		if atIndex == 0 {
+			return fmt.Sprintf(
+				"error at index %d: unexpected EOF",
+				index,
+			)
+		}
+		errMsg = "unexpected EOF"
+	case ErrorCodeIllegalControlCharacter:
+		errMsg = "illegal control character"
+	case ErrorCallback:
+		errMsg = "callback error"
+	default:
+		return ""
+	}
+	if index >= 0 {
+		if atIndex < 32 {
+			return fmt.Sprintf(
+				"error at index %d (0x%x): %s",
+				index, atIndex, errMsg,
+			)
+		}
+		return fmt.Sprintf(
+			"error at index %d ('%s'): %s",
+			index, string(atIndex), errMsg,
+		)
+	}
+	return fmt.Sprintf(
+		"error at index %d: %s",
+		index, errMsg,
+	)
 }

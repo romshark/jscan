@@ -2,9 +2,9 @@ package jscan
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/romshark/jscan/internal/jsonnum"
 	"github.com/romshark/jscan/internal/keyescape"
@@ -140,12 +140,15 @@ func getItrBytesFromPool(s []byte, escapePath bool) *IteratorBytes {
 }
 
 // getError returns the stringified error, if any.
-func (i *IteratorBytes) getError() ErrorBytes {
-	return ErrorBytes{
-		Src:   i.src,
-		Index: i.ValueStart,
-		Code:  i.errCode,
+func (i *IteratorBytes) getError() (e ErrorBytes) {
+	e.Code = i.errCode
+	e.Src = i.src
+	if e.Index >= len(i.src) {
+		e.Index = -1
+	} else {
+		e.Index = i.ValueStart
 	}
+	return
 }
 
 type ErrorBytes struct {
@@ -158,27 +161,11 @@ type ErrorBytes struct {
 func (e ErrorBytes) IsErr() bool { return e.Code != 0 }
 
 func (e ErrorBytes) Error() string {
-	errMsg := ""
-	switch e.Code {
-	case ErrorCodeUnexpectedToken:
-		errMsg = "unexpected token"
-	case ErrorCodeMalformedNumber:
-		errMsg = "malformed number"
-	case ErrorCodeUnexpectedEOF:
-		errMsg = "unexpected EOF"
-	case ErrorCallback:
-		errMsg = "callback error"
-	default:
-		return ""
-	}
-	r := ""
 	if e.Index < len(e.Src) {
-		r = " ('" + string(e.Src[e.Index]) + "')"
+		r, _ := utf8.DecodeRune(e.Src[e.Index:])
+		return errorMessage(e.Code, e.Index, r)
 	}
-	return fmt.Sprintf(
-		"error at index %d%s: %s",
-		e.Index, r, errMsg,
-	)
+	return errorMessage(e.Code, e.Index, 0)
 }
 
 // Get calls fn for the value at the given path.
@@ -223,7 +210,12 @@ func ValidateBytes(s []byte) ErrorBytes {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return i.getError()
+			}
 
 		case ',':
 			switch i.expect {
@@ -327,10 +319,17 @@ func ValidateBytes(s []byte) ErrorBytes {
 			i.KeyStart, i.KeyEnd = -1, -1
 
 		case '"': // String
-			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart+1)
+			i.ValueStart++
+			i.ValueEnd = strfind.IndexTermBytes(s, i.ValueStart)
 			if i.ValueEnd < 0 {
 				i.errCode = ErrorCodeUnexpectedEOF
 				return i.getError()
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return i.getError()
+				}
 			}
 			i.ValueStart = i.ValueEnd + 1
 			t := i.st.Top()
@@ -428,7 +427,11 @@ func ValidateBytes(s []byte) ErrorBytes {
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return i.getError()
 		}
 	}
@@ -659,7 +662,12 @@ func (i *IteratorBytes) scan(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return true
+			}
 
 		case ',':
 			if i.onComma() {
@@ -735,6 +743,12 @@ func (i *IteratorBytes) scan(
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return true
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return true
+				}
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -825,7 +839,11 @@ func (i *IteratorBytes) scan(
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return true
 		}
 	}
@@ -862,7 +880,12 @@ func (i *IteratorBytes) scanWithCachedPath(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			i.ValueStart += strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			i.ValueStart += e
+			if illegal {
+				i.errCode = ErrorCodeIllegalControlCharacter
+				return true
+			}
 
 		case ',':
 			if i.onComma() {
@@ -944,6 +967,12 @@ func (i *IteratorBytes) scanWithCachedPath(
 				i.ValueStart--
 				i.errCode = ErrorCodeUnexpectedEOF
 				return true
+			}
+			for _, c := range s[i.ValueStart:i.ValueEnd] {
+				if c < 0x20 {
+					i.errCode = ErrorCodeIllegalControlCharacter
+					return true
+				}
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -1056,7 +1085,11 @@ func (i *IteratorBytes) scanWithCachedPath(
 			i.ValueStart += len("true")
 
 		default:
-			i.errCode = ErrorCodeUnexpectedToken
+			if s[i.ValueStart] < 0x20 {
+				i.errCode = ErrorCodeIllegalControlCharacter
+			} else {
+				i.errCode = ErrorCodeUnexpectedToken
+			}
 			return true
 		}
 	}

@@ -56,37 +56,43 @@ func TestLastIndexUnescaped(t *testing.T) {
 
 func TestEndOfWhitespaceSeq(t *testing.T) {
 	for _, tt := range []struct {
-		in  string
-		exp int
+		in              string
+		exp             int
+		expIllegalChars bool
 	}{
-		{"", 0},
-		{"e", 0},
-		{" ", 1},
-		{" \r\n\t", 4},
+		{"", 0, false},
+		{"e", 0, false},
+		{" ", 1, false},
+		{" \r\n\t", 4, false},
 
-		{"\n", 1},
-		{"\t", 1},
-		{"\r", 1},
+		{"\n", 1, false},
+		{"\t", 1, false},
+		{"\r", 1, false},
 
-		{" e", 1},
-		{"\ne", 1},
-		{"\te", 1},
-		{"\re", 1},
+		{" e", 1, false},
+		{"\ne", 1, false},
+		{"\te", 1, false},
+		{"\re", 1, false},
 
-		{"   abc", 3},
-		{"  \nabc", 3},
-		{"  \tabc", 3},
-		{"  \rabc", 3},
+		{"   abc", 3, false},
+		{"  \nabc", 3, false},
+		{"  \tabc", 3, false},
+		{"  \rabc", 3, false},
+
+		{"\u0000", 0, true},
+		{"   \u0000a", 3, true},
 	} {
 		t.Run("", func(t *testing.T) {
 			t.Run("string", func(t *testing.T) {
-				a := strfind.EndOfWhitespaceSeq(tt.in)
+				a, ilc := strfind.EndOfWhitespaceSeq(tt.in)
 				require.Equal(t, tt.exp, a)
+				require.Equal(t, tt.expIllegalChars, ilc)
 			})
 
 			t.Run("bytes", func(t *testing.T) {
-				a := strfind.EndOfWhitespaceSeqBytes([]byte(tt.in))
+				a, ilc := strfind.EndOfWhitespaceSeqBytes([]byte(tt.in))
 				require.Equal(t, tt.exp, a)
+				require.Equal(t, tt.expIllegalChars, ilc)
 			})
 		})
 	}
