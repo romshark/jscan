@@ -114,22 +114,3 @@ func EndOfWhitespaceSeqBytes(s []byte) (index int, stoppedAtIllegalChar bool) {
 	}
 	return i, false
 }
-
-// ControlChars is list of all control characters
-const ControlChars = "\t\r\n\a\b\v\f" +
-	"\x00\x01\x02\x03\x04\x05\x06" +
-	"\x0e\x0f\x10\x11\x12\x13\x14" +
-	"\x15\x16\x17\x18\x19\x1a\x1b" +
-	"\x1c\x1d\x1e\x1f"
-
-// ContainsCtrlChar returns true if s contains any control character,
-// otherwise returns false.
-func ContainsCtrlChar(s string) bool {
-	return strings.ContainsAny(s, ControlChars)
-}
-
-// ContainsCtrlCharBytes returns true if s contains any control character,
-// otherwise returns false.
-func ContainsCtrlCharBytes(s []byte) bool {
-	return bytes.ContainsAny(s, ControlChars)
-}

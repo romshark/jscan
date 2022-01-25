@@ -1,7 +1,6 @@
 package strfind_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/romshark/jscan/internal/strfind"
@@ -118,28 +117,37 @@ func TestContainsCtrlCharFalse(t *testing.T) {
 	}
 }
 
-func TestContainsCtrlCharTrue(t *testing.T) {
-	forEachChar := func(fn func(byte)) {
-		for b := byte(0); b < 0x20; b++ {
-			fn(b)
+func TestContainsCtrlChar(t *testing.T) {
+	t.Run("contains", func(t *testing.T) {
+		forStringsWithCC := func(fn func(s []byte)) {
+			for i := 1; i <= 1025; i++ {
+				s := make([]byte, i)
+				for i := range s {
+					s[i] = 'x'
+				}
+				if len(s) > 0 {
+					s[len(s)-1] = 0x00
+				}
+				fn(s)
+			}
 		}
-	}
 
-	t.Run("string", func(t *testing.T) {
-		forEachChar(func(b byte) {
-			var s strings.Builder
-			s.WriteString("abc")
-			s.WriteByte(b)
-			require.True(t, strfind.ContainsCtrlChar(s.String()))
+		t.Run("string", func(t *testing.T) {
+			forStringsWithCC(func(s []byte) {
+				require.True(
+					t, strfind.ContainsCtrlChar(string(s)),
+					"undetected control character at %q", string(s),
+				)
+			})
 		})
-	})
 
-	t.Run("bytes", func(t *testing.T) {
-		forEachChar(func(b byte) {
-			var s strings.Builder
-			s.WriteString("abc")
-			s.WriteByte(b)
-			require.True(t, strfind.ContainsCtrlCharBytes([]byte(s.String())))
+		t.Run("bytes", func(t *testing.T) {
+			forStringsWithCC(func(s []byte) {
+				require.True(
+					t, strfind.ContainsCtrlCharBytes(s),
+					"undetected control character at %q", string(s),
+				)
+			})
 		})
 	})
 }
