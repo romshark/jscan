@@ -333,10 +333,8 @@ func ValidateBytes(s []byte) ErrorBytes {
 			if i.ValueEnd < 0 {
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlCharBytes(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			i.ValueStart = i.ValueEnd + 1
 			t := i.st.Top()
@@ -620,10 +618,8 @@ func (i *IteratorBytes) scan(
 				i.ValueStart--
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlCharBytes(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -917,10 +913,8 @@ func (i *IteratorBytes) scanWithCachedPath(
 				i.ValueStart--
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlCharBytes(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {

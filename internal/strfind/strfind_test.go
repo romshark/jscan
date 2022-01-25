@@ -1,6 +1,7 @@
 package strfind_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/romshark/jscan/internal/strfind"
@@ -96,4 +97,49 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestContainsCtrlCharFalse(t *testing.T) {
+	for _, tt := range []string{
+		"",
+		" ",
+		"abc ",
+		`\u0000\t\r\n\x00`,
+	} {
+		t.Run("", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				require.False(t, strfind.ContainsCtrlChar(tt))
+			})
+
+			t.Run("bytes", func(t *testing.T) {
+				require.False(t, strfind.ContainsCtrlCharBytes([]byte(tt)))
+			})
+		})
+	}
+}
+
+func TestContainsCtrlCharTrue(t *testing.T) {
+	forEachChar := func(fn func(byte)) {
+		for b := byte(0); b < 0x20; b++ {
+			fn(b)
+		}
+	}
+
+	t.Run("string", func(t *testing.T) {
+		forEachChar(func(b byte) {
+			var s strings.Builder
+			s.WriteString("abc")
+			s.WriteByte(b)
+			require.True(t, strfind.ContainsCtrlChar(s.String()))
+		})
+	})
+
+	t.Run("bytes", func(t *testing.T) {
+		forEachChar(func(b byte) {
+			var s strings.Builder
+			s.WriteString("abc")
+			s.WriteByte(b)
+			require.True(t, strfind.ContainsCtrlCharBytes([]byte(s.String())))
+		})
+	})
 }

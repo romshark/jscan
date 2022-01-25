@@ -341,10 +341,8 @@ func Validate(s string) Error {
 			if i.ValueEnd < 0 {
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlChar(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			i.ValueStart = i.ValueEnd + 1
 			t := i.st.Top()
@@ -633,10 +631,8 @@ func (i *Iterator) scan(
 				i.ValueStart--
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlChar(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
@@ -942,10 +938,8 @@ func (i *Iterator) scanWithCachedPath(
 				i.ValueStart--
 				return i.getError(ErrorCodeUnexpectedEOF)
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlCharacter)
-				}
+			if strfind.ContainsCtrlChar(s[i.ValueStart:i.ValueEnd]) {
+				return i.getError(ErrorCodeIllegalControlCharacter)
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
