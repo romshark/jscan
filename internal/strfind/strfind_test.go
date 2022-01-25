@@ -120,7 +120,7 @@ func TestContainsCtrlCharFalse(t *testing.T) {
 func TestContainsCtrlChar(t *testing.T) {
 	t.Run("contains", func(t *testing.T) {
 		forStringsWithCC := func(fn func(s []byte)) {
-			for i := 1; i <= 1025; i++ {
+			for i := 1; i <= 2049; i++ {
 				s := make([]byte, i)
 				for i := range s {
 					s[i] = 'x'
