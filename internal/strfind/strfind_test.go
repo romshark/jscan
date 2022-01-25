@@ -118,22 +118,22 @@ func TestContainsCtrlCharFalse(t *testing.T) {
 }
 
 func TestContainsCtrlChar(t *testing.T) {
-	t.Run("contains", func(t *testing.T) {
-		forStringsWithCC := func(fn func(s []byte)) {
-			for i := 1; i <= 2049; i++ {
-				s := make([]byte, i)
-				for i := range s {
-					s[i] = 'x'
-				}
-				if len(s) > 0 {
-					s[len(s)-1] = 0x00
-				}
-				fn(s)
+	forStringIn2049 := func(withIllegalPostfix bool, fn func(s []byte)) {
+		for i := 1; i <= 2049; i++ {
+			s := make([]byte, i)
+			for i := range s {
+				s[i] = 'x'
 			}
+			if withIllegalPostfix {
+				s[len(s)-1] = 0x00
+			}
+			fn(s)
 		}
+	}
 
+	t.Run("contains", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			forStringsWithCC(func(s []byte) {
+			forStringIn2049(true, func(s []byte) {
 				require.True(
 					t, strfind.ContainsCtrlChar(string(s)),
 					"undetected control character at %q", string(s),
@@ -142,10 +142,30 @@ func TestContainsCtrlChar(t *testing.T) {
 		})
 
 		t.Run("bytes", func(t *testing.T) {
-			forStringsWithCC(func(s []byte) {
+			forStringIn2049(true, func(s []byte) {
 				require.True(
 					t, strfind.ContainsCtrlCharBytes(s),
 					"undetected control character at %q", string(s),
+				)
+			})
+		})
+	})
+
+	t.Run("notcontains", func(t *testing.T) {
+		t.Run("string", func(t *testing.T) {
+			forStringIn2049(false, func(s []byte) {
+				require.False(
+					t, strfind.ContainsCtrlChar(string(s)),
+					"false positive at %q", string(s),
+				)
+			})
+		})
+
+		t.Run("bytes", func(t *testing.T) {
+			forStringIn2049(false, func(s []byte) {
+				require.False(
+					t, strfind.ContainsCtrlCharBytes(s),
+					"false positive at %q", string(s),
 				)
 			})
 		})
