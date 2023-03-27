@@ -683,6 +683,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0 ('e'): unexpected token`,
 		},
 		{
+			name:   "invalid escape sequence in string",
+			input:  `"\0"`,
+			expect: `error at index 2 ('0'): invalid escape sequence`,
+		},
+		{
 			name:   "missing closing }",
 			input:  `{"x":null`,
 			expect: `error at index 9: unexpected EOF`,
@@ -705,22 +710,22 @@ func TestScanError(t *testing.T) {
 		{
 			name:   `missing closing quotes`,
 			input:  `"string`,
-			expect: `error at index 0 ('"'): unexpected EOF`,
+			expect: `error at index 7: unexpected EOF`,
 		},
 		{
-			name:   `missing closing quotes`,
+			name:   `missing closing quotes after escaped quotes`,
 			input:  `"string\"`,
-			expect: `error at index 0 ('"'): unexpected EOF`,
+			expect: `error at index 9: unexpected EOF`,
 		},
 		{
-			name:   `missing closing quotes`,
+			name:   `missing closing quotes after escaped sequences`,
 			input:  `"string\\\"`,
-			expect: `error at index 0 ('"'): unexpected EOF`,
+			expect: `error at index 11: unexpected EOF`,
 		},
 		{
 			name:   `unfinished key`,
 			input:  `{"key`,
-			expect: `error at index 1 ('"'): unexpected EOF`,
+			expect: `error at index 5: unexpected EOF`,
 		},
 		{
 			name:   `missing column`,
@@ -890,14 +895,14 @@ func TestControlCharacters(t *testing.T) {
 			err := jscan.Validate(in)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlCharacter, err.Code)
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
 		t.Run("validbytes", func(t *testing.T) {
 			err := jscan.ValidateBytes([]byte(in))
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlCharacter, err.Code)
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
 		t.Run("valid", func(t *testing.T) {
@@ -915,7 +920,7 @@ func TestControlCharacters(t *testing.T) {
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlCharacter, err.Code)
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
 		t.Run("nocachepath", func(t *testing.T) {
@@ -925,7 +930,7 @@ func TestControlCharacters(t *testing.T) {
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlCharacter, err.Code)
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 	}
 
@@ -1077,7 +1082,7 @@ func TestReturnErrorTrue(t *testing.T) {
 				)
 				require.Equal(t, 1, j)
 				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCallback, err.Code)
+				require.Equal(t, jscan.ErrorCodeCallback, err.Code)
 				require.Equal(
 					t, "error at index 0 ('{'): callback error", err.Error(),
 				)
@@ -1094,7 +1099,7 @@ func TestReturnErrorTrue(t *testing.T) {
 				)
 				require.Equal(t, 1, j)
 				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCallback, err.Code)
+				require.Equal(t, jscan.ErrorCodeCallback, err.Code)
 				require.Equal(
 					t, "error at index 0 ('{'): callback error", err.Error(),
 				)

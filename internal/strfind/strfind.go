@@ -1,50 +1,57 @@
 package strfind
 
-import (
-	"bytes"
-	"strings"
+import "bytes"
+
+type ErrCode int
+
+const (
+	ErrCodeOK ErrCode = iota
+	ErrCodeInvalidEscapeSeq
+	ErrCodeIllegalControlChar
+	ErrCodeUnexpectedEOF
 )
 
 // IndexTerm returns either -1 or the index of the string value terminator.
-func IndexTerm(s string, i int) int {
-	for {
-		x := strings.IndexByte(s[i:], '"')
-		if x < 0 {
-			return -1
-		}
-		x += i
-
-		bs := 0
-		for j := x - 1; j >= 0 && s[j] == '\\'; j-- {
-			bs++
-		}
-		if bs%2 > 0 {
+func IndexTerm[S []byte | string](s S, i int) (indexEnd int, errCode ErrCode) {
+	for j := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\\':
 			i++
-			continue
+			if i >= len(s) {
+				return i, ErrCodeUnexpectedEOF
+			}
+			switch s[i] {
+			case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
+				j = 0
+			case 'u':
+				if i+4 >= len(s) ||
+					!isValidHexDigits(s[i+4]) ||
+					!isValidHexDigits(s[i+3]) ||
+					!isValidHexDigits(s[i+2]) ||
+					!isValidHexDigits(s[i+1]) {
+					return i, ErrCodeInvalidEscapeSeq
+				}
+				i, j = i+4, 0
+			default:
+				return i, ErrCodeInvalidEscapeSeq
+			}
+		case '"':
+			if j%2 == 0 {
+				return i, ErrCodeOK
+			}
+		default:
+			if s[i] < 0x20 {
+				return i, ErrCodeIllegalControlChar
+			}
 		}
-		return x
 	}
+	return i, ErrCodeUnexpectedEOF
 }
 
-// IndexTermBytes returns either -1 or the index of the string value terminator.
-func IndexTermBytes(s []byte, i int) int {
-	for {
-		x := bytes.IndexByte(s[i:], '"')
-		if x < 0 {
-			return -1
-		}
-		x += i
-
-		bs := 0
-		for j := x - 1; j >= 0 && s[j] == '\\'; j-- {
-			bs++
-		}
-		if bs%2 > 0 {
-			i++
-			continue
-		}
-		return x
-	}
+func isValidHexDigits(b byte) bool {
+	return (b >= '0' && b <= '9') ||
+		(b >= 'A' && b <= 'F') ||
+		(b >= 'a' && b <= 'f')
 }
 
 func LastIndexUnescaped(path []byte, b byte) (i int) {
@@ -75,7 +82,7 @@ MAIN:
 // the whitespace sequence.
 // If the returned stoppedAtIllegalChar == true then index points at an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq(s string) (index int, hasIllegalChars bool) {
+func EndOfWhitespaceSeq(s string) (index int, stoppedAtIllegalChar bool) {
 	if len(s) == 0 || s[0] > 32 {
 		return 0, false
 	}

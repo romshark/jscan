@@ -203,7 +203,7 @@ func ExampleScan_error_handling() {
 	}
 
 	// Output:
-	// ERR: error at index 0 ('"'): unexpected EOF
+	// ERR: error at index 13: unexpected EOF
 }
 
 func ExampleGet() {

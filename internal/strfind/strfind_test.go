@@ -1,6 +1,7 @@
 package strfind_test
 
 import (
+	_ "embed"
 	"testing"
 
 	"github.com/romshark/jscan/internal/strfind"
@@ -8,28 +9,153 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//go:embed test_longstr.txt
+var longStrTXT string
+
+var testsIndexTerm = []struct {
+	name            string
+	input           string
+	i               int
+	expectIndexEnd  int
+	expectErrorCode strfind.ErrCode
+}{
+	{
+		name:           "ok_empty_string",
+		input:          `"`,
+		i:              0,
+		expectIndexEnd: 0,
+	},
+	{
+		name:           "ok_escaped_quotes",
+		input:          `\""`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_backslash",
+		input:          `\\"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_bashslash_and_escaped_quotes",
+		input:          `\\\""`,
+		i:              0,
+		expectIndexEnd: 4,
+	},
+	{
+		name:           "ok_text_followed_by_escape_sequences",
+		input:          `abcd\\\""`,
+		i:              3,
+		expectIndexEnd: 8,
+	},
+	{
+		name:           "ok_escaped_slash",
+		input:          `\/"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_backspace",
+		input:          `\b"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_formfeed",
+		input:          `\f"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_newline",
+		input:          `\n"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_carriage_return",
+		input:          `\r"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_tab",
+		input:          `\t"`,
+		i:              0,
+		expectIndexEnd: 2,
+	},
+	{
+		name:           "ok_escaped_hex",
+		input:          `\uffff"`,
+		i:              0,
+		expectIndexEnd: 6,
+	},
+	{
+		name:           "ok_longstr",
+		input:          longStrTXT,
+		i:              1,
+		expectIndexEnd: len(longStrTXT) - 1,
+	},
+
+	// Errors
+	{
+		name:            "err_unexpeof_no_terminator",
+		input:           ``,
+		i:               0,
+		expectIndexEnd:  0,
+		expectErrorCode: strfind.ErrCodeUnexpectedEOF,
+	},
+	{
+		name:            "err_unexpeof_text_followed_by_no_terminator",
+		input:           `value`,
+		i:               3,
+		expectIndexEnd:  len("value"),
+		expectErrorCode: strfind.ErrCodeUnexpectedEOF,
+	},
+	{
+		name:            "err_unexpeof_after_escape",
+		input:           `value\`,
+		i:               0,
+		expectIndexEnd:  len(`value\`),
+		expectErrorCode: strfind.ErrCodeUnexpectedEOF,
+	},
+	{
+		name:            "err_controlchar",
+		input:           `ab` + string(byte(0x1F)) + `c"`,
+		i:               0,
+		expectIndexEnd:  2,
+		expectErrorCode: strfind.ErrCodeIllegalControlChar,
+	},
+	{
+		name:            "err_escapechar",
+		input:           `\0"`,
+		i:               0,
+		expectIndexEnd:  1,
+		expectErrorCode: strfind.ErrCodeInvalidEscapeSeq,
+	},
+	{
+		name:            "err_illegal_escape_sequence",
+		input:           `escaped: \u000k"`,
+		i:               0,
+		expectIndexEnd:  len(`escaped: \`),
+		expectErrorCode: strfind.ErrCodeInvalidEscapeSeq,
+	},
+}
+
 func TestIndexTerm(t *testing.T) {
-	for _, tt := range []struct {
-		in  string
-		i   int
-		exp int
-	}{
-		{`value`, 1, -1},
-		{`"`, 0, 0},
-		{`\""`, 0, 2},
-		{`\\"`, 0, 2},
-		{`\\\""`, 0, 4},
-		{`abcd\\\""`, 3, 8},
-	} {
-		t.Run("", func(t *testing.T) {
+	for _, tt := range testsIndexTerm {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Run("string", func(t *testing.T) {
-				a := strfind.IndexTerm(tt.in, tt.i)
-				require.Equal(t, tt.exp, a)
+				a, errCode := strfind.IndexTerm(tt.input, tt.i)
+				require.Equal(t, tt.expectErrorCode, errCode, "error code")
+				require.Equal(t, tt.expectIndexEnd, a)
 			})
 
 			t.Run("bytes", func(t *testing.T) {
-				a := strfind.IndexTermBytes([]byte(tt.in), tt.i)
-				require.Equal(t, tt.exp, a)
+				a, errCode := strfind.IndexTerm([]byte(tt.input), tt.i)
+				require.Equal(t, tt.expectErrorCode, errCode, "error code")
+				require.Equal(t, tt.expectIndexEnd, a)
 			})
 		})
 	}
@@ -37,8 +163,8 @@ func TestIndexTerm(t *testing.T) {
 
 func TestLastIndexUnescaped(t *testing.T) {
 	for _, tt := range []struct {
-		in  string
-		exp int
+		input  string
+		expect int
 	}{
 		{``, -1},
 		{`x`, 0},
@@ -46,19 +172,20 @@ func TestLastIndexUnescaped(t *testing.T) {
 		{`\\x`, 2},
 		{`\\\x`, -1},
 		{`x\\\x`, 0},
+		{`xxxxx`, 4},
 	} {
 		t.Run("", func(t *testing.T) {
-			a := strfind.LastIndexUnescaped([]byte(tt.in), 'x')
-			require.Equal(t, tt.exp, a)
+			a := strfind.LastIndexUnescaped([]byte(tt.input), 'x')
+			require.Equal(t, tt.expect, a)
 		})
 	}
 }
 
 func TestEndOfWhitespaceSeq(t *testing.T) {
 	for _, tt := range []struct {
-		in              string
-		exp             int
-		expIllegalChars bool
+		input              string
+		expect             int
+		expectIllegalChars bool
 	}{
 		{"", 0, false},
 		{"e", 0, false},
@@ -84,15 +211,15 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 	} {
 		t.Run("", func(t *testing.T) {
 			t.Run("string", func(t *testing.T) {
-				a, ilc := strfind.EndOfWhitespaceSeq(tt.in)
-				require.Equal(t, tt.exp, a)
-				require.Equal(t, tt.expIllegalChars, ilc)
+				a, ilc := strfind.EndOfWhitespaceSeq(tt.input)
+				require.Equal(t, tt.expect, a)
+				require.Equal(t, tt.expectIllegalChars, ilc)
 			})
 
 			t.Run("bytes", func(t *testing.T) {
-				a, ilc := strfind.EndOfWhitespaceSeqBytes([]byte(tt.in))
-				require.Equal(t, tt.exp, a)
-				require.Equal(t, tt.expIllegalChars, ilc)
+				a, ilc := strfind.EndOfWhitespaceSeqBytes([]byte(tt.input))
+				require.Equal(t, tt.expect, a)
+				require.Equal(t, tt.expectIllegalChars, ilc)
 			})
 		})
 	}
