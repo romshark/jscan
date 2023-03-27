@@ -266,6 +266,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueStart++
@@ -286,6 +288,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueStart++
@@ -325,6 +329,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			var err bool
@@ -362,6 +368,8 @@ func Validate(s string) Error {
 				}
 				if t != nil {
 					i.expect = expectCommaOrObjTerm
+				} else {
+					i.expect = expectEOF
 				}
 
 				i.KeyStart, i.KeyEnd = -1, -1
@@ -395,6 +403,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.KeyStart, i.KeyEnd = -1, -1
@@ -412,6 +422,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.KeyStart, i.KeyEnd = -1, -1
@@ -429,6 +441,8 @@ func Validate(s string) Error {
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.KeyStart, i.KeyEnd = -1, -1
@@ -538,6 +552,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.Level--
@@ -559,6 +575,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.Level--
@@ -610,6 +628,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			var err bool
@@ -664,6 +684,8 @@ func (i *Iterator) scan(
 				}
 				if t != nil {
 					i.expect = expectCommaOrObjTerm
+				} else {
+					i.expect = expectEOF
 				}
 
 				i.ValueType = ValueTypeString
@@ -705,6 +727,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeNull
@@ -727,6 +751,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeFalse
@@ -749,6 +775,8 @@ func (i *Iterator) scan(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeTrue
@@ -791,7 +819,7 @@ func (i *Iterator) read4(at int, a, b, c, d byte) (err bool) {
 type expectation int8
 
 const (
-	_ expectation = iota
+	expectEOF expectation = iota
 	expectVal
 	expectCommaOrObjTerm
 	expectCommaOrArrTerm
@@ -841,6 +869,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.Level--
@@ -863,6 +893,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.Level--
@@ -919,6 +951,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			var err bool
@@ -983,6 +1017,8 @@ func (i *Iterator) scanWithCachedPath(
 				}
 				if t != nil {
 					i.expect = expectCommaOrObjTerm
+				} else {
+					i.expect = expectEOF
 				}
 
 				i.ValueType = ValueTypeString
@@ -1036,6 +1072,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeNull
@@ -1058,6 +1096,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeFalse
@@ -1080,6 +1120,8 @@ func (i *Iterator) scanWithCachedPath(
 				case stack.NodeTypeObject:
 					i.expect = expectCommaOrObjTerm
 				}
+			} else {
+				i.expect = expectEOF
 			}
 
 			i.ValueType = ValueTypeTrue

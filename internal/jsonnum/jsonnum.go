@@ -4,15 +4,17 @@ func Parse(s string) (end int, err bool) {
 	var i int
 	var c rune
 
-	switch s[0] {
-	case '-':
+	if s[0] == '-' {
 		// Signed
+		end++
 		s = s[1:]
 		if len(s) < 1 {
 			// Expected at least one digit
 			return 0, true
 		}
-		end++
+	}
+
+	switch s[0] {
 	case '0':
 		if len(s) > 1 {
 			// Leading zero
@@ -22,17 +24,13 @@ func Parse(s string) (end int, err bool) {
 				end += 2
 				i = -1
 				goto FRACTION
-			case ' ', '\t', '\r', '\n', ',', '}', ']':
-				// Zero
-				return end + 1, false
 			case 'e', 'E':
 				s = s[2:]
 				end += 2
 				i = -1
 				goto EXPONENT_SIGN
 			default:
-				// Unexpected rune
-				return 0, true
+				return end + 1, false
 			}
 		}
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
@@ -148,15 +146,17 @@ func ParseBytes(s []byte) (end int, err bool) {
 	var i int
 	var c byte
 
-	switch s[0] {
-	case '-':
+	if s[0] == '-' {
 		// Signed
+		end++
 		s = s[1:]
 		if len(s) < 1 {
 			// Expected at least one digit
 			return 0, true
 		}
-		end++
+	}
+
+	switch s[0] {
 	case '0':
 		if len(s) > 1 {
 			// Leading zero
@@ -166,17 +166,13 @@ func ParseBytes(s []byte) (end int, err bool) {
 				end += 2
 				i = -1
 				goto FRACTION
-			case ' ', '\t', '\r', '\n', ',', '}', ']':
-				// Zero
-				return end + 1, false
 			case 'e', 'E':
 				s = s[2:]
 				end += 2
 				i = -1
 				goto EXPONENT_SIGN
 			default:
-				// Unexpected rune
-				return 0, true
+				return end + 1, false
 			}
 		}
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9':

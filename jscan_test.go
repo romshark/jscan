@@ -450,6 +450,54 @@ func TestScan(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:       "trailing space",
+			escapePath: true,
+			input:      "null ",
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeNull,
+					ArrayIndex: -1,
+					Value:      "null",
+				},
+			},
+		},
+		{
+			name:       "trailing carriage return",
+			escapePath: true,
+			input:      "null\r",
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeNull,
+					ArrayIndex: -1,
+					Value:      "null",
+				},
+			},
+		},
+		{
+			name:       "trailing tab",
+			escapePath: true,
+			input:      "null\t",
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeNull,
+					ArrayIndex: -1,
+					Value:      "null",
+				},
+			},
+		},
+		{
+			name:       "trailing line-break",
+			escapePath: true,
+			input:      "null\n",
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeNull,
+					ArrayIndex: -1,
+					Value:      "null",
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			require.True(t, json.Valid([]byte(tt.input)))
@@ -620,11 +668,6 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 0 ('0'): malformed number`,
 		},
 		{
-			name:   "invalid number",
-			input:  "01",
-			expect: `error at index 0 ('0'): malformed number`,
-		},
-		{
 			name:   "invalid number exponent",
 			input:  "0e",
 			expect: `error at index 0 ('0'): malformed number`,
@@ -735,14 +778,54 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 6 ('f'): unexpected token`,
 		},
 		{
-			name:   `error at end`,
-			input:  `{"foo":"bar"}{`,
-			expect: `error at index 13 ('{'): unexpected token`,
+			name:   "expect EOF after number zero",
+			input:  "01",
+			expect: `error at index 1 ('1'): unexpected token`,
 		},
 		{
-			name:   `unexpected comma`,
+			name:   `expect EOF after negative number zero`,
+			input:  `-00`,
+			expect: `error at index 2 ('0'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after string get comma`,
 			input:  `"okay",null`,
 			expect: `error at index 6 (','): unexpected token`,
+		},
+		{
+			name:   `expect EOF after string`,
+			input:  `"str" "str"`,
+			expect: `error at index 6 ('"'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after number`,
+			input:  `0 0`,
+			expect: `error at index 2 ('0'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after false`,
+			input:  `false false`,
+			expect: `error at index 6 ('f'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after true`,
+			input:  `true true`,
+			expect: `error at index 5 ('t'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after null`,
+			input:  `null null`,
+			expect: `error at index 5 ('n'): unexpected token`,
+		},
+		{
+			name:   `expect EOF after array`,
+			input:  `[] []`,
+			expect: `error at index 3 ('['): unexpected token`,
+		},
+		{
+			name:   `expect EOF after object`,
+			input:  `{"k":0} {"k":0}`,
+			expect: `error at index 8 ('{'): unexpected token`,
 		},
 	} {
 		require.False(t, json.Valid([]byte(tt.input)))
@@ -1106,7 +1189,8 @@ func TestGet(t *testing.T) {
 		}},
 		{
 			`[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`,
-			`[1][0][1].\[foo\][0].bar-baz`, true, Record{
+			`[1][0][1].\[foo\][0].bar-baz`, true,
+			Record{
 				Level:      6,
 				ValueType:  jscan.ValueTypeString,
 				Key:        "bar-baz",
