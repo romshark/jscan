@@ -105,7 +105,6 @@ Calculating statistics for a tiny JSON document (`{"x":0}`):
 |implementation|ns/op|B/op|allocs/op|
 |-|-|-|-|
 | jscan | 46.39 ns/op | 0 B/op | 0 allocs/op |
-| encoding-json | 46.39 ns/op | 0 B/op | 0 allocs/op |
 | jsoniter | 85.98 ns/op | 160 B/op | 2 allocs/op |
 | gofaster-jx | 54.21 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 50.17 ns/op | 0 B/op | 0 allocs/op |
