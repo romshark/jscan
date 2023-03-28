@@ -12,6 +12,7 @@ import (
 	"github.com/romshark/jscan"
 
 	gofasterjx "github.com/go-faster/jx"
+	goccygojson "github.com/goccy/go-json"
 	jsoniter "github.com/json-iterator/go"
 	sinhashubham95jsonic "github.com/sinhashubham95/jsonic"
 	"github.com/stretchr/testify/require"
@@ -850,6 +851,10 @@ func TestValid(t *testing.T) {
 	t.Run("fast-json", func(t *testing.T) {
 		require.NoError(t, valyalafastjson.Validate(j))
 	})
+
+	t.Run("goccy-go-json", func(t *testing.T) {
+		require.True(t, goccygojson.Valid([]byte(j)))
+	})
 }
 
 var gbool bool
@@ -910,6 +915,12 @@ func BenchmarkValid(b *testing.B) {
 			b.Run("valyala-fastjson", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					gbool = (valyalafastjson.ValidateBytes(bb.input) != nil)
+				}
+			})
+
+			b.Run("goccy-go-json", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gbool = goccygojson.Valid(bb.input)
 				}
 			})
 		})

@@ -99,6 +99,7 @@ goarch: arm64
 |github.com/sinhashubham95/jsonic|[v1.1.0](https://github.com/sinhashubham95/jsonic/releases/tag/v1.1.0)|
 |github.com/tidwall/gjson|[v1.14.4](https://github.com/tidwall/gjson/releases/tag/v1.14.4)|
 |github.com/valyala/fastjson|[v1.6.4](https://github.com/valyala/fastjson/releases/tag/v1.6.4)|
+|github.com/goccy/go-json|[v0.10.2](https://github.com/goccy/go-json/releases/tag/v0.10.2)|
 
 Calculating statistics for a tiny JSON document (`{"x":0}`):
 
@@ -196,6 +197,7 @@ Tiny
 | gofaster-jx | 39.19 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 15.85 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 19.25 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 353.3 ns/op | 1072 B/op | 9 allocs/op |
 
 Small
 
@@ -207,6 +209,7 @@ Small
 | gofaster-jx | 392.2 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 336.0 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 372.0 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 2504 ns/op | 2866 B/op | 61 allocs/op |
 
 Large
 
@@ -218,6 +221,7 @@ Large
 | gofaster-jx | 20625554 ns/op | 24 B/op | 0 allocs/op |
 | tidwallgjson | 27378477 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 25695158 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 7272724291 ns/op | 144636136 B/op | 2338137 allocs/op |
 
 Validating an object that contains a key and a string value consisting entirely of escape sequences (~3KB):
 
@@ -229,6 +233,7 @@ Validating an object that contains a key and a string value consisting entirely 
 | gofaster-jx | 5897 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 2989 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 9062 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 14823 ns/op | 4480 B/op | 13 allocs/op |
 
 Unwinding Stack
 
@@ -240,6 +245,7 @@ Unwinding Stack
 | gofaster-jx | 398530 ns/op | 65687 B/op | 1026 allocs/op |
 | tidwallgjson | 14033 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 4876865 ns/op | 52431864 B/op | 4134 allocs/op |
+| goccy-go-json | 155792 ns/op | 102298 B/op | 4105 allocs/op |
 
 Array of 1024 integers
 
@@ -251,6 +257,7 @@ Array of 1024 integers
 | gofaster-jx | 17843 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 13525 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 14741 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 100111 ns/op | 73463 B/op | 2057 allocs/op |
 
 Array of 1024 floats
 
@@ -262,6 +269,7 @@ Array of 1024 floats
 | gofaster-jx | 20111 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 12176 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 17346 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 104758 ns/op | 73476 B/op | 2057 allocs/op |
 
 Array of 1024 nullable booleans
 
@@ -273,6 +281,7 @@ Array of 1024 nullable booleans
 | gofaster-jx | 20987 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 5081 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 4891 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 45429 ns/op | 48912 B/op | 1036 allocs/op |
 
 Array of 1024 strings
 
@@ -284,3 +293,4 @@ Array of 1024 strings
 | gofaster-jx | 152812 ns/op | 0 B/op | 0 allocs/op |
 | tidwallgjson | 501928 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 253798 ns/op | 0 B/op | 0 allocs/op |
+| goccy-go-json | 844523 ns/op | 2817995 B/op | 3081 allocs/op |

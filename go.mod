@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-faster/jx v1.0.0
+	github.com/goccy/go-json v0.10.2
 	github.com/json-iterator/go v1.1.12
 	github.com/sinhashubham95/jsonic v1.1.0
 	github.com/stretchr/testify v1.8.2
