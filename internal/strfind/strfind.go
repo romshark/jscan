@@ -11,9 +11,53 @@ const (
 	ErrCodeUnexpectedEOF
 )
 
+// safeCharSet maps 0 to all inherently safe ASCII characters.
+// 1 is mapped to control, quotation mark (") and reverse solidus ("\").
+var safeCharSet = [256]byte{
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	'"': 1, '\\': 1,
+}
+
 // IndexTerm returns either -1 or the index of the string value terminator.
 func IndexTerm[S []byte | string](s S, i int) (indexEnd int, errCode ErrCode) {
 	for j := 0; i < len(s); i++ {
+		if i+7 < len(s) {
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+			if safeCharSet[s[i]] != 0 {
+				goto CHECK
+			}
+			i++
+		}
+
+	CHECK:
 		switch s[i] {
 		case '\\':
 			i++

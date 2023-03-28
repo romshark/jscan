@@ -97,6 +97,60 @@ var testsIndexTerm = []struct {
 		i:              1,
 		expectIndexEnd: len(longStrTXT) - 1,
 	},
+	{
+		name:           "ok_escaped_at_0",
+		input:          `\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_1",
+		input:          `0\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`0\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_2",
+		input:          `01\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`01\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_3",
+		input:          `012\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`012\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_4",
+		input:          `0123\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`0123\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_5",
+		input:          `01234\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`01234\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_6",
+		input:          `012345\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`012345\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_7",
+		input:          `0123456\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`0123456\"tailtext`),
+	},
+	{
+		name:           "ok_escaped_at_8",
+		input:          `01234567\"tailtext"`,
+		i:              0,
+		expectIndexEnd: len(`01234567\"tailtext`),
+	},
 
 	// Errors
 	{
