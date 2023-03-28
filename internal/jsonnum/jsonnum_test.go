@@ -129,6 +129,12 @@ func TestParseErr(t *testing.T) {
 		"-1x",
 		"-1.1x",
 		"1ex",
+		"0.E0",
+		"0.e0",
+		"0E.0",
+		"42.E0",
+		"42.e0",
+		"42E.0",
 	} {
 		t.Run(tt, func(t *testing.T) {
 			for _, t2 := range []struct {

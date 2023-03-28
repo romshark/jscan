@@ -73,7 +73,6 @@ func Parse(s string) (end int, err bool) {
 		// Integer without exponent
 		return end + i + 1, false
 	}
-
 FRACTION:
 	for i, c = range s {
 		switch c {
@@ -86,6 +85,10 @@ FRACTION:
 			// Number with fraction
 			return end + i, false
 		case 'e', 'E':
+			if i < 1 {
+				// Expected at least one digit before the exponent
+				return 0, true
+			}
 			d := i + 1
 			s = s[d:]
 			end += d
@@ -215,7 +218,6 @@ func ParseBytes(s []byte) (end int, err bool) {
 		// Integer without exponent
 		return end + i + 1, false
 	}
-
 FRACTION:
 	for i, c = range s {
 		switch c {
@@ -228,6 +230,10 @@ FRACTION:
 			// Number with fraction
 			return end + i, false
 		case 'e', 'E':
+			if i < 1 {
+				// Expected at least one digit before the exponent
+				return 0, true
+			}
 			d := i + 1
 			s = s[d:]
 			end += d
