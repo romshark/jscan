@@ -22,7 +22,7 @@ var safeCharSet = [256]byte{
 // IndexTerm returns either -1 or the index of the string value terminator.
 func IndexTerm[S []byte | string](s S, i int) (indexEnd int, errCode ErrCode) {
 	for j := 0; i < len(s); i++ {
-		if i+7 < len(s) {
+		if i+8 < len(s) {
 			if safeCharSet[s[i]] != 0 {
 				goto CHECK
 			}
