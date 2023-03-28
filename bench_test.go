@@ -3,6 +3,7 @@ package jscan_test
 import (
 	"bytes"
 	_ "embed"
+	"encoding/json"
 	encodingjson "encoding/json"
 	"fmt"
 	"strconv"
@@ -631,6 +632,9 @@ func TestImplementationsWithPath(t *testing.T) {
 
 var gs Stats
 
+//go:embed miniscule.json
+var jsonMiniscule []byte
+
 //go:embed tiny.json
 var jsonTiny []byte
 
@@ -639,6 +643,9 @@ var jsonSmall []byte
 
 //go:embed large.json
 var jsonLarge []byte
+
+//go:embed escaped.json
+var jsonEscaped []byte
 
 //go:embed array_int_1024.json
 var jsonArrayInt1024 []byte
@@ -695,9 +702,11 @@ func BenchmarkCalcStats(b *testing.B) {
 				name string
 				json []byte
 			}{
+				{"miniscule", jsonMiniscule},
 				{"tiny", jsonTiny},
 				{"small", jsonSmall},
 				{"large", jsonLarge},
+				{"escaped", jsonEscaped},
 				{"array_int_1024", jsonArrayInt1024},
 				{"array_dec_1024", jsonArrayDec1024},
 				{"array_nullbool_1024", jsonArrayNullBool1024},
@@ -826,12 +835,12 @@ func TestValid(t *testing.T) {
 		require.True(t, jscan.Valid(j))
 	})
 
-	t.Run("jsoniter", func(t *testing.T) {
-		require.True(t, jsoniter.Valid([]byte(j)))
-	})
-
 	t.Run("encoding-json", func(t *testing.T) {
 		require.True(t, encodingjson.Valid([]byte(j)))
+	})
+
+	t.Run("jsoniter", func(t *testing.T) {
+		require.True(t, jsoniter.Valid([]byte(j)))
 	})
 
 	t.Run("tidwallgjson", func(t *testing.T) {
@@ -850,9 +859,11 @@ func BenchmarkValid(b *testing.B) {
 		name  string
 		input []byte
 	}{
+		{"miniscule", jsonMiniscule},
 		{"tiny", jsonTiny},
 		{"small", jsonSmall},
 		{"large", jsonLarge},
+		{"escaped", jsonEscaped},
 		{"unwind_stack", MakeRepeated("[", 1024)},
 		{"array_int_1024", jsonArrayInt1024},
 		{"array_dec_1024", jsonArrayDec1024},
@@ -863,6 +874,12 @@ func BenchmarkValid(b *testing.B) {
 			b.Run("jscan", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					gbool = jscan.ValidBytes(bb.input)
+				}
+			})
+
+			b.Run("encoding-json", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gbool = json.Valid(bb.input)
 				}
 			})
 
@@ -879,14 +896,6 @@ func BenchmarkValid(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gbool = gofasterjx.Valid(jb)
-				}
-			})
-
-			b.Run("encoding-json", func(b *testing.B) {
-				jb := []byte(bb.input)
-				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					gbool = encodingjson.Valid(jb)
 				}
 			})
 

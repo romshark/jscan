@@ -2,14 +2,149 @@ package jscan_test
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/romshark/jscan"
 
 	"github.com/stretchr/testify/require"
 )
+
+//go:embed jsontestsuite
+var fsSuite embed.FS
+
+func TestJSONTestSuite(t *testing.T) {
+	d, err := fsSuite.ReadDir("jsontestsuite")
+	require.NoError(t, err)
+	for _, f := range d {
+		n := f.Name()
+		t.Run(n, func(t *testing.T) {
+			switch {
+			case strings.HasPrefix(n, "i_"):
+				testOKOrErr(t, readTestFileContents(t, n))
+			case strings.HasPrefix(n, "y_"):
+				testStrictOK(t, readTestFileContents(t, n))
+			case strings.HasPrefix(n, "n_"):
+				testStrictErr(t, readTestFileContents(t, n))
+			default:
+				t.Skip(n)
+			}
+		})
+	}
+}
+
+func readTestFileContents(t *testing.T, name string) []byte {
+	c, err := fsSuite.ReadFile(filepath.Join("jsontestsuite", name))
+	require.NoError(t, err)
+	return c
+}
+
+// testStrictOK runs tests with the "y_" prefix that parsers must accept.
+func testStrictOK(t *testing.T, input []byte) {
+	t.Run("Valid", func(t *testing.T) {
+		require.True(t, jscan.Valid(string(input)))
+	})
+	t.Run("ValidBytes", func(t *testing.T) {
+		require.True(t, jscan.ValidBytes(input))
+	})
+	t.Run("Scan", func(t *testing.T) {
+		err := jscan.Scan(
+			jscan.Options{},
+			string(input),
+			func(i *jscan.Iterator) (err bool) { return false },
+		)
+		require.False(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := jscan.Scan(
+				jscan.Options{CachePath: true},
+				string(input),
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+	})
+	t.Run("ScanBytes", func(t *testing.T) {
+		err := jscan.ScanBytes(
+			jscan.Options{},
+			input,
+			func(i *jscan.IteratorBytes) (err bool) { return false },
+		)
+		require.False(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := jscan.ScanBytes(
+				jscan.Options{CachePath: true},
+				input,
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+	})
+}
+
+// testOKOrErr runs tests with the "i_" prefix that
+// parsers are free to accept or reject.
+func testOKOrErr(t *testing.T, input []byte) {
+	t.Run("Valid", func(t *testing.T) {
+		if !jscan.Valid(string(input)) {
+			t.Skip("allowed to fail")
+		}
+	})
+	t.Run("ValidBytes", func(t *testing.T) {
+		if !jscan.ValidBytes(input) {
+			t.Skip("allowed to fail")
+		}
+	})
+}
+
+// testStrictErr runs tests with the "n_" prefix that parsers must reject.
+func testStrictErr(t *testing.T, input []byte) {
+	t.Run("Valid", func(t *testing.T) {
+		require.False(t, jscan.Valid(string(input)))
+	})
+	t.Run("ValidBytes", func(t *testing.T) {
+		require.False(t, jscan.ValidBytes(input))
+	})
+	t.Run("Scan", func(t *testing.T) {
+		err := jscan.Scan(
+			jscan.Options{},
+			string(input),
+			func(i *jscan.Iterator) (err bool) { return false },
+		)
+		require.True(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := jscan.Scan(
+				jscan.Options{CachePath: true},
+				string(input),
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
+	})
+	t.Run("ScanBytes", func(t *testing.T) {
+		err := jscan.ScanBytes(
+			jscan.Options{},
+			input,
+			func(i *jscan.IteratorBytes) (err bool) { return false },
+		)
+		require.True(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := jscan.ScanBytes(
+				jscan.Options{CachePath: true},
+				input,
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
+	})
+}
 
 type Record struct {
 	Level      int
