@@ -264,17 +264,9 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 		{"   \u0000a", 3, true},
 	} {
 		t.Run("", func(t *testing.T) {
-			t.Run("string", func(t *testing.T) {
-				a, ilc := strfind.EndOfWhitespaceSeq(tt.input)
-				require.Equal(t, tt.expect, a)
-				require.Equal(t, tt.expectIllegalChars, ilc)
-			})
-
-			t.Run("bytes", func(t *testing.T) {
-				a, ilc := strfind.EndOfWhitespaceSeqBytes([]byte(tt.input))
-				require.Equal(t, tt.expect, a)
-				require.Equal(t, tt.expectIllegalChars, ilc)
-			})
+			a, ilc := strfind.EndOfWhitespaceSeq(tt.input)
+			require.Equal(t, tt.expect, a)
+			require.Equal(t, tt.expectIllegalChars, ilc)
 		})
 	}
 }

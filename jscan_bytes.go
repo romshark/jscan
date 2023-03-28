@@ -204,7 +204,7 @@ func GetBytes(
 
 // ValidateBytes returns an error if s is invalid JSON.
 func ValidateBytes(s []byte) ErrorBytes {
-	startIndex, illegal := strfind.EndOfWhitespaceSeqBytes(s)
+	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return ErrorBytes{
 			Src:   s,
@@ -227,7 +227,7 @@ func ValidateBytes(s []byte) ErrorBytes {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
 				return i.getError(ErrorCodeIllegalControlChar)
@@ -470,7 +470,7 @@ func ScanBytes(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
-	startIndex, illegal := strfind.EndOfWhitespaceSeqBytes(s)
+	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return ErrorBytes{
 			Src:   s,
@@ -503,7 +503,7 @@ func (i *IteratorBytes) scan(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
 				return i.getError(ErrorCodeIllegalControlChar)
@@ -805,7 +805,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
-			e, illegal := strfind.EndOfWhitespaceSeqBytes(s[i.ValueStart:])
+			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
 				return i.getError(ErrorCodeIllegalControlChar)

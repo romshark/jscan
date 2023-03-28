@@ -126,29 +126,7 @@ MAIN:
 // the whitespace sequence.
 // If the returned stoppedAtIllegalChar == true then index points at an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq(s string) (index int, stoppedAtIllegalChar bool) {
-	if len(s) == 0 || s[0] > 32 {
-		return 0, false
-	}
-	i := 0
-	for ; i < len(s); i++ {
-		switch s[i] {
-		case ' ', '\n', '\t', '\r':
-		default:
-			if s[i] < 0x20 {
-				return i, true
-			}
-			return i, false
-		}
-	}
-	return i, false
-}
-
-// EndOfWhitespaceSeqBytes returns the index of the end of
-// the whitespace sequence.
-// If the returned stoppedAtIllegalChar == true then index points at an
-// illegal character that was encountered during the scan.
-func EndOfWhitespaceSeqBytes(s []byte) (index int, stoppedAtIllegalChar bool) {
+func EndOfWhitespaceSeq[S []byte | string](s S) (index int, stoppedAtIllegalChar bool) {
 	if len(s) == 0 || s[0] > 32 {
 		return 0, false
 	}
