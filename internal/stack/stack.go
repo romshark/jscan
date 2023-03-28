@@ -1,6 +1,6 @@
 package stack
 
-type NodeType int
+type NodeType int8
 
 const (
 	_              NodeType = iota
@@ -19,9 +19,9 @@ func (t NodeType) String() string {
 }
 
 type Node struct {
-	Type             NodeType
 	ArrLen           int
 	KeyStart, KeyEnd int
+	Type             NodeType
 }
 
 // Stack is a LIFO Stack
