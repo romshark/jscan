@@ -140,7 +140,7 @@ Calculating statistics for an object that contains a key and a string value cons
 | valyala-fastjson | 11292 ns/op | 0 B/op | 0 allocs/op |
 
 
-Array of 1024 integers:
+Calculating statistics for an array of 1024 integers:
 
 |implementation|ns/op|B/op|allocs/op|
 |-|-|-|-|
@@ -149,7 +149,7 @@ Array of 1024 integers:
 | gofaster-jx | 29924 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 21763 ns/op | 0 B/op | 0 allocs/op |
 
-Array of 1024 floating point numbers:
+Calculating statistics for an array of 1024 floating point numbers:
 
 |implementation|ns/op|B/op|allocs/op|
 |-|-|-|-|
@@ -158,7 +158,7 @@ Array of 1024 floating point numbers:
 | gofaster-jx | 37036 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 21320 ns/op | 6 B/op | 0 allocs/op |
 
-Array of 1024 strings:
+Calculating statistics for an array of 1024 strings:
 
 |implementation|ns/op|B/op|allocs/op|
 |-|-|-|-|
@@ -167,7 +167,7 @@ Array of 1024 strings:
 | gofaster-jx | 166966 ns/op | 0 B/op | 0 allocs/op |
 | valyala-fastjson | 61301 ns/op | 50 B/op | 0 allocs/op |
 
-Array of 1024 nullable booleans:
+Calculating statistics for an array of 1024 nullable booleans:
 
 |implementation|ns/op|B/op|allocs/op|
 |-|-|-|-|
