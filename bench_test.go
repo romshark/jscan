@@ -11,6 +11,7 @@ import (
 
 	"github.com/romshark/jscan"
 
+	bytedancesonic "github.com/bytedance/sonic"
 	gofasterjx "github.com/go-faster/jx"
 	goccygojson "github.com/goccy/go-json"
 	jsoniter "github.com/json-iterator/go"
@@ -855,6 +856,10 @@ func TestValid(t *testing.T) {
 	t.Run("goccy-go-json", func(t *testing.T) {
 		require.True(t, goccygojson.Valid([]byte(j)))
 	})
+
+	t.Run("bytedance-sonic", func(t *testing.T) {
+		require.True(t, bytedancesonic.ConfigFastest.Valid([]byte(j)))
+	})
 }
 
 var gbool bool
@@ -921,6 +926,12 @@ func BenchmarkValid(b *testing.B) {
 			b.Run("goccy-go-json", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
 					gbool = goccygojson.Valid(bb.input)
+				}
+			})
+
+			b.Run("bytedance-sonic", func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					gbool = bytedancesonic.ConfigFastest.Valid(bb.input)
 				}
 			})
 		})
