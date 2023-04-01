@@ -55,6 +55,13 @@ func testStrictOK(
 	t.Run("ParserBytesValid", func(t *testing.T) {
 		require.True(t, pb.Valid(input))
 	})
+	t.Run("ParserValidate", func(t *testing.T) {
+		p := jscan.New(64)
+		require.False(t, p.Validate(string(input)).IsErr())
+	})
+	t.Run("ParserBytesValidate", func(t *testing.T) {
+		require.False(t, pb.Validate(input).IsErr())
+	})
 	t.Run("ParserScan", func(t *testing.T) {
 		err := p.Scan(
 			jscan.Options{},
@@ -94,6 +101,12 @@ func testStrictOK(
 	})
 	t.Run("ValidBytes", func(t *testing.T) {
 		require.True(t, jscan.ValidBytes(input))
+	})
+	t.Run("Validate", func(t *testing.T) {
+		require.False(t, jscan.Validate(string(input)).IsErr())
+	})
+	t.Run("ValidateBytes", func(t *testing.T) {
+		require.False(t, jscan.ValidateBytes(input).IsErr())
 	})
 	t.Run("Scan", func(t *testing.T) {
 		err := jscan.Scan(
