@@ -279,15 +279,9 @@ func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Erro
 		EscapePath: escapePath,
 	}, s, func(i *Iterator) (err bool) {
 		i.ViewPath(func(p []byte) {
-			if len(p) != len(path) {
+			if string(p) != path {
 				return
 			}
-			for i := range p {
-				if p[i] != path[i] {
-					return
-				}
-			}
-
 			fn(i)
 			err = true
 		})

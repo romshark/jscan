@@ -1,7 +1,6 @@
 package jscan
 
 import (
-	"bytes"
 	"strconv"
 	"sync"
 	"unicode/utf8"
@@ -273,10 +272,9 @@ func (i *IteratorBytes) get(
 		EscapePath: escapePath,
 	}, s, func(i *IteratorBytes) (err bool) {
 		i.ViewPath(func(p []byte) {
-			if !bytes.Equal(p, path) {
+			if string(p) != string(path) {
 				return
 			}
-
 			fn(i)
 			err = true
 		})
