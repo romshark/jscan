@@ -20,16 +20,17 @@ var fsSuite embed.FS
 func TestJSONTestSuite(t *testing.T) {
 	d, err := fsSuite.ReadDir("jsontestsuite")
 	require.NoError(t, err)
+	p, pb := jscan.New(64), jscan.NewBytes(64)
 	for _, f := range d {
 		n := f.Name()
 		t.Run(n, func(t *testing.T) {
 			switch {
 			case strings.HasPrefix(n, "i_"):
-				testOKOrErr(t, readTestFileContents(t, n))
+				testOKOrErr(t, readTestFileContents(t, n), p, pb)
 			case strings.HasPrefix(n, "y_"):
-				testStrictOK(t, readTestFileContents(t, n))
+				testStrictOK(t, readTestFileContents(t, n), p, pb)
 			case strings.HasPrefix(n, "n_"):
-				testStrictErr(t, readTestFileContents(t, n))
+				testStrictErr(t, readTestFileContents(t, n), p, pb)
 			default:
 				t.Skip(n)
 			}
@@ -44,7 +45,50 @@ func readTestFileContents(t *testing.T, name string) []byte {
 }
 
 // testStrictOK runs tests with the "y_" prefix that parsers must accept.
-func testStrictOK(t *testing.T, input []byte) {
+func testStrictOK(
+	t *testing.T, input []byte, p *jscan.Parser, pb *jscan.ParserBytes,
+) {
+	t.Run("ParserValid", func(t *testing.T) {
+		p := jscan.New(64)
+		require.True(t, p.Valid(string(input)))
+	})
+	t.Run("ParserBytesValid", func(t *testing.T) {
+		require.True(t, pb.Valid(input))
+	})
+	t.Run("ParserScan", func(t *testing.T) {
+		err := p.Scan(
+			jscan.Options{},
+			string(input),
+			func(i *jscan.Iterator) (err bool) { return false },
+		)
+		require.False(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := p.Scan(
+				jscan.Options{CachePath: true},
+				string(input),
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+	})
+	t.Run("ParserBytesScan", func(t *testing.T) {
+		err := pb.Scan(
+			jscan.Options{},
+			input,
+			func(i *jscan.IteratorBytes) (err bool) { return false },
+		)
+		require.False(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := pb.Scan(
+				jscan.Options{CachePath: true},
+				input,
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+	})
 	t.Run("Valid", func(t *testing.T) {
 		require.True(t, jscan.Valid(string(input)))
 	})
@@ -89,7 +133,19 @@ func testStrictOK(t *testing.T, input []byte) {
 
 // testOKOrErr runs tests with the "i_" prefix that
 // parsers are free to accept or reject.
-func testOKOrErr(t *testing.T, input []byte) {
+func testOKOrErr(
+	t *testing.T, input []byte, p *jscan.Parser, pb *jscan.ParserBytes,
+) {
+	t.Run("ParserValid", func(t *testing.T) {
+		if !p.Valid(string(input)) {
+			t.Skip("allowed to fail")
+		}
+	})
+	t.Run("ParserBytesValid", func(t *testing.T) {
+		if !pb.Valid(input) {
+			t.Skip("allowed to fail")
+		}
+	})
 	t.Run("Valid", func(t *testing.T) {
 		if !jscan.Valid(string(input)) {
 			t.Skip("allowed to fail")
@@ -103,7 +159,50 @@ func testOKOrErr(t *testing.T, input []byte) {
 }
 
 // testStrictErr runs tests with the "n_" prefix that parsers must reject.
-func testStrictErr(t *testing.T, input []byte) {
+func testStrictErr(
+	t *testing.T, input []byte, p *jscan.Parser, pb *jscan.ParserBytes,
+) {
+	t.Run("ParserValid", func(t *testing.T) {
+		require.False(t, p.Valid(string(input)))
+	})
+	t.Run("ParserBytesValid", func(t *testing.T) {
+		require.False(t, pb.Valid(input))
+	})
+	t.Run("ParserScan", func(t *testing.T) {
+		err := p.Scan(
+			jscan.Options{},
+			string(input),
+			func(i *jscan.Iterator) (err bool) { return false },
+		)
+		require.True(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := p.Scan(
+				jscan.Options{CachePath: true},
+				string(input),
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
+	})
+	t.Run("ParserBytesScan", func(t *testing.T) {
+		err := pb.Scan(
+			jscan.Options{},
+			input,
+			func(i *jscan.IteratorBytes) (err bool) { return false },
+		)
+		require.True(t, err.IsErr())
+
+		t.Run("cachePath", func(t *testing.T) {
+			err := pb.Scan(
+				jscan.Options{CachePath: true},
+				input,
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
+	})
+
 	t.Run("Valid", func(t *testing.T) {
 		require.False(t, jscan.Valid(string(input)))
 	})

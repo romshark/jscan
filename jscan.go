@@ -124,30 +124,74 @@ func (i *Iterator) ViewPath(fn func(p []byte)) {
 }
 
 var itrPool = sync.Pool{
-	New: func() interface{} {
-		return &Iterator{
-			st: stack.New(64),
-		}
+	New: func() any {
+		i := &Iterator{st: stack.New(64)}
+		i.reset()
+		return i
 	},
 }
 
-func getItrFromPool(
+type Parser struct{ i *Iterator }
+
+// New creates a new parser instance.
+func New(stackCapacity int) *Parser {
+	return &Parser{
+		i: &Iterator{
+			st: stack.New(stackCapacity),
+		},
+	}
+}
+
+// Valid returns true if s is valid JSON, otherwise returns false.
+func (p *Parser) Valid(s string) bool {
+	return !p.i.validate(s).IsErr()
+}
+
+// Validate returns an error if s is invalid JSON.
+func (p *Parser) Validate(s string) Error {
+	return p.i.validate(s)
+}
+
+// Scan calls fn for every scanned value including objects and arrays.
+// Scan returns true if there was an error or if fn returned true,
+// otherwise it returns false.
+// If cachePath == true then paths are generated and cached on the fly
+// reducing their performance penalty.
+//
+// WARNING: Fields exported by *Iterator in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
+func (p *Parser) Scan(
+	o Options,
 	s string,
+	fn func(*Iterator) (err bool),
+) Error {
+	return p.i.scan(o, s, fn)
+}
+
+// Get calls fn for the value at the given path.
+// The value path is defined by keys separated by a dot and
+// index access operators for arrays.
+// If no value is found for the given path then fn isn't called
+// and no error is returned.
+// If escapePath then all dots and square brackets are expected to be escaped.
+//
+// WARNING: Fields exported by *Iterator in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
+func (p *Parser) Get(
+	s, path string,
 	escapePath bool,
-	startIndex int,
-) *Iterator {
-	i := itrPool.Get().(*Iterator)
+	fn func(*Iterator),
+) Error {
+	return p.i.get(s, path, escapePath, fn)
+}
+
+func (i *Iterator) reset() {
 	i.st.Reset()
-	i.escapePath = escapePath
 	i.cachedPath = i.cachedPath[:0]
-	i.src = s
-	i.ValueType = 0
-	i.Level = 0
-	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-	i.ValueStart, i.ValueEnd = startIndex, -1
-	i.ArrayIndex = 0
+	i.src = ""
+	i.KeyStart, i.KeyEnd, i.KeyLenEscaped, i.ValueEnd = -1, -1, -1, -1
+	i.Level, i.ValueType, i.ArrayIndex = 0, 0, 0
 	i.expect = expectVal
-	return i
 }
 
 // getError returns the stringified error, if any.
@@ -176,6 +220,36 @@ func (e Error) Error() string {
 	return errorMessage(e.Code, e.Index, 0)
 }
 
+// Valid returns true if s is valid JSON, otherwise returns false.
+func Valid(s string) bool {
+	return !Validate(s).IsErr()
+}
+
+// Validate returns an error if s is invalid JSON.
+func Validate(s string) Error {
+	i := itrPool.Get().(*Iterator)
+	defer itrPool.Put(i)
+	return i.validate(s)
+}
+
+// Scan calls fn for every scanned value including objects and arrays.
+// Scan returns true if there was an error or if fn returned true,
+// otherwise it returns false.
+// If cachePath == true then paths are generated and cached on the fly
+// reducing their performance penalty.
+//
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
+func Scan(
+	o Options,
+	s string,
+	fn func(*Iterator) (err bool),
+) Error {
+	i := itrPool.Get().(*Iterator)
+	defer itrPool.Put(i)
+	return i.scan(o, s, fn)
+}
+
 // Get calls fn for the value at the given path.
 // The value path is defined by keys separated by a dot and
 // index access operators for arrays.
@@ -183,10 +257,22 @@ func (e Error) Error() string {
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// WARNING: Fields exported by *Iterator in fn must not be mutated!
 // Do not use or alias *Iterator after fn returns!
-func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
-	err := Scan(Options{
+func Get(
+	s, path string,
+	escapePath bool,
+	fn func(*Iterator),
+) Error {
+	i := itrPool.Get().(*Iterator)
+	defer itrPool.Put(i)
+	return i.get(s, path, escapePath, fn)
+}
+
+func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Error {
+	i.src, i.escapePath = s, escapePath
+	defer i.reset()
+	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
 	}, s, func(i *Iterator) (err bool) {
@@ -211,8 +297,9 @@ func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	return err
 }
 
-// Validate returns an error if s is invalid JSON.
-func Validate(s string) Error {
+func (i *Iterator) validate(s string) Error {
+	i.src, i.escapePath = s, false
+	defer i.reset()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return Error{
@@ -229,9 +316,6 @@ func Validate(s string) Error {
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
-
-	i := getItrFromPool(s, false, startIndex)
-	defer itrPool.Put(i)
 
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
@@ -461,29 +545,19 @@ func Validate(s string) Error {
 	return Error{}
 }
 
-// Valid returns true if s is valid JSON, otherwise returns false.
-func Valid(s string) bool {
-	return !Validate(s).IsErr()
-}
-
 type Options struct {
 	CachePath  bool
 	EscapePath bool
 }
 
-// Scan calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
-//
-// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
-func Scan(
+func (i *Iterator) scan(
 	o Options,
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
+	i.src, i.escapePath = s, o.EscapePath
+	defer i.reset()
+
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return Error{
@@ -501,16 +575,15 @@ func Scan(
 		}
 	}
 
-	i := getItrFromPool(s, o.EscapePath, startIndex)
-	defer itrPool.Put(i)
+	i.ValueStart = startIndex
 
 	if o.CachePath {
 		return i.scanWithCachedPath(s, fn)
 	}
-	return i.scan(s, fn)
+	return i.scanNocache(s, fn)
 }
 
-func (i *Iterator) scan(
+func (i *Iterator) scanNocache(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {

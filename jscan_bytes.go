@@ -19,7 +19,6 @@ type IteratorBytes struct {
 	escapePath bool
 	cachedPath []byte
 	expect     expectation
-	keyBuf     []byte
 
 	ValueType                       ValueType
 	Level                           int
@@ -114,32 +113,73 @@ func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 }
 
 var itrPoolBytes = sync.Pool{
-	New: func() interface{} {
-		return &IteratorBytes{
-			st:     stack.New(64),
-			keyBuf: make([]byte, 0, 4096),
-		}
+	New: func() any {
+		i := &IteratorBytes{st: stack.New(64)}
+		i.reset()
+		return i
 	},
 }
 
-func getItrBytesFromPool(
+type ParserBytes struct{ i *IteratorBytes }
+
+func NewBytes(stackCapacity int) *ParserBytes {
+	return &ParserBytes{
+		i: &IteratorBytes{
+			st: stack.New(stackCapacity),
+		},
+	}
+}
+
+// Valid returns true if s is valid JSON, otherwise returns false.
+func (p *ParserBytes) Valid(s []byte) bool {
+	return !p.i.validate(s).IsErr()
+}
+
+// Validate returns an error if s is invalid JSON.
+func (p *ParserBytes) Validate(s []byte) ErrorBytes {
+	return p.i.validate(s)
+}
+
+// Scan calls fn for every scanned value including objects and arrays.
+// Scan returns true if there was an error or if fn returned true,
+// otherwise it returns false.
+// If cachePath == true then paths are generated and cached on the fly
+// reducing their performance penalty.
+//
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func (p *ParserBytes) Scan(
+	o Options,
 	s []byte,
+	fn func(*IteratorBytes) (err bool),
+) ErrorBytes {
+	return p.i.scan(o, s, fn)
+}
+
+// Get calls fn for the value at the given path.
+// The value path is defined by keys separated by a dot and
+// index access operators for arrays.
+// If no value is found for the given path then fn isn't called
+// and no error is returned.
+// If escapePath then all dots and square brackets are expected to be escaped.
+//
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func (p *ParserBytes) Get(
+	s, path []byte,
 	escapePath bool,
-	startIndex int,
-) *IteratorBytes {
-	i := itrPoolBytes.Get().(*IteratorBytes)
+	fn func(*IteratorBytes),
+) ErrorBytes {
+	return p.i.get(s, path, escapePath, fn)
+}
+
+func (i *IteratorBytes) reset() {
 	i.st.Reset()
-	i.escapePath = escapePath
 	i.cachedPath = i.cachedPath[:0]
-	i.src = s
-	i.ValueType = 0
-	i.Level = 0
-	i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
-	i.ValueStart, i.ValueEnd = startIndex, -1
-	i.ArrayIndex = 0
+	i.src = nil
+	i.KeyStart, i.KeyEnd, i.KeyLenEscaped, i.ValueEnd = -1, -1, -1, -1
+	i.Level, i.ValueType, i.ArrayIndex = 0, 0, 0
 	i.expect = expectVal
-	i.keyBuf = i.keyBuf[:0]
-	return i
 }
 
 // getError returns the stringified error, if any.
@@ -168,7 +208,37 @@ func (e ErrorBytes) Error() string {
 	return errorMessage(e.Code, e.Index, 0)
 }
 
-// Get calls fn for the value at the given path.
+// ValidBytes returns true if s is valid JSON, otherwise returns false.
+func ValidBytes(s []byte) bool {
+	return !ValidateBytes(s).IsErr()
+}
+
+// ValidateBytes returns an error if s is invalid JSON.
+func ValidateBytes(s []byte) ErrorBytes {
+	i := itrPoolBytes.Get().(*IteratorBytes)
+	defer itrPoolBytes.Put(i)
+	return i.validate(s)
+}
+
+// ScanBytes calls fn for every scanned value including objects and arrays.
+// Scan returns true if there was an error or if fn returned true,
+// otherwise it returns false.
+// If cachePath == true then paths are generated and cached on the fly
+// reducing their performance penalty.
+//
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func ScanBytes(
+	o Options,
+	s []byte,
+	fn func(*IteratorBytes) (err bool),
+) ErrorBytes {
+	i := itrPoolBytes.Get().(*IteratorBytes)
+	defer itrPoolBytes.Put(i)
+	return i.scan(o, s, fn)
+}
+
+// GetBytes calls fn for the value at the given path.
 // The value path is defined by keys separated by a dot and
 // index access operators for arrays.
 // If no value is found for the given path then fn isn't called
@@ -182,7 +252,28 @@ func GetBytes(
 	escapePath bool,
 	fn func(*IteratorBytes),
 ) ErrorBytes {
-	err := ScanBytes(Options{
+	i := itrPoolBytes.Get().(*IteratorBytes)
+	defer itrPoolBytes.Put(i)
+	return i.get(s, path, escapePath, fn)
+}
+
+// get calls fn for the value at the given path.
+// The value path is defined by keys separated by a dot and
+// index access operators for arrays.
+// If no value is found for the given path then fn isn't called
+// and no error is returned.
+// If escapePath then all dots and square brackets are expected to be escaped.
+//
+// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
+// Do not use or alias *IteratorBytes after fn returns!
+func (i *IteratorBytes) get(
+	s, path []byte,
+	escapePath bool,
+	fn func(*IteratorBytes),
+) ErrorBytes {
+	i.src, i.escapePath = s, escapePath
+	defer i.reset()
+	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
 	}, s, func(i *IteratorBytes) (err bool) {
@@ -202,8 +293,10 @@ func GetBytes(
 	return err
 }
 
-// ValidateBytes returns an error if s is invalid JSON.
-func ValidateBytes(s []byte) ErrorBytes {
+// validate returns an error if s is invalid JSON.
+func (i *IteratorBytes) validate(s []byte) ErrorBytes {
+	i.src, i.escapePath = s, false
+	defer i.reset()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return ErrorBytes{
@@ -220,9 +313,6 @@ func ValidateBytes(s []byte) ErrorBytes {
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
-
-	i := getItrBytesFromPool(s, false, startIndex)
-	defer itrPoolBytes.Put(i)
 
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
@@ -452,24 +542,14 @@ func ValidateBytes(s []byte) ErrorBytes {
 	return ErrorBytes{}
 }
 
-// ValidBytes returns true if s is valid JSON, otherwise returns false.
-func ValidBytes(s []byte) bool {
-	return !ValidateBytes(s).IsErr()
-}
-
-// ScanBytes calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
-//
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
-func ScanBytes(
+func (i *IteratorBytes) scan(
 	o Options,
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
+	i.src, i.escapePath = s, o.EscapePath
+	defer i.reset()
+
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return ErrorBytes{
@@ -487,16 +567,14 @@ func ScanBytes(
 		}
 	}
 
-	i := getItrBytesFromPool(s, o.EscapePath, startIndex)
-	defer itrPoolBytes.Put(i)
-
 	if o.CachePath {
+		i.cachedPath = i.cachedPath[:0]
 		return i.scanWithCachedPath(s, fn)
 	}
-	return i.scan(s, fn)
+	return i.scanNocache(s, fn)
 }
 
-func (i *IteratorBytes) scan(
+func (i *IteratorBytes) scanNocache(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {

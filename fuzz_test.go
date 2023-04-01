@@ -1,11 +1,15 @@
-package jscan
+package jscan_test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/romshark/jscan"
 )
 
 func FuzzValid(f *testing.F) {
+	p, pb := jscan.New(64), jscan.NewBytes(64)
+
 	for _, s := range []string{
 		``,
 		`0`,
@@ -28,19 +32,32 @@ func FuzzValid(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, data string) {
 		var (
-			std        = json.Valid([]byte(data))
-			jscanBytes = ValidBytes([]byte(data))
-			jscanStr   = Valid(data)
+			std              = json.Valid([]byte(data))
+			jscanParserBytes = pb.Valid([]byte(data))
+			jscanParserStr   = p.Valid(data)
+			jscanBytes       = jscan.ValidBytes([]byte(data))
+			jscanStr         = jscan.Valid(data)
 		)
-		if std != jscanStr {
+		switch {
+		case std != jscanStr:
 			t.Fatalf(
 				`Valid(%q): %t (std) != %t (jscanStr)`,
 				data, std, jscanStr,
 			)
-		} else if std != jscanBytes {
+		case std != jscanBytes:
 			t.Fatalf(
 				`Valid(%q): %t (std) != %t (jscanBytes)`,
 				data, std, jscanBytes,
+			)
+		case std != jscanParserStr:
+			t.Fatalf(
+				`Valid(%q): %t (std) != %t (jscanParserStr)`,
+				data, std, jscanParserStr,
+			)
+		case std != jscanParserBytes:
+			t.Fatalf(
+				`Valid(%q): %t (std) != %t (jscanParserBytes)`,
+				data, std, jscanParserBytes,
 			)
 		}
 	})
