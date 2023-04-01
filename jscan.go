@@ -126,7 +126,6 @@ func (i *Iterator) ViewPath(fn func(p []byte)) {
 var itrPool = sync.Pool{
 	New: func() any {
 		i := &Iterator{st: stack.New(64)}
-		i.reset()
 		return i
 	},
 }
@@ -194,6 +193,8 @@ func (i *Iterator) reset() {
 	i.expect = expectVal
 }
 
+func (i *Iterator) clear() { i.src = "" }
+
 // getError returns the stringified error, if any.
 func (i *Iterator) getError(c ErrorCode) Error {
 	return Error{
@@ -228,6 +229,7 @@ func Valid(s string) bool {
 // Validate returns an error if s is invalid JSON.
 func Validate(s string) Error {
 	i := itrPool.Get().(*Iterator)
+	i.reset()
 	defer itrPool.Put(i)
 	return i.validate(s)
 }
@@ -246,6 +248,7 @@ func Scan(
 	fn func(*Iterator) (err bool),
 ) Error {
 	i := itrPool.Get().(*Iterator)
+	i.reset()
 	defer itrPool.Put(i)
 	return i.scan(o, s, fn)
 }
@@ -265,13 +268,14 @@ func Get(
 	fn func(*Iterator),
 ) Error {
 	i := itrPool.Get().(*Iterator)
+	i.reset()
 	defer itrPool.Put(i)
 	return i.get(s, path, escapePath, fn)
 }
 
 func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	i.src, i.escapePath = s, escapePath
-	defer i.reset()
+	defer i.clear()
 	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
@@ -299,7 +303,7 @@ func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Erro
 
 func (i *Iterator) validate(s string) Error {
 	i.src, i.escapePath = s, false
-	defer i.reset()
+	defer i.clear()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return Error{
@@ -556,7 +560,7 @@ func (i *Iterator) scan(
 	fn func(*Iterator) (err bool),
 ) Error {
 	i.src, i.escapePath = s, o.EscapePath
-	defer i.reset()
+	defer i.clear()
 
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
@@ -580,10 +584,10 @@ func (i *Iterator) scan(
 	if o.CachePath {
 		return i.scanWithCachedPath(s, fn)
 	}
-	return i.scanNocache(s, fn)
+	return i.scanNoCache(s, fn)
 }
 
-func (i *Iterator) scanNocache(
+func (i *Iterator) scanNoCache(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
@@ -899,6 +903,7 @@ func (i *Iterator) scanWithCachedPath(
 	s string,
 	fn func(*Iterator) bool,
 ) Error {
+	i.cachedPath = i.cachedPath[:0]
 	i.cachedPath = append(i.cachedPath, '.')
 
 	for i.ValueStart < len(s) {

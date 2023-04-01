@@ -115,7 +115,6 @@ func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 var itrPoolBytes = sync.Pool{
 	New: func() any {
 		i := &IteratorBytes{st: stack.New(64)}
-		i.reset()
 		return i
 	},
 }
@@ -182,6 +181,8 @@ func (i *IteratorBytes) reset() {
 	i.expect = expectVal
 }
 
+func (i *IteratorBytes) clear() { i.src = nil }
+
 // getError returns the stringified error, if any.
 func (i *IteratorBytes) getError(c ErrorCode) ErrorBytes {
 	return ErrorBytes{
@@ -216,6 +217,7 @@ func ValidBytes(s []byte) bool {
 // ValidateBytes returns an error if s is invalid JSON.
 func ValidateBytes(s []byte) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
+	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.validate(s)
 }
@@ -234,6 +236,7 @@ func ScanBytes(
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
+	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.scan(o, s, fn)
 }
@@ -253,6 +256,7 @@ func GetBytes(
 	fn func(*IteratorBytes),
 ) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
+	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.get(s, path, escapePath, fn)
 }
@@ -272,7 +276,7 @@ func (i *IteratorBytes) get(
 	fn func(*IteratorBytes),
 ) ErrorBytes {
 	i.src, i.escapePath = s, escapePath
-	defer i.reset()
+	defer i.clear()
 	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
@@ -296,7 +300,7 @@ func (i *IteratorBytes) get(
 // validate returns an error if s is invalid JSON.
 func (i *IteratorBytes) validate(s []byte) ErrorBytes {
 	i.src, i.escapePath = s, false
-	defer i.reset()
+	defer i.clear()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
 		return ErrorBytes{
@@ -548,7 +552,7 @@ func (i *IteratorBytes) scan(
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
 	i.src, i.escapePath = s, o.EscapePath
-	defer i.reset()
+	defer i.clear()
 
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
@@ -567,14 +571,15 @@ func (i *IteratorBytes) scan(
 		}
 	}
 
+	i.ValueStart = startIndex
+
 	if o.CachePath {
-		i.cachedPath = i.cachedPath[:0]
 		return i.scanWithCachedPath(s, fn)
 	}
-	return i.scanNocache(s, fn)
+	return i.scanNoCache(s, fn)
 }
 
-func (i *IteratorBytes) scanNocache(
+func (i *IteratorBytes) scanNoCache(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
@@ -878,6 +883,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 	s []byte,
 	fn func(*IteratorBytes) bool,
 ) ErrorBytes {
+	i.cachedPath = i.cachedPath[:0]
 	i.cachedPath = append(i.cachedPath, '.')
 
 	for i.ValueStart < len(s) {
