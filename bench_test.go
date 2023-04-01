@@ -584,6 +584,7 @@ func TestImplementations(t *testing.T) {
 		TotalKeys:     11,
 		MaxKeyLen:     5,
 		MaxArrayLen:   5,
+		// MaxPathLen is not considered in this test
 	}
 	for _, tt := range []struct {
 		name string
