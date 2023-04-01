@@ -114,8 +114,9 @@ func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 
 var itrPoolBytes = sync.Pool{
 	New: func() any {
-		i := &IteratorBytes{st: stack.New(64)}
-		return i
+		return &IteratorBytes{
+			st: stack.New(64),
+		}
 	},
 }
 
