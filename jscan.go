@@ -186,11 +186,10 @@ func (p *Parser) Get(
 
 func (i *Iterator) reset() {
 	i.st.Reset()
-	i.cachedPath = i.cachedPath[:0]
-	i.src = ""
 	i.KeyStart, i.KeyEnd, i.KeyLenEscaped, i.ValueEnd = -1, -1, -1, -1
 	i.Level, i.ValueType, i.ArrayIndex = 0, 0, 0
 	i.expect = expectVal
+	i.cachedPath = i.cachedPath[:0]
 }
 
 func (i *Iterator) clear() { i.src = "" }
@@ -229,7 +228,6 @@ func Valid(s string) bool {
 // Validate returns an error if s is invalid JSON.
 func Validate(s string) Error {
 	i := itrPool.Get().(*Iterator)
-	i.reset()
 	defer itrPool.Put(i)
 	return i.validate(s)
 }
@@ -248,7 +246,6 @@ func Scan(
 	fn func(*Iterator) (err bool),
 ) Error {
 	i := itrPool.Get().(*Iterator)
-	i.reset()
 	defer itrPool.Put(i)
 	return i.scan(o, s, fn)
 }
@@ -268,14 +265,12 @@ func Get(
 	fn func(*Iterator),
 ) Error {
 	i := itrPool.Get().(*Iterator)
-	i.reset()
 	defer itrPool.Put(i)
 	return i.get(s, path, escapePath, fn)
 }
 
 func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Error {
 	i.src, i.escapePath = s, escapePath
-	defer i.clear()
 	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
@@ -302,6 +297,7 @@ func (i *Iterator) get(s, path string, escapePath bool, fn func(*Iterator)) Erro
 }
 
 func (i *Iterator) validate(s string) Error {
+	i.reset()
 	i.src, i.escapePath = s, false
 	defer i.clear()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
@@ -320,6 +316,8 @@ func (i *Iterator) validate(s string) Error {
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
+
+	i.ValueStart = startIndex
 
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
@@ -559,6 +557,7 @@ func (i *Iterator) scan(
 	s string,
 	fn func(*Iterator) (err bool),
 ) Error {
+	i.reset()
 	i.src, i.escapePath = s, o.EscapePath
 	defer i.clear()
 
@@ -903,7 +902,6 @@ func (i *Iterator) scanWithCachedPath(
 	s string,
 	fn func(*Iterator) bool,
 ) Error {
-	i.cachedPath = i.cachedPath[:0]
 	i.cachedPath = append(i.cachedPath, '.')
 
 	for i.ValueStart < len(s) {

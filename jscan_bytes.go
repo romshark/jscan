@@ -174,11 +174,10 @@ func (p *ParserBytes) Get(
 
 func (i *IteratorBytes) reset() {
 	i.st.Reset()
-	i.cachedPath = i.cachedPath[:0]
-	i.src = nil
 	i.KeyStart, i.KeyEnd, i.KeyLenEscaped, i.ValueEnd = -1, -1, -1, -1
 	i.Level, i.ValueType, i.ArrayIndex = 0, 0, 0
 	i.expect = expectVal
+	i.cachedPath = i.cachedPath[:0]
 }
 
 func (i *IteratorBytes) clear() { i.src = nil }
@@ -217,7 +216,6 @@ func ValidBytes(s []byte) bool {
 // ValidateBytes returns an error if s is invalid JSON.
 func ValidateBytes(s []byte) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
-	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.validate(s)
 }
@@ -236,7 +234,6 @@ func ScanBytes(
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
-	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.scan(o, s, fn)
 }
@@ -256,7 +253,6 @@ func GetBytes(
 	fn func(*IteratorBytes),
 ) ErrorBytes {
 	i := itrPoolBytes.Get().(*IteratorBytes)
-	i.reset()
 	defer itrPoolBytes.Put(i)
 	return i.get(s, path, escapePath, fn)
 }
@@ -299,6 +295,7 @@ func (i *IteratorBytes) get(
 
 // validate returns an error if s is invalid JSON.
 func (i *IteratorBytes) validate(s []byte) ErrorBytes {
+	i.reset()
 	i.src, i.escapePath = s, false
 	defer i.clear()
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
@@ -317,6 +314,8 @@ func (i *IteratorBytes) validate(s []byte) ErrorBytes {
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
+
+	i.ValueStart = startIndex
 
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
@@ -551,6 +550,7 @@ func (i *IteratorBytes) scan(
 	s []byte,
 	fn func(*IteratorBytes) (err bool),
 ) ErrorBytes {
+	i.reset()
 	i.src, i.escapePath = s, o.EscapePath
 	defer i.clear()
 
@@ -883,7 +883,6 @@ func (i *IteratorBytes) scanWithCachedPath(
 	s []byte,
 	fn func(*IteratorBytes) bool,
 ) ErrorBytes {
-	i.cachedPath = i.cachedPath[:0]
 	i.cachedPath = append(i.cachedPath, '.')
 
 	for i.ValueStart < len(s) {
