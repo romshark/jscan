@@ -38,24 +38,26 @@ func FuzzValid(f *testing.F) {
 			jscanBytes       = jscan.ValidBytes([]byte(data))
 			jscanStr         = jscan.Valid(data)
 		)
-		switch {
-		case std != jscanStr:
-			t.Fatalf(
+		if std != jscanStr {
+			t.Errorf(
 				`Valid(%q): %t (std) != %t (jscanStr)`,
 				data, std, jscanStr,
 			)
-		case std != jscanBytes:
-			t.Fatalf(
+		}
+		if std != jscanBytes {
+			t.Errorf(
 				`Valid(%q): %t (std) != %t (jscanBytes)`,
 				data, std, jscanBytes,
 			)
-		case std != jscanParserStr:
-			t.Fatalf(
+		}
+		if std != jscanParserStr {
+			t.Errorf(
 				`Valid(%q): %t (std) != %t (jscanParserStr)`,
 				data, std, jscanParserStr,
 			)
-		case std != jscanParserBytes:
-			t.Fatalf(
+		}
+		if std != jscanParserBytes {
+			t.Errorf(
 				`Valid(%q): %t (std) != %t (jscanParserBytes)`,
 				data, std, jscanParserBytes,
 			)
