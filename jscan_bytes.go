@@ -268,7 +268,6 @@ func (i *IteratorBytes) get(
 	fn func(*IteratorBytes),
 ) ErrorBytes {
 	i.src, i.escapePath = s, escapePath
-	defer i.clear()
 	err := i.scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
