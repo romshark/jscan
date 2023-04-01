@@ -12,7 +12,7 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
-// IteratorBytes provides access to the recently scanned value.
+// IteratorBytes provides read-only access to the recently scanned value.
 type IteratorBytes struct {
 	st         *stack.Stack
 	src        []byte
@@ -67,11 +67,11 @@ func (i *IteratorBytes) Path() (s []byte) {
 	return
 }
 
-// ViewPath calls fn and provides the stringified path.
+// ViewPath calls fn and provides the stringified path for read-only.
 //
-// WARNING: do not use or alias p after fn returns!
-// Only viewing or copying are considered safe!
-// Use (*IteratorBytes).Path instead for a safer and more convenient API.
+// WARNING: do not use or alias p after fn returns, copy
+// instead to avoid undefined behavior!
+// Consider using (*IteratorBytes).Path instead if you need a copy.
 func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 	if len(i.cachedPath) > 0 {
 		// The path is already cached
@@ -142,13 +142,14 @@ func (p *ParserBytes) Validate(s []byte) ErrorBytes {
 }
 
 // Scan calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
+// If Options.CachePath == true then paths are generated and cached on the fly
+// significantly improving performance of (*IteratorBytes).Path and
+// (*IteratorBytes).ViewPath, otherwise paths are computed when either of
+// the methods are called.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func (p *ParserBytes) Scan(
 	o Options,
 	s []byte,
@@ -164,8 +165,9 @@ func (p *ParserBytes) Scan(
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func (p *ParserBytes) Get(
 	s, path []byte,
 	escapePath bool,
@@ -223,13 +225,13 @@ func ValidateBytes(s []byte) ErrorBytes {
 }
 
 // ScanBytes calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
+// If Options.CachePath == true then paths are generated and cached on the fly
+// significantly improving performance of (*Iterator).Path and (*Iterator).ViewPath,
+// otherwise paths are computed when either of the methods are called.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func ScanBytes(
 	o Options,
 	s []byte,
@@ -247,8 +249,9 @@ func ScanBytes(
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func GetBytes(
 	s, path []byte,
 	escapePath bool,
@@ -259,15 +262,6 @@ func GetBytes(
 	return i.get(s, path, escapePath, fn)
 }
 
-// get calls fn for the value at the given path.
-// The value path is defined by keys separated by a dot and
-// index access operators for arrays.
-// If no value is found for the given path then fn isn't called
-// and no error is returned.
-// If escapePath then all dots and square brackets are expected to be escaped.
-//
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
 func (i *IteratorBytes) get(
 	s, path []byte,
 	escapePath bool,
@@ -295,7 +289,6 @@ func (i *IteratorBytes) get(
 	return err
 }
 
-// validate returns an error if s is invalid JSON.
 func (i *IteratorBytes) validate(s []byte) ErrorBytes {
 	i.reset()
 	i.src, i.escapePath = s, false

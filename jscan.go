@@ -12,7 +12,7 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
-// Iterator provides access to the recently scanned value.
+// Iterator provides read-only access to the recently scanned value.
 type Iterator struct {
 	st         *stack.Stack
 	src        string
@@ -78,11 +78,11 @@ func (i *Iterator) Path() (s string) {
 	return
 }
 
-// ViewPath calls fn and provides the stringified path.
+// ViewPath calls fn and provides the stringified path for read-only.
 //
-// WARNING: do not use or alias p after fn returns!
-// Only viewing or copying are considered safe!
-// Use (*Iterator).Path instead for a safer and more convenient API.
+// WARNING: do not use or alias p after fn returns, copy
+// instead to avoid undefined behavior!
+// Consider using (*Iterator).Path instead if you need a copy.
 func (i *Iterator) ViewPath(fn func(p []byte)) {
 	if len(i.cachedPath) > 0 {
 		// The path is already cached
@@ -153,13 +153,13 @@ func (p *Parser) Validate(s string) Error {
 }
 
 // Scan calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
+// If Options.CachePath == true then paths are generated and cached on the fly
+// significantly improving performance of (*Iterator).Path and (*Iterator).ViewPath,
+// otherwise paths are computed when either of the methods are called.
 //
-// WARNING: Fields exported by *Iterator in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func (p *Parser) Scan(
 	o Options,
 	s string,
@@ -175,8 +175,9 @@ func (p *Parser) Scan(
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *Iterator in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func (p *Parser) Get(
 	s, path string,
 	escapePath bool,
@@ -234,13 +235,13 @@ func Validate(s string) Error {
 }
 
 // Scan calls fn for every scanned value including objects and arrays.
-// Scan returns true if there was an error or if fn returned true,
-// otherwise it returns false.
-// If cachePath == true then paths are generated and cached on the fly
-// reducing their performance penalty.
+// If Options.CachePath == true then paths are generated and cached on the fly
+// significantly improving performance of (*Iterator).Path and (*Iterator).ViewPath,
+// otherwise paths are computed when either of the methods are called.
 //
 // WARNING: Fields exported by *Iterator provided in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func Scan(
 	o Options,
 	s string,
@@ -258,8 +259,9 @@ func Scan(
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *Iterator in fn must not be mutated!
-// Do not use or alias *Iterator after fn returns!
+// WARNING: Fields exported by *Iterator provided in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns,
+// copy instead to avoid undefined behavior!
 func Get(
 	s, path string,
 	escapePath bool,
