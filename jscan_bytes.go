@@ -122,6 +122,7 @@ var itrPoolBytes = sync.Pool{
 
 type ParserBytes struct{ i *IteratorBytes }
 
+// NewBytes creates a new parser instance.
 func NewBytes(stackCapacity int) *ParserBytes {
 	return &ParserBytes{
 		i: &IteratorBytes{
