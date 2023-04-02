@@ -975,6 +975,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 5: unexpected EOF`,
 		},
 		{
+			name:   "EOF after key",
+			input:  `{"x"`,
+			expect: `error at index 4: unexpected EOF`,
+		},
+		{
 			name:   `illegal char in beginning`,
 			input:  string(byte(0x1F)) + "0",
 			expect: `error at index 0 (0x1f): illegal control character`,

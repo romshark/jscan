@@ -457,12 +457,14 @@ func (i *Iterator) validate(s string) Error {
 			} else {
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
+					i.ValueStart--
 					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
-				if i.ValueEnd > len(s) {
+				i.ValueStart = i.ValueEnd + 1
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -771,7 +773,7 @@ func (i *Iterator) scanNoCache(
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
-				if i.ValueEnd > len(s) {
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -1100,7 +1102,7 @@ func (i *Iterator) scanWithCachedPath(
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
-				if i.ValueEnd > len(s) {
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -1245,7 +1247,7 @@ func (t ValueType) String() string {
 }
 
 func (i *Iterator) parseColumn(s string) (index int, err ErrorCode) {
-	if len(s) > 0 && s[0] == ':' {
+	if s[0] == ':' {
 		return 0, 0
 	}
 	for j, c := range s {
@@ -1354,13 +1356,7 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 	case ErrorCodeMalformedNumber:
 		errMsg = "malformed number"
 	case ErrorCodeUnexpectedEOF:
-		if atIndex == 0 {
-			return fmt.Sprintf(
-				"error at index %d: unexpected EOF",
-				index,
-			)
-		}
-		errMsg = "unexpected EOF"
+		return fmt.Sprintf("error at index %d: unexpected EOF", index)
 	case ErrorCodeInvalidEscapeSeq:
 		errMsg = "invalid escape sequence"
 	case ErrorCodeIllegalControlChar:

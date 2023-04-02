@@ -450,12 +450,14 @@ func (i *IteratorBytes) validate(s []byte) ErrorBytes {
 			} else {
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
+					i.ValueStart--
 					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
-				if i.ValueEnd > len(s) {
+				i.ValueStart = i.ValueEnd + 1
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -759,7 +761,7 @@ func (i *IteratorBytes) scanNoCache(
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
-				if i.ValueEnd > len(s) {
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -1076,7 +1078,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
-				if i.ValueEnd > len(s) {
+				if i.ValueStart >= len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
@@ -1186,7 +1188,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 }
 
 func (i *IteratorBytes) parseColumn(s []byte) (index int, err ErrorCode) {
-	if len(s) > 0 && s[0] == ':' {
+	if s[0] == ':' {
 		return 0, 0
 	}
 	for j, c := range s {
