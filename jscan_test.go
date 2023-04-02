@@ -1430,6 +1430,8 @@ func ForASCIIControlCharsExceptTRN(fn func(b byte)) {
 }
 
 func TestGet(t *testing.T) {
+	p, pb := jscan.New(64), jscan.NewBytes(64)
+
 	for _, tt := range []struct {
 		json       string
 		path       string
@@ -1508,9 +1510,49 @@ func TestGet(t *testing.T) {
 				require.Equal(t, 1, c)
 			})
 
+			t.Run("parser_string", func(t *testing.T) {
+				c := 0
+				err := p.Get(
+					tt.json, tt.path, tt.escapePath,
+					func(i *jscan.Iterator) {
+						c++
+						require.Equal(t, tt.expect, Record{
+							Level:      i.Level,
+							ValueType:  i.ValueType,
+							Key:        i.Key(),
+							Value:      i.Value(),
+							ArrayIndex: i.ArrayIndex,
+							Path:       i.Path(),
+						})
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Equal(t, 1, c)
+			})
+
 			t.Run("bytes", func(t *testing.T) {
 				c := 0
 				err := jscan.GetBytes(
+					[]byte(tt.json), []byte(tt.path), tt.escapePath,
+					func(i *jscan.IteratorBytes) {
+						c++
+						require.Equal(t, tt.expect, Record{
+							Level:      i.Level,
+							ValueType:  i.ValueType,
+							Key:        string(i.Key()),
+							Value:      string(i.Value()),
+							ArrayIndex: i.ArrayIndex,
+							Path:       string(i.Path()),
+						})
+					},
+				)
+				require.False(t, err.IsErr(), "unexpected error: %s", err)
+				require.Equal(t, 1, c)
+			})
+
+			t.Run("parser_bytes", func(t *testing.T) {
+				c := 0
+				err := pb.Get(
 					[]byte(tt.json), []byte(tt.path), tt.escapePath,
 					func(i *jscan.IteratorBytes) {
 						c++
