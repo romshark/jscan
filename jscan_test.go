@@ -975,6 +975,41 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 5: unexpected EOF`,
 		},
 		{
+			name:   `illegal char in beginning`,
+			input:  string(byte(0x1F)) + "0",
+			expect: `error at index 0 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char in beginning after spaces`,
+			input:  " \n" + string(byte(0x1F)) + "0",
+			expect: `error at index 2 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char in beginning after comma in array`,
+			input:  `[0,` + string(byte(0x1F)) + `]`,
+			expect: `error at index 3 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char after key`,
+			input:  `{"x"` + string(byte(0x1F)) + `:0}`,
+			expect: `error at index 4 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char after key column`,
+			input:  `{"x":` + string(byte(0x1F)) + `:0}`,
+			expect: `error at index 5 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char in string`,
+			input:  `["x` + string(byte(0x1F)) + `"]`,
+			expect: `error at index 3 (0x1f): illegal control character`,
+		},
+		{
+			name:   `illegal char after value`,
+			input:  `["x" ` + string(byte(0x1F)) + `"]`,
+			expect: `error at index 5 (0x1f): illegal control character`,
+		},
+		{
 			name:   `missing column`,
 			input:  `{"key"}`,
 			expect: `error at index 6 ('}'): unexpected token`,

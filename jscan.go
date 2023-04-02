@@ -465,8 +465,8 @@ func (i *Iterator) validate(s string) Error {
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -765,7 +765,7 @@ func (i *Iterator) scanNoCache(
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return i.getError((ErrorCodeUnexpectedToken))
+					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
@@ -774,8 +774,8 @@ func (i *Iterator) scanNoCache(
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -1044,11 +1044,6 @@ func (i *Iterator) scanWithCachedPath(
 				i.ValueStart = i.ValueEnd
 				return i.getError(ErrorCode(errCode))
 			}
-			for _, c := range s[i.ValueStart:i.ValueEnd] {
-				if c < 0x20 {
-					return i.getError(ErrorCodeIllegalControlChar)
-				}
-			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
@@ -1099,7 +1094,7 @@ func (i *Iterator) scanWithCachedPath(
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return i.getError((ErrorCodeUnexpectedToken))
+					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
@@ -1108,8 +1103,8 @@ func (i *Iterator) scanWithCachedPath(
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -1249,18 +1244,21 @@ func (t ValueType) String() string {
 	return ""
 }
 
-func (i *Iterator) parseColumn(s string) (index int, err bool) {
+func (i *Iterator) parseColumn(s string) (index int, err ErrorCode) {
 	if len(s) > 0 && s[0] == ':' {
-		return 0, false
+		return 0, 0
 	}
 	for j, c := range s {
 		if c == ':' {
-			return j, false
+			return j, 0
 		} else if !isSpace(c) {
+			if s[0] < 0x20 {
+				return -1, ErrorCodeIllegalControlChar
+			}
 			break
 		}
 	}
-	return -1, true
+	return -1, ErrorCodeUnexpectedToken
 }
 
 func isSpace(b rune) bool {

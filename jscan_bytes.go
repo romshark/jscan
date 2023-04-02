@@ -458,8 +458,8 @@ func (i *IteratorBytes) validate(s []byte) ErrorBytes {
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -753,7 +753,7 @@ func (i *IteratorBytes) scanNoCache(
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return i.getError((ErrorCodeUnexpectedToken))
+					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
@@ -762,8 +762,8 @@ func (i *IteratorBytes) scanNoCache(
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -1070,7 +1070,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return i.getError((ErrorCodeUnexpectedToken))
+					return i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
@@ -1079,8 +1079,8 @@ func (i *IteratorBytes) scanWithCachedPath(
 				if i.ValueEnd > len(s) {
 					return i.getError(ErrorCodeUnexpectedEOF)
 				}
-				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return i.getError(ErrorCodeUnexpectedToken)
+				if x, err := i.parseColumn(s[i.ValueStart:]); err > 0 {
+					return i.getError(err)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -1185,18 +1185,21 @@ func (i *IteratorBytes) scanWithCachedPath(
 	return ErrorBytes{}
 }
 
-func (i *IteratorBytes) parseColumn(s []byte) (index int, err bool) {
+func (i *IteratorBytes) parseColumn(s []byte) (index int, err ErrorCode) {
 	if len(s) > 0 && s[0] == ':' {
-		return 0, false
+		return 0, 0
 	}
 	for j, c := range s {
 		if c == ':' {
-			return j, false
+			return j, 0
 		} else if !isSpaceByte(c) {
+			if s[0] < 0x20 {
+				return -1, ErrorCodeIllegalControlChar
+			}
 			break
 		}
 	}
-	return -1, true
+	return -1, ErrorCodeUnexpectedToken
 }
 
 func isSpaceByte(b byte) bool {
