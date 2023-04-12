@@ -33,15 +33,6 @@ type Stats struct {
 	MaxArrayLen   int
 }
 
-// StackItem is used for manual stack management
-// (optimization to avoid recursion)
-type StackItem struct {
-	level int
-	key   string
-	index int
-	state int8
-}
-
 func CalcStatsJscan(parser *jscan.ParserBytes, str []byte) (s Stats) {
 	if err := parser.Scan(
 		jscan.Options{},
@@ -81,95 +72,56 @@ func CalcStatsJscan(parser *jscan.ParserBytes, str []byte) (s Stats) {
 	return
 }
 
-type JsoniterIterator struct {
-	stack    []StackItem
-	iterator *jsoniter.Iterator
-}
-
-func NewJsoniterIterator() *JsoniterIterator {
-	return &JsoniterIterator{
-		stack:    make([]StackItem, 0, 256),
-		iterator: jsoniter.NewIterator(jsoniter.ConfigFastest),
-	}
-}
-
-func CalcStatsJsoniter(p *JsoniterIterator, str []byte) (s Stats) {
-	i := p.iterator.ResetBytes(str)
-	p.stack = p.stack[:0] // Reset stack
-	p.stack = append(p.stack, StackItem{level: 0, index: 0})
-
-	for len(p.stack) > 0 {
-		t := p.stack[len(p.stack)-1]
-		p.stack = p.stack[:len(p.stack)-1]
-
-		if t.level > s.MaxDepth {
-			s.MaxDepth = t.level
+func CalcStatsJsoniter(i *jsoniter.Iterator, str []byte) (s Stats) {
+	i = i.ResetBytes(str)
+	var readValue func(lv int, k string)
+	readValue = func(
+		level int,
+		key string,
+	) {
+		if level > s.MaxDepth {
+			s.MaxDepth = level
 		}
-		if l := len(t.key); l > 0 {
+		if l := len(key); l > 0 {
 			s.TotalKeys++
 			if l > s.MaxKeyLen {
 				s.MaxKeyLen = l
 			}
 		}
-
-		switch t.state {
-		case 0:
-			switch i.WhatIsNext() {
-			case jsoniter.StringValue:
-				s.TotalStrings++
-				i.ReadString()
-			case jsoniter.NumberValue:
-				s.TotalNumbers++
-				i.ReadNumber()
-			case jsoniter.NilValue:
-				s.TotalNulls++
-				i.ReadNil()
-			case jsoniter.BoolValue:
-				s.TotalBooleans++
-				i.ReadBool()
-			case jsoniter.ArrayValue:
-				s.TotalArrays++
-				hasMore := i.ReadArray()
-				if !hasMore {
-					continue
-				}
-				t.level++
-				p.stack = append(p.stack, StackItem{
-					level: t.level, state: 1, index: 0,
-				})
-				p.stack = append(p.stack, StackItem{
-					level: t.level, state: 0, index: 0,
-				})
-			case jsoniter.ObjectValue:
-				s.TotalObjects++
-				t.level++
-				if key := i.ReadObject(); key != "" {
-					p.stack = append(p.stack, StackItem{
-						level: t.level, state: 2,
-					})
-					p.stack = append(p.stack, StackItem{
-						level: t.level, key: key,
-					})
+		switch i.WhatIsNext() {
+		case jsoniter.StringValue:
+			i.ReadString()
+			s.TotalStrings++
+		case jsoniter.NumberValue:
+			i.ReadNumber()
+			s.TotalNumbers++
+		case jsoniter.NilValue:
+			i.ReadNil()
+			s.TotalNulls++
+		case jsoniter.BoolValue:
+			i.ReadBool()
+			s.TotalBooleans++
+		case jsoniter.ArrayValue:
+			s.TotalArrays++
+			l := level + 1
+			index := 0
+			for e := i.ReadArray(); e; e = i.ReadArray() {
+				readValue(l, "")
+				index++
+				if index > s.MaxArrayLen {
+					s.MaxArrayLen = index
 				}
 			}
-		case 1:
-			if i.ReadArray() {
-				p.stack = append(p.stack, StackItem{
-					level: t.level, state: 1, index: t.index + 1,
-				})
-				p.stack = append(p.stack, StackItem{level: t.level})
-			} else if t.index+1 > s.MaxArrayLen {
-				s.MaxArrayLen = t.index + 1
-			}
-		case 2:
-			if key := i.ReadObject(); key != "" {
-				p.stack = append(p.stack, StackItem{level: t.level, state: 2})
-				p.stack = append(p.stack, StackItem{level: t.level, key: key})
+		case jsoniter.ObjectValue:
+			s.TotalObjects++
+			l := level + 1
+			for f := i.ReadObject(); f != ""; f = i.ReadObject() {
+				readValue(l, f)
 			}
 		}
 	}
-
-	return s
+	readValue(0, "")
+	return
 }
 
 func CalcStatsGofasterJx(parser *gofasterjx.Decoder, str []byte) (s Stats) {
@@ -340,7 +292,7 @@ func TestImplementations(t *testing.T) {
 		require.Equal(t, expect, a)
 	})
 	t.Run("jsoniter", func(t *testing.T) {
-		p := NewJsoniterIterator()
+		p := jsoniter.NewIterator(jsoniter.ConfigFastest)
 		a := CalcStatsJsoniter(p, []byte(input))
 		require.Equal(t, expect, a)
 	})
@@ -409,7 +361,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				}
 			})
 			b.Run("jsoniter", func(b *testing.B) {
-				p := NewJsoniterIterator()
+				p := jsoniter.NewIterator(jsoniter.ConfigFastest)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gs = CalcStatsJsoniter(p, bb.json)
