@@ -222,3 +222,30 @@ func ExampleGet() {
 	// Output:
 	// string value
 }
+
+func ExampleValidateOne() {
+	s := `-120.4` +
+		`"string"` +
+		`{"key":"value"}` +
+		`[0,1]` +
+		`true` +
+		`false` +
+		`null`
+
+	for offset, x := 0, s; x != ""; offset = len(s) - len(x) {
+		var err jscan.Error
+		if x, err = jscan.ValidateOne(x); err.IsErr() {
+			panic(fmt.Errorf("unexpected error: %w", err))
+		}
+		fmt.Println(s[offset : len(s)-len(x)])
+	}
+
+	// Output:
+	// -120.4
+	// "string"
+	// {"key":"value"}
+	// [0,1]
+	// true
+	// false
+	// null
+}
