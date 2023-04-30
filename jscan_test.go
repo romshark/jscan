@@ -1438,3 +1438,92 @@ func TestGetNotFound(t *testing.T) {
 		})
 	}
 }
+
+func TestScanOne(t *testing.T) {
+	s := `-120.4` +
+		`"string"` +
+		`{"key":"value"}` +
+		`[0,1]` +
+		`true` +
+		`false` +
+		`null`
+
+	type V struct {
+		Type  jscan.ValueType
+		Value string
+	}
+	expect := []V{
+		{jscan.ValueTypeNumber, "-120.4"},
+		{jscan.ValueTypeString, "string"},
+		{jscan.ValueTypeObject, ""},
+		{jscan.ValueTypeString, "value"},
+		{jscan.ValueTypeArray, ""},
+		{jscan.ValueTypeNumber, "0"},
+		{jscan.ValueTypeNumber, "1"},
+		{jscan.ValueTypeTrue, ""},
+		{jscan.ValueTypeFalse, ""},
+		{jscan.ValueTypeNull, ""},
+	}
+
+	t.Run("nocache", func(t *testing.T) {
+		i := 0
+		jscan.ScanOne(
+			jscan.Options{}, s,
+			func(itr *jscan.Iterator) (err bool) {
+				require.Equal(t, expect[i], V{
+					Type:  itr.ValueType,
+					Value: string(itr.Value()),
+				}, "unexpected value at index %d", i)
+				i++
+				return false
+			},
+		)
+	})
+
+	t.Run("cachePath", func(t *testing.T) {
+		i := 0
+		jscan.ScanOne(
+			jscan.Options{CachePath: true}, s,
+			func(itr *jscan.Iterator) (err bool) {
+				require.Equal(t, expect[i], V{
+					Type:  itr.ValueType,
+					Value: string(itr.Value()),
+				}, "unexpected value at index %d", i)
+				i++
+				return false
+			},
+		)
+	})
+
+	t.Run("bytes", func(t *testing.T) {
+		t.Run("nocache", func(t *testing.T) {
+			i := 0
+			jscan.ScanBytesOne(
+				jscan.Options{}, []byte(s),
+				func(itr *jscan.IteratorBytes) (err bool) {
+					require.Equal(t, expect[i], V{
+						Type:  itr.ValueType,
+						Value: string(itr.Value()),
+					}, "unexpected value at index %d", i)
+					i++
+					return false
+				},
+			)
+		})
+
+		t.Run("cachePath", func(t *testing.T) {
+			i := 0
+			jscan.ScanBytesOne(
+				jscan.Options{CachePath: true}, []byte(s),
+				func(itr *jscan.IteratorBytes) (err bool) {
+					require.Equal(t, expect[i], V{
+						Type:  itr.ValueType,
+						Value: string(itr.Value()),
+					}, "unexpected value at index %d", i)
+					i++
+					return false
+				},
+			)
+		})
+	})
+}
