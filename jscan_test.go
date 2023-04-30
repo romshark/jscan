@@ -1440,13 +1440,16 @@ func TestGetNotFound(t *testing.T) {
 }
 
 func TestScanOne(t *testing.T) {
-	s := `-120.4` +
-		`"string"` +
-		`{"key":"value"}` +
-		`[0,1]` +
-		`true` +
-		`false` +
-		`null`
+	inputs := []string{
+		`-120.4`,
+		`"string"`,
+		`{"key":"value"}`,
+		`[0,1]`,
+		`true`,
+		`false`,
+		`null`,
+	}
+	s := strings.Join(inputs, "")
 
 	type V struct {
 		Type  jscan.ValueType
@@ -1460,70 +1463,88 @@ func TestScanOne(t *testing.T) {
 		{jscan.ValueTypeArray, ""},
 		{jscan.ValueTypeNumber, "0"},
 		{jscan.ValueTypeNumber, "1"},
-		{jscan.ValueTypeTrue, ""},
-		{jscan.ValueTypeFalse, ""},
-		{jscan.ValueTypeNull, ""},
+		{jscan.ValueTypeTrue, "true"},
+		{jscan.ValueTypeFalse, "false"},
+		{jscan.ValueTypeNull, "null"},
 	}
 
 	t.Run("nocache", func(t *testing.T) {
-		i := 0
-		jscan.ScanOne(
-			jscan.Options{}, s,
-			func(itr *jscan.Iterator) (err bool) {
-				require.Equal(t, expect[i], V{
-					Type:  itr.ValueType,
-					Value: string(itr.Value()),
-				}, "unexpected value at index %d", i)
-				i++
-				return false
-			},
-		)
+		for i, c, s := 0, 1, s; s != ""; c++ {
+			trailing, err := jscan.ScanOne(
+				jscan.Options{}, s,
+				func(itr *jscan.Iterator) (err bool) {
+					require.Equal(t, expect[i], V{
+						Type:  itr.ValueType,
+						Value: string(itr.Value()),
+					}, "unexpected value at index %d", i)
+					i++
+					return false
+				},
+			)
+			require.False(t, err.IsErr())
+			require.Equal(t, trailing, strings.Join(inputs[c:], ""))
+			s = trailing
+		}
 	})
 
 	t.Run("cachePath", func(t *testing.T) {
-		i := 0
-		jscan.ScanOne(
-			jscan.Options{CachePath: true}, s,
-			func(itr *jscan.Iterator) (err bool) {
-				require.Equal(t, expect[i], V{
-					Type:  itr.ValueType,
-					Value: string(itr.Value()),
-				}, "unexpected value at index %d", i)
-				i++
-				return false
-			},
-		)
+		for i, c, s := 0, 1, s; s != ""; c++ {
+			trailing, err := jscan.ScanOne(
+				jscan.Options{CachePath: true}, s,
+				func(itr *jscan.Iterator) (err bool) {
+					require.Equal(t, expect[i], V{
+						Type:  itr.ValueType,
+						Value: string(itr.Value()),
+					}, "unexpected value at index %d", i)
+					i++
+					return false
+				},
+			)
+			require.False(t, err.IsErr())
+			require.Equal(t, trailing, strings.Join(inputs[c:], ""))
+			s = trailing
+		}
 	})
 
 	t.Run("bytes", func(t *testing.T) {
 		t.Run("nocache", func(t *testing.T) {
-			i := 0
-			jscan.ScanBytesOne(
-				jscan.Options{}, []byte(s),
-				func(itr *jscan.IteratorBytes) (err bool) {
-					require.Equal(t, expect[i], V{
-						Type:  itr.ValueType,
-						Value: string(itr.Value()),
-					}, "unexpected value at index %d", i)
-					i++
-					return false
-				},
-			)
+			s := []byte(s)
+			for i, c, s := 0, 1, s; len(s) > 0; c++ {
+				trailing, err := jscan.ScanBytesOne(
+					jscan.Options{}, s,
+					func(itr *jscan.IteratorBytes) (err bool) {
+						require.Equal(t, expect[i], V{
+							Type:  itr.ValueType,
+							Value: string(itr.Value()),
+						}, "unexpected value at index %d", i)
+						i++
+						return false
+					},
+				)
+				require.False(t, err.IsErr())
+				require.Equal(t, string(trailing), strings.Join(inputs[c:], ""))
+				s = trailing
+			}
 		})
 
 		t.Run("cachePath", func(t *testing.T) {
-			i := 0
-			jscan.ScanBytesOne(
-				jscan.Options{CachePath: true}, []byte(s),
-				func(itr *jscan.IteratorBytes) (err bool) {
-					require.Equal(t, expect[i], V{
-						Type:  itr.ValueType,
-						Value: string(itr.Value()),
-					}, "unexpected value at index %d", i)
-					i++
-					return false
-				},
-			)
+			s := []byte(s)
+			for i, c, s := 0, 1, s; len(s) > 0; c++ {
+				trailing, err := jscan.ScanBytesOne(
+					jscan.Options{CachePath: true}, s,
+					func(itr *jscan.IteratorBytes) (err bool) {
+						require.Equal(t, expect[i], V{
+							Type:  itr.ValueType,
+							Value: string(itr.Value()),
+						}, "unexpected value at index %d", i)
+						i++
+						return false
+					},
+				)
+				require.False(t, err.IsErr())
+				require.Equal(t, string(trailing), strings.Join(inputs[c:], ""))
+				s = trailing
+			}
 		})
 	})
 }
