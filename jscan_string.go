@@ -11,14 +11,13 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
-// IteratorBytes provides access to the recently scanned value.
-type IteratorBytes struct {
+// Iterator provides access to the recently scanned value.
+type Iterator struct {
 	st         *stack.Stack
-	src        []byte
+	src        string
 	escapePath bool
 	cachedPath []byte
 	expect     expectation
-	keyBuf     []byte
 
 	ValueType                       ValueType
 	Level                           int
@@ -28,17 +27,17 @@ type IteratorBytes struct {
 }
 
 // Key returns the field key if any.
-func (i *IteratorBytes) Key() []byte {
+func (i *Iterator) Key() string {
 	if i.KeyStart < 0 {
-		return nil
+		return ""
 	}
 	return i.src[i.KeyStart:i.KeyEnd]
 }
 
 // Value returns the value if any.
-func (i *IteratorBytes) Value() []byte {
+func (i *Iterator) Value() string {
 	if i.ValueEnd < 0 || i.ValueEnd < i.ValueStart {
-		return nil
+		return ""
 	}
 	return i.src[i.ValueStart:i.ValueEnd]
 }
@@ -46,7 +45,7 @@ func (i *IteratorBytes) Value() []byte {
 // ScanPath calls fn for every element in the path of the value.
 // If keyStart is != -1 then the element is a field value, otherwise
 // arrIndex indicates the index of the item in the underlying array.
-func (i *IteratorBytes) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
+func (i *Iterator) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 	for j := i.st.Len() - 1; j >= 0; j-- {
 		t := i.st.TopOffset(j)
 		if t.KeyStart > -1 {
@@ -59,11 +58,8 @@ func (i *IteratorBytes) ScanPath(fn func(keyStart, keyEnd, arrIndex int)) {
 }
 
 // Path returns the stringified path.
-func (i *IteratorBytes) Path() (s []byte) {
-	i.ViewPath(func(p []byte) {
-		s = make([]byte, len(p))
-		copy(s, p)
-	})
+func (i *Iterator) Path() (s string) {
+	i.ViewPath(func(p []byte) { s = string(p) })
 	return
 }
 
@@ -71,8 +67,8 @@ func (i *IteratorBytes) Path() (s []byte) {
 //
 // WARNING: do not use or alias p after fn returns!
 // Only viewing or copying are considered safe!
-// Use (*IteratorBytes).Path instead for a safer and more convenient API.
-func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
+// Use (*Iterator).Path instead for a safer and more convenient API.
+func (i *Iterator) ViewPath(fn func(p []byte)) {
 	if len(i.cachedPath) > 0 {
 		// The path is already cached
 		fn(i.cachedPath[1:])
@@ -88,7 +84,7 @@ func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 			}
 			k := i.src[keyStart:keyEnd]
 			if i.escapePath {
-				k = keyescape.EscapeAppend(nil, k)
+				k = keyescape.Escape(k)
 			}
 			b = append(b, k...)
 			needDelim = true
@@ -105,28 +101,27 @@ func (i *IteratorBytes) ViewPath(fn func(p []byte)) {
 		}
 		k := i.src[i.KeyStart:i.KeyEnd]
 		if i.escapePath {
-			k = keyescape.EscapeAppend(nil, k)
+			k = keyescape.Escape(k)
 		}
 		b = append(b, k...)
 	}
 	fn(b)
 }
 
-var itrPoolBytes = sync.Pool{
+var itrPool = sync.Pool{
 	New: func() interface{} {
-		return &IteratorBytes{
-			st:     stack.New(64),
-			keyBuf: make([]byte, 0, 4096),
+		return &Iterator{
+			st: stack.New(64),
 		}
 	},
 }
 
-func getItrBytesFromPool(
-	s []byte,
+func getItrFromPool(
+	s string,
 	escapePath bool,
 	startIndex int,
-) *IteratorBytes {
-	i := itrPoolBytes.Get().(*IteratorBytes)
+) *Iterator {
+	i := itrPool.Get().(*Iterator)
 	i.st.Reset()
 	i.escapePath = escapePath
 	i.cachedPath = i.cachedPath[:0]
@@ -137,31 +132,30 @@ func getItrBytesFromPool(
 	i.ValueStart, i.ValueEnd = startIndex, -1
 	i.ArrayIndex = 0
 	i.expect = expectVal
-	i.keyBuf = i.keyBuf[:0]
 	return i
 }
 
 // getError returns the stringified error, if any.
-func (i *IteratorBytes) getError(c ErrorCode) ErrorBytes {
-	return ErrorBytes{
+func (i *Iterator) getError(c ErrorCode) Error {
+	return Error{
 		Code:  c,
 		Src:   i.src,
 		Index: i.ValueStart,
 	}
 }
 
-type ErrorBytes struct {
-	Src   []byte
+type Error struct {
+	Src   string
 	Index int
 	Code  ErrorCode
 }
 
 // IsErr returns true if there is an error, otherwise returns false.
-func (e ErrorBytes) IsErr() bool { return e.Code != 0 }
+func (e Error) IsErr() bool { return e.Code != 0 }
 
-func (e ErrorBytes) Error() string {
+func (e Error) Error() string {
 	if e.Index < len(e.Src) {
-		r, _ := utf8.DecodeRune(e.Src[e.Index:])
+		r, _ := utf8.DecodeRuneInString(e.Src[e.Index:])
 		return errorMessage(e.Code, e.Index, r)
 	}
 	return errorMessage(e.Code, e.Index, 0)
@@ -174,13 +168,13 @@ func (e ErrorBytes) Error() string {
 // and no error is returned.
 // If escapePath then all dots and square brackets are expected to be escaped.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
-func GetBytes(s, path []byte, escapePath bool, fn func(*IteratorBytes)) ErrorBytes {
-	err := ScanBytes(Options{
+// WARNING: Fields exported by *Iterator in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
+func Get(s, path string, escapePath bool, fn func(*Iterator)) Error {
+	err := Scan(Options{
 		CachePath:  true,
 		EscapePath: escapePath,
-	}, s, func(i *IteratorBytes) (err bool) {
+	}, s, func(i *Iterator) (err bool) {
 		i.ViewPath(func(p []byte) {
 			if string(p) != string(path) {
 				return
@@ -197,20 +191,20 @@ func GetBytes(s, path []byte, escapePath bool, fn func(*IteratorBytes)) ErrorByt
 	return err
 }
 
-// ValidateBytesOne scans a JSON value from s and returns an error if it's invalid,
+// ValidateOne scans a JSON value from s and returns an error if it's invalid,
 // otherwise returns s with the scanned value cut.
-func ValidateBytesOne(s []byte) (trailing []byte, err ErrorBytes) {
-	i := getItrBytesFromPool(s, false, 0)
-	defer itrPoolBytes.Put(i)
-	return i.validateBytes(s)
+func ValidateOne(s string) (trailing string, err Error) {
+	i := getItrFromPool(s, false, 0)
+	defer itrPool.Put(i)
+	return i.validate(s)
 }
 
-// ValidateBytes returns an error if s is invalid JSON.
-func ValidateBytes(s []byte) ErrorBytes {
-	i := getItrBytesFromPool(s, false, 0)
-	defer itrPoolBytes.Put(i)
+// Validate returns an error if s is invalid JSON.
+func Validate(s string) Error {
+	i := getItrFromPool(s, false, 0)
+	defer itrPool.Put(i)
 
-	trailing, err := i.validateBytes(s)
+	trailing, err := i.validate(s)
 	if err.IsErr() {
 		return err
 	}
@@ -223,14 +217,14 @@ func ValidateBytes(s []byte) ErrorBytes {
 		i.ValueStart += end
 		return i.getError(ErrorCodeUnexpectedToken)
 	}
-	return ErrorBytes{}
+	return Error{}
 }
 
-// validateBytes returns an error if s is invalid JSON.
-func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
+// validate returns an error if s is invalid JSON.
+func (i *Iterator) validate(s string) (string, Error) {
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
-		return nil, ErrorBytes{
+		return "", Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeIllegalControlChar,
@@ -238,7 +232,7 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 	}
 
 	if startIndex >= len(s) {
-		return nil, ErrorBytes{
+		return "", Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeUnexpectedEOF,
@@ -251,7 +245,7 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
 
 		case ',':
@@ -261,21 +255,21 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 			case expectCommaOrObjTerm:
 				i.expect = expectKey
 			default:
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 		case '}':
 			if i.expect != expectCommaOrObjTerm &&
 				i.expect != expectKeyOrObjTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -289,14 +283,14 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 		case ']':
 			if i.expect != expectCommaOrArrTerm &&
 				i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -309,7 +303,7 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 
 		case '{': // Object
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectKeyOrObjTerm
 
@@ -320,7 +314,7 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 
 		case '[': // Array
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectValOrArrTerm
 
@@ -331,24 +325,24 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 
 		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 
 			var err bool
 			i.ValueEnd, err = jsonnum.EndIndex(i.src[i.ValueStart:])
 			if err {
-				return nil, i.getError(ErrorCodeMalformedNumber)
+				return "", i.getError(ErrorCodeMalformedNumber)
 			}
 			if _, err := strconv.ParseFloat(
-				unsafeB2S(i.src[i.ValueStart:i.ValueStart+i.ValueEnd]), 64,
+				i.src[i.ValueStart:i.ValueStart+i.ValueEnd], 64,
 			); err != nil {
-				return nil, i.getError(ErrorCodeMalformedNumber)
+				return "", i.getError(ErrorCodeMalformedNumber)
 			}
 			i.ValueStart += i.ValueEnd
 
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -365,40 +359,40 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 			i.ValueEnd, errCode = strfind.IndexTerm(s, i.ValueStart)
 			if errCode > strfind.ErrCodeOK {
 				i.ValueStart = i.ValueEnd
-				return nil, i.getError(ErrorCode(errCode))
+				return "", i.getError(ErrorCode(errCode))
 			}
 			i.ValueStart = i.ValueEnd + 1
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
 				if i.expect != expectVal && i.expect != expectValOrArrTerm {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectCommaOrArrTerm
 				i.KeyStart, i.KeyEnd = -1, -1
 			} else if i.KeyStart != -1 || i.st.Len() == 0 {
 				// String value
 				if i.expect != expectVal {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				if t == nil {
-					return s[i.ValueStart:], ErrorBytes{}
+					return s[i.ValueStart:], Error{}
 				}
 				i.expect = expectCommaOrObjTerm
 				i.KeyStart, i.KeyEnd = -1, -1
 			} else {
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				if i.ValueEnd > len(s) {
-					return nil, i.getError(ErrorCodeUnexpectedEOF)
+					return "", i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -407,13 +401,13 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 		case 'n': // Null
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'u', 'l', 'l') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart += len("null")
 
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -427,13 +421,13 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 		case 'f': // False
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.read4(i.ValueStart+1, 'a', 'l', 's', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart += len("false")
 
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -447,13 +441,13 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 		case 't': // True
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'r', 'u', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart += len("true")
 
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -466,41 +460,41 @@ func (i *IteratorBytes) validateBytes(s []byte) ([]byte, ErrorBytes) {
 
 		default:
 			if s[i.ValueStart] < 0x20 {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
-			return nil, i.getError(ErrorCodeUnexpectedToken)
+			return "", i.getError(ErrorCodeUnexpectedToken)
 		}
 	}
 
 	if i.st.Len() > 0 {
-		return nil, i.getError(ErrorCodeUnexpectedEOF)
+		return "", i.getError(ErrorCodeUnexpectedEOF)
 	}
 
-	return s[i.ValueStart:], ErrorBytes{}
+	return s[i.ValueStart:], Error{}
 }
 
-// ValidBytes returns true if s is valid JSON, otherwise returns false.
-func ValidBytes(s []byte) bool {
-	return !ValidateBytes(s).IsErr()
+// Valid returns true if s is valid JSON, otherwise returns false.
+func Valid(s string) bool {
+	return !Validate(s).IsErr()
 }
 
-// ScanBytesOne calls fn for every scanned value including objects and arrays.
+// ScanOne calls fn for every scanned value including objects and arrays.
 // When an object or array is encountered fn will also be called for each
 // field value and array item respectively.
-// Unlike ScanBytes, ScanBytesOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns s with the scanned value cut.
 //
 // WARNING: Fields exported by *Iterator in fn must not be mutated!
 // Do not use or alias *Iterator after fn returns!
-func ScanBytesOne(
+func ScanOne(
 	o Options,
-	s []byte,
-	fn func(*IteratorBytes) (err bool),
-) (trailing []byte, err ErrorBytes) {
+	s string,
+	fn func(*Iterator) (err bool),
+) (trailing string, err Error) {
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
-		return nil, ErrorBytes{
+		return "", Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeIllegalControlChar,
@@ -508,14 +502,14 @@ func ScanBytesOne(
 	}
 
 	if startIndex >= len(s) {
-		return nil, ErrorBytes{
+		return "", Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
 
-	i := getItrBytesFromPool(s, o.EscapePath, startIndex)
+	i := getItrFromPool(s, o.EscapePath, startIndex)
 	defer itrPool.Put(i)
 
 	if o.CachePath {
@@ -524,20 +518,20 @@ func ScanBytesOne(
 	return i.scan(s, fn)
 }
 
-// ScanBytes calls fn for every scanned value including objects and arrays.
+// Scan calls fn for every scanned value including objects and arrays.
 // When an object or array is encountered fn will also be called for each
 // field value and array item respectively.
 //
-// WARNING: Fields exported by *IteratorBytes in fn must not be mutated!
-// Do not use or alias *IteratorBytes after fn returns!
-func ScanBytes(
+// WARNING: Fields exported by *Iterator in fn must not be mutated!
+// Do not use or alias *Iterator after fn returns!
+func Scan(
 	o Options,
-	s []byte,
-	fn func(*IteratorBytes) (err bool),
-) (err ErrorBytes) {
+	s string,
+	fn func(*Iterator) (err bool),
+) (err Error) {
 	startIndex, illegal := strfind.EndOfWhitespaceSeq(s)
 	if illegal {
-		return ErrorBytes{
+		return Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeIllegalControlChar,
@@ -545,17 +539,17 @@ func ScanBytes(
 	}
 
 	if startIndex >= len(s) {
-		return ErrorBytes{
+		return Error{
 			Src:   s,
 			Index: startIndex,
 			Code:  ErrorCodeUnexpectedEOF,
 		}
 	}
 
-	i := getItrBytesFromPool(s, o.EscapePath, startIndex)
-	defer itrPoolBytes.Put(i)
+	i := getItrFromPool(s, o.EscapePath, startIndex)
+	defer itrPool.Put(i)
 
-	var trailing []byte
+	var trailing string
 	if o.CachePath {
 		trailing, err = i.scanWithCachedPath(s, fn)
 	} else {
@@ -573,20 +567,20 @@ func ScanBytes(
 		i.ValueStart += end
 		return i.getError(ErrorCodeUnexpectedToken)
 	}
-	return ErrorBytes{}
+	return Error{}
 }
 
-func (i *IteratorBytes) scan(
-	s []byte,
-	fn func(*IteratorBytes) (err bool),
-) (trailing []byte, err ErrorBytes) {
+func (i *Iterator) scan(
+	s string,
+	fn func(*Iterator) (err bool),
+) (trailing string, err Error) {
 	for i.ValueStart < len(s) {
 		switch s[i.ValueStart] {
 		case ' ', '\t', '\r', '\n':
 			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
 
 		case ',':
@@ -596,7 +590,7 @@ func (i *IteratorBytes) scan(
 			case expectCommaOrObjTerm:
 				i.expect = expectKey
 			default:
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 
 			i.ValueStart++
@@ -604,14 +598,14 @@ func (i *IteratorBytes) scan(
 		case '}':
 			if i.expect != expectCommaOrObjTerm &&
 				i.expect != expectKeyOrObjTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -626,14 +620,14 @@ func (i *IteratorBytes) scan(
 		case ']':
 			if i.expect != expectCommaOrArrTerm &&
 				i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -647,7 +641,7 @@ func (i *IteratorBytes) scan(
 
 		case '{': // Object
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectKeyOrObjTerm
 
@@ -655,7 +649,7 @@ func (i *IteratorBytes) scan(
 			i.ValueEnd = -1
 			ks, ke := i.KeyStart, i.KeyEnd
 			if i.callFn(i.st.Top(), fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.st.Push(stack.NodeTypeObject, 0, ks, ke)
 			i.Level++
@@ -663,7 +657,7 @@ func (i *IteratorBytes) scan(
 
 		case '[': // Array
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectValOrArrTerm
 
@@ -671,7 +665,7 @@ func (i *IteratorBytes) scan(
 			i.ValueEnd = -1
 			ks, ke := i.KeyStart, i.KeyEnd
 			if i.callFn(i.st.Top(), fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.st.Push(stack.NodeTypeArray, 0, ks, ke)
 			i.Level++
@@ -679,7 +673,7 @@ func (i *IteratorBytes) scan(
 
 		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 
 			t := i.st.Top()
@@ -687,18 +681,18 @@ func (i *IteratorBytes) scan(
 			var err bool
 			i.ValueEnd, err = jsonnum.EndIndex(i.src[i.ValueStart:])
 			if err {
-				return nil, i.getError(ErrorCodeMalformedNumber)
+				return "", i.getError(ErrorCodeMalformedNumber)
 			}
 			i.ValueEnd += +i.ValueStart
 
 			i.ValueType = ValueTypeNumber
 			if i.callFn(t, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart = i.ValueEnd
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -714,14 +708,14 @@ func (i *IteratorBytes) scan(
 			i.ValueEnd, errCode = strfind.IndexTerm(s, i.ValueStart)
 			if errCode > strfind.ErrCodeOK {
 				i.ValueStart = i.ValueEnd
-				return nil, i.getError(ErrorCode(errCode))
+				return "", i.getError(ErrorCode(errCode))
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
 				if i.expect != expectVal && i.expect != expectValOrArrTerm {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectCommaOrArrTerm
 
@@ -731,42 +725,42 @@ func (i *IteratorBytes) scan(
 				i.KeyStart, i.KeyEnd, i.KeyLenEscaped = -1, -1, -1
 				if fn(i) {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeCallback)
+					return "", i.getError(ErrorCodeCallback)
 				}
 				i.ValueStart = i.ValueEnd + 1
 			} else if i.KeyStart != -1 || i.Level == 0 {
 				// String value
 				if i.expect != expectVal {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 
 				i.ValueType = ValueTypeString
 				if i.callFn(nil, fn) {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeCallback)
+					return "", i.getError(ErrorCodeCallback)
 				}
 				i.ValueStart = i.ValueEnd + 1
 
 				if t == nil {
-					return s[i.ValueStart:], ErrorBytes{}
+					return s[i.ValueStart:], Error{}
 				}
 				i.expect = expectCommaOrObjTerm
 			} else {
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
 				if i.ValueEnd > len(s) {
-					return nil, i.getError(ErrorCodeUnexpectedEOF)
+					return "", i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -775,19 +769,19 @@ func (i *IteratorBytes) scan(
 		case 'n': // Null
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'u', 'l', 'l') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeNull
 			i.ValueEnd = i.ValueStart + len("null")
 			if i.callFn(t, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("null")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -799,19 +793,19 @@ func (i *IteratorBytes) scan(
 		case 'f': // False
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.read4(i.ValueStart+1, 'a', 'l', 's', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeFalse
 			i.ValueEnd = i.ValueStart + len("false")
 			if i.callFn(t, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("false")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -823,19 +817,19 @@ func (i *IteratorBytes) scan(
 		case 't': // True
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'r', 'u', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeTrue
 			i.ValueEnd = i.ValueStart + len("true")
 			if i.callFn(t, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("true")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -846,27 +840,27 @@ func (i *IteratorBytes) scan(
 
 		default:
 			if s[i.ValueStart] < 0x20 {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
-			return nil, i.getError(ErrorCodeUnexpectedToken)
+			return "", i.getError(ErrorCodeUnexpectedToken)
 		}
 	}
 
 	if i.st.Len() > 0 {
-		return nil, i.getError(ErrorCodeUnexpectedEOF)
+		return "", i.getError(ErrorCodeUnexpectedEOF)
 	}
 
-	return s[i.ValueStart:], ErrorBytes{}
+	return s[i.ValueStart:], Error{}
 }
 
-func (i *IteratorBytes) expect3(at int, a, b, c byte) (err bool) {
+func (i *Iterator) expect3(at int, a, b, c byte) (err bool) {
 	return len(i.src)-at < 3 ||
 		i.src[at] != a ||
 		i.src[at+1] != b ||
 		i.src[at+2] != c
 }
 
-func (i *IteratorBytes) read4(at int, a, b, c, d byte) (err bool) {
+func (i *Iterator) read4(at int, a, b, c, d byte) (err bool) {
 	return len(i.src)-at < 4 ||
 		i.src[at] != a ||
 		i.src[at+1] != b ||
@@ -874,10 +868,10 @@ func (i *IteratorBytes) read4(at int, a, b, c, d byte) (err bool) {
 		i.src[at+3] != d
 }
 
-func (i *IteratorBytes) scanWithCachedPath(
-	s []byte,
-	fn func(*IteratorBytes) bool,
-) (trailing []byte, err ErrorBytes) {
+func (i *Iterator) scanWithCachedPath(
+	s string,
+	fn func(*Iterator) bool,
+) (trailing string, err Error) {
 	i.cachedPath = append(i.cachedPath, '.')
 
 	for i.ValueStart < len(s) {
@@ -886,7 +880,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 			e, illegal := strfind.EndOfWhitespaceSeq(s[i.ValueStart:])
 			i.ValueStart += e
 			if illegal {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
 
 		case ',':
@@ -896,21 +890,21 @@ func (i *IteratorBytes) scanWithCachedPath(
 			case expectCommaOrObjTerm:
 				i.expect = expectKey
 			default:
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 		case '}':
 			if i.expect != expectCommaOrObjTerm &&
 				i.expect != expectKeyOrObjTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -926,14 +920,14 @@ func (i *IteratorBytes) scanWithCachedPath(
 		case ']':
 			if i.expect != expectCommaOrArrTerm &&
 				i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.ValueStart++
 
 			i.st.Pop()
 			t := i.st.Top()
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -951,7 +945,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 		case '{': // Object
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectKeyOrObjTerm
 
@@ -959,7 +953,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 			i.ValueEnd = -1
 			ks, ke := i.KeyStart, i.KeyEnd
 			if i.callFnWithPathCache(i.st.Top(), false, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.st.Push(stack.NodeTypeObject, 0, ks, ke)
 			i.Level++
@@ -967,7 +961,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 		case '[': // Array
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			i.expect = expectValOrArrTerm
 
@@ -975,7 +969,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 			i.ValueEnd = -1
 			ks, ke := i.KeyStart, i.KeyEnd
 			if i.callFnWithPathCache(i.st.Top(), false, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.st.Push(stack.NodeTypeArray, 0, ks, ke)
 			i.Level++
@@ -984,7 +978,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 		case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			if i.expect != expectVal && i.expect != expectValOrArrTerm {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 
 			t := i.st.Top()
@@ -992,18 +986,18 @@ func (i *IteratorBytes) scanWithCachedPath(
 			var err bool
 			i.ValueEnd, err = jsonnum.EndIndex(i.src[i.ValueStart:])
 			if err {
-				return nil, i.getError(ErrorCodeMalformedNumber)
+				return "", i.getError(ErrorCodeMalformedNumber)
 			}
 			i.ValueEnd += +i.ValueStart
 
 			i.ValueType = ValueTypeNumber
 			if i.callFnWithPathCache(t, true, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart = i.ValueEnd
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -1019,14 +1013,14 @@ func (i *IteratorBytes) scanWithCachedPath(
 			i.ValueEnd, errCode = strfind.IndexTerm(s, i.ValueStart)
 			if errCode > strfind.ErrCodeOK {
 				i.ValueStart = i.ValueEnd
-				return nil, i.getError(ErrorCode(errCode))
+				return "", i.getError(ErrorCode(errCode))
 			}
 			t := i.st.Top()
 			if t != nil && t.Type == stack.NodeTypeArray {
 				// Array item string value
 				if i.expect != expectVal && i.expect != expectValOrArrTerm {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectCommaOrArrTerm
 
@@ -1043,7 +1037,7 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 				if fn(i) {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeCallback)
+					return "", i.getError(ErrorCodeCallback)
 				}
 				// Remove index
 				i.cachedPath = i.cachedPath[:initArrIndex]
@@ -1053,35 +1047,35 @@ func (i *IteratorBytes) scanWithCachedPath(
 				// String value
 				if i.expect != expectVal {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 
 				i.ValueType = ValueTypeString
 				if i.callFnWithPathCache(nil, true, fn) {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeCallback)
+					return "", i.getError(ErrorCodeCallback)
 				}
 				i.ValueStart = i.ValueEnd + 1
 
 				if t == nil {
-					return s[i.ValueStart:], ErrorBytes{}
+					return s[i.ValueStart:], Error{}
 				}
 				i.expect = expectCommaOrObjTerm
 			} else {
 				// Key
 				if i.expect != expectKey && i.expect != expectKeyOrObjTerm {
 					i.ValueStart--
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				}
 				i.expect = expectVal
 
 				i.KeyStart, i.KeyEnd = i.ValueStart, i.ValueEnd
 				i.ValueStart = i.ValueEnd + 1
 				if i.ValueEnd > len(s) {
-					return nil, i.getError(ErrorCodeUnexpectedEOF)
+					return "", i.getError(ErrorCodeUnexpectedEOF)
 				}
 				if x, err := i.parseColumn(s[i.ValueStart:]); err {
-					return nil, i.getError(ErrorCodeUnexpectedToken)
+					return "", i.getError(ErrorCodeUnexpectedToken)
 				} else {
 					i.ValueStart += x + 1
 				}
@@ -1089,9 +1083,9 @@ func (i *IteratorBytes) scanWithCachedPath(
 				if len(i.cachedPath) > 1 {
 					i.cachedPath = append(i.cachedPath, '.')
 				}
-				var e []byte
+				var e string
 				if i.escapePath {
-					e = keyescape.EscapeAppend(nil, s[i.KeyStart:i.KeyEnd])
+					e = keyescape.Escape(s[i.KeyStart:i.KeyEnd])
 				} else {
 					e = s[i.KeyStart:i.KeyEnd]
 				}
@@ -1102,19 +1096,19 @@ func (i *IteratorBytes) scanWithCachedPath(
 		case 'n': // Null
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'u', 'l', 'l') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeNull
 			i.ValueEnd = i.ValueStart + len("null")
 			if i.callFnWithPathCache(t, true, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("null")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -1126,19 +1120,19 @@ func (i *IteratorBytes) scanWithCachedPath(
 		case 'f': // False
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.read4(i.ValueStart+1, 'a', 'l', 's', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeFalse
 			i.ValueEnd = i.ValueStart + len("false")
 			if i.callFnWithPathCache(t, true, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("false")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -1150,19 +1144,19 @@ func (i *IteratorBytes) scanWithCachedPath(
 		case 't': // True
 			if (i.expect != expectVal && i.expect != expectValOrArrTerm) ||
 				i.expect3(i.ValueStart+1, 'r', 'u', 'e') {
-				return nil, i.getError(ErrorCodeUnexpectedToken)
+				return "", i.getError(ErrorCodeUnexpectedToken)
 			}
 			t := i.st.Top()
 
 			i.ValueType = ValueTypeTrue
 			i.ValueEnd = i.ValueStart + len("true")
 			if i.callFnWithPathCache(t, true, fn) {
-				return nil, i.getError(ErrorCodeCallback)
+				return "", i.getError(ErrorCodeCallback)
 			}
 			i.ValueStart += len("true")
 
 			if t == nil {
-				return s[i.ValueStart:], ErrorBytes{}
+				return s[i.ValueStart:], Error{}
 			}
 			switch t.Type {
 			case stack.NodeTypeArray:
@@ -1173,34 +1167,34 @@ func (i *IteratorBytes) scanWithCachedPath(
 
 		default:
 			if s[i.ValueStart] < 0x20 {
-				return nil, i.getError(ErrorCodeIllegalControlChar)
+				return "", i.getError(ErrorCodeIllegalControlChar)
 			}
-			return nil, i.getError(ErrorCodeUnexpectedToken)
+			return "", i.getError(ErrorCodeUnexpectedToken)
 		}
 	}
 
 	if i.st.Len() > 0 {
-		return nil, i.getError(ErrorCodeUnexpectedEOF)
+		return "", i.getError(ErrorCodeUnexpectedEOF)
 	}
 
-	return s[i.ValueStart:], ErrorBytes{}
+	return s[i.ValueStart:], Error{}
 }
 
-func (i *IteratorBytes) parseColumn(s []byte) (index int, err bool) {
+func (i *Iterator) parseColumn(s string) (index int, err bool) {
 	if len(s) > 0 && s[0] == ':' {
 		return 0, false
 	}
 	for j, c := range s {
 		if c == ':' {
 			return j, false
-		} else if !isSpaceByte(c) {
+		} else if !isSpace(c) {
 			break
 		}
 	}
 	return -1, true
 }
 
-func isSpaceByte(b byte) bool {
+func isSpace(b rune) bool {
 	switch b {
 	case ' ', '\r', '\n', '\t':
 		return true
@@ -1208,7 +1202,7 @@ func isSpaceByte(b byte) bool {
 	return false
 }
 
-func (i *IteratorBytes) cacheCleanupAfterContainer() {
+func (i *Iterator) cacheCleanupAfterContainer() {
 	if l := len(i.cachedPath) - 1; l > -1 {
 		switch i.cachedPath[l] {
 		case ']':
@@ -1226,9 +1220,9 @@ func (i *IteratorBytes) cacheCleanupAfterContainer() {
 	}
 }
 
-func (i *IteratorBytes) callFn(
+func (i *Iterator) callFn(
 	t *stack.Node,
-	fn func(i *IteratorBytes) (err bool),
+	fn func(i *Iterator) (err bool),
 ) (err bool) {
 	i.ArrayIndex = -1
 	if t != nil && t.Type == stack.NodeTypeArray {
@@ -1244,10 +1238,10 @@ func (i *IteratorBytes) callFn(
 	return false
 }
 
-func (i *IteratorBytes) callFnWithPathCache(
+func (i *Iterator) callFnWithPathCache(
 	t *stack.Node,
 	nonComposite bool,
-	fn func(i *IteratorBytes) bool,
+	fn func(i *Iterator) bool,
 ) (err bool) {
 	i.ArrayIndex = -1
 	initArrIndex := -1

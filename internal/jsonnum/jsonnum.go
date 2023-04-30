@@ -1,12 +1,13 @@
 package jsonnum
 
-func Parse(s string) (end int, err bool) {
+// EndIndex returns the index of the end of the number value
+// and err=true if a syntax error was encountered.
+func EndIndex[S ~string | ~[]byte](s S) (indexEnd int, err bool) {
+	originalLen := len(s)
 	var i int
-	var c rune
 
 	if s[0] == '-' {
 		// Signed
-		end++
 		s = s[1:]
 		if len(s) < 1 {
 			// Expected at least one digit
@@ -14,245 +15,239 @@ func Parse(s string) (end int, err bool) {
 		}
 	}
 
-	switch s[0] {
-	case '0':
-		if len(s) > 1 {
-			// Leading zero
-			switch s[1] {
-			case '.':
-				s = s[2:]
-				end += 2
-				i = -1
-				goto FRACTION
-			case 'e', 'E':
-				s = s[2:]
-				end += 2
-				i = -1
-				goto EXPONENT_SIGN
-			default:
-				return end + 1, false
-			}
-		}
-	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
-	default:
-		// Unexpected rune
-		return 0, true
-	}
-
-	// Integer
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case '.':
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto FRACTION
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
-			}
-			// Integer
-			return end + i, false
-		case 'e', 'E':
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto EXPONENT_SIGN
-		default:
-			// Unexpected rune
-			return 0, true
-		}
-	}
-	s = s[i+1:]
-
-	if s == "" {
-		// Integer without exponent
-		return end + i + 1, false
-	}
-FRACTION:
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
-			}
-			// Number with fraction
-			return end + i, false
-		case 'e', 'E':
-			if i < 1 {
-				// Expected at least one digit before the exponent
-				return 0, true
-			}
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto EXPONENT_SIGN
-		default:
-			// Unexpected rune
-			return 0, true
-		}
-	}
-	if i == -1 {
-		// Unexpected end of string
-		return 0, true
-	}
-	s = s[i+1:]
-
-	if s == "" {
-		// Number (with fraction but) without exponent
-		return end + i + 1, false
-	}
-
-EXPONENT_SIGN:
-	if s == "" {
-		// Missing exponent value
-		return 0, true
-	}
-	switch s[0] {
-	case '-', '+':
-		s = s[1:]
-		end++
-	}
-
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
-			}
-			// Number with (fraction and) exponent
-			return end + i, false
-		default:
-			// Unexpected rune
-			return 0, true
-		}
-	}
-	if i == -1 {
-		// Unexpected end of string
-		return 0, true
-	}
-
-	// Number with (fraction and) exponent
-	return end + i + 1, false
-}
-
-func ParseBytes(s []byte) (end int, err bool) {
-	var i int
-	var c byte
-
-	if s[0] == '-' {
-		// Signed
-		end++
+	if s[0] == '0' {
 		s = s[1:]
 		if len(s) < 1 {
-			// Expected at least one digit
-			return 0, true
+			// Zero
+			goto RETURN
 		}
-	}
-
-	switch s[0] {
-	case '0':
-		if len(s) > 1 {
-			// Leading zero
-			switch s[1] {
-			case '.':
-				s = s[2:]
-				end += 2
-				i = -1
-				goto FRACTION
-			case 'e', 'E':
-				s = s[2:]
-				end += 2
-				i = -1
-				goto EXPONENT_SIGN
-			default:
-				return end + 1, false
-			}
+		// Leading zero
+		switch s[0] {
+		case '.':
+			s = s[1:]
+			goto FRACTION
+		case 'e', 'E':
+			s = s[1:]
+			goto EXPONENT_SIGN
+		default:
+			// Zero
+			goto RETURN
 		}
-	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
-	default:
-		// Unexpected rune
-		return 0, true
 	}
 
 	// Integer
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case '.':
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto FRACTION
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
+	if len(s) < 1 || (s[0] < '1' || s[0] > '9') {
+		// Expected at least one digit
+		return 0, true
+	}
+	s = s[1:]
+	for len(s) >= 8 {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			} else if s[0] == '.' {
+				s = s[1:]
+				goto FRACTION
 			}
 			// Integer
-			return end + i, false
-		case 'e', 'E':
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto EXPONENT_SIGN
-		default:
-			// Unexpected rune
-			return 0, true
+			goto RETURN
+		}
+		if s[1] < '0' || s[1] > '9' {
+			if s[1] == 'e' || s[1] == 'E' {
+				s = s[2:]
+				goto EXPONENT_SIGN
+			} else if s[1] == '.' {
+				s = s[2:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[1:]
+			goto RETURN
+		}
+		if s[2] < '0' || s[2] > '9' {
+			if s[2] == 'e' || s[2] == 'E' {
+				s = s[3:]
+				goto EXPONENT_SIGN
+			} else if s[2] == '.' {
+				s = s[3:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[2:]
+			goto RETURN
+		}
+		if s[3] < '0' || s[3] > '9' {
+			if s[3] == 'e' || s[3] == 'E' {
+				s = s[4:]
+				goto EXPONENT_SIGN
+			} else if s[3] == '.' {
+				s = s[4:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[3:]
+			goto RETURN
+		}
+		if s[4] < '0' || s[4] > '9' {
+			if s[4] == 'e' || s[4] == 'E' {
+				s = s[5:]
+				goto EXPONENT_SIGN
+			} else if s[4] == '.' {
+				s = s[5:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[4:]
+			goto RETURN
+		}
+		if s[5] < '0' || s[5] > '9' {
+			if s[5] == 'e' || s[5] == 'E' {
+				s = s[6:]
+				goto EXPONENT_SIGN
+			} else if s[5] == '.' {
+				s = s[6:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[5:]
+			goto RETURN
+		}
+		if s[6] < '0' || s[6] > '9' {
+			if s[6] == 'e' || s[6] == 'E' {
+				s = s[7:]
+				goto EXPONENT_SIGN
+			} else if s[6] == '.' {
+				s = s[7:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[6:]
+			goto RETURN
+		}
+		if s[7] < '0' || s[7] > '9' {
+			if s[7] == 'e' || s[7] == 'E' {
+				s = s[8:]
+				goto EXPONENT_SIGN
+			} else if s[7] == '.' {
+				s = s[8:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[7:]
+			goto RETURN
+		}
+		s = s[8:]
+	}
+	for i = 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			if s[i] == 'e' || s[i] == 'E' {
+				s = s[i+1:]
+				goto EXPONENT_SIGN
+			} else if s[i] == '.' {
+				s = s[i+1:]
+				goto FRACTION
+			}
+			// Integer
+			s = s[i:]
+			goto RETURN
 		}
 	}
-	s = s[i+1:]
+	s = s[i:]
 
 	if len(s) < 1 {
 		// Integer without exponent
-		return end + i + 1, false
+		goto RETURN
 	}
+
 FRACTION:
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
-			}
-			// Number with fraction
-			return end + i, false
-		case 'e', 'E':
-			if i < 1 {
-				// Expected at least one digit before the exponent
-				return 0, true
-			}
-			d := i + 1
-			s = s[d:]
-			end += d
-			i = -1
-			goto EXPONENT_SIGN
-		default:
-			// Unexpected rune
-			return 0, true
-		}
-	}
-	if i == -1 {
-		// Unexpected end of string
+	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
+		// Expected at least one digit
 		return 0, true
 	}
-	s = s[i+1:]
+	s = s[1:]
+
+	for len(s) >= 8 {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			}
+			goto RETURN
+		}
+		if s[1] < '0' || s[1] > '9' {
+			if s[1] == 'e' || s[1] == 'E' {
+				s = s[2:]
+				goto EXPONENT_SIGN
+			}
+			s = s[1:]
+			goto RETURN
+		}
+		if s[2] < '0' || s[2] > '9' {
+			if s[2] == 'e' || s[2] == 'E' {
+				s = s[3:]
+				goto EXPONENT_SIGN
+			}
+			s = s[2:]
+			goto RETURN
+		}
+		if s[3] < '0' || s[3] > '9' {
+			if s[3] == 'e' || s[3] == 'E' {
+				s = s[4:]
+				goto EXPONENT_SIGN
+			}
+			s = s[3:]
+			goto RETURN
+		}
+		if s[4] < '0' || s[4] > '9' {
+			if s[4] == 'e' || s[4] == 'E' {
+				s = s[5:]
+				goto EXPONENT_SIGN
+			}
+			s = s[4:]
+			goto RETURN
+		}
+		if s[5] < '0' || s[5] > '9' {
+			if s[5] == 'e' || s[5] == 'E' {
+				s = s[6:]
+				goto EXPONENT_SIGN
+			}
+			s = s[5:]
+			goto RETURN
+		}
+		if s[6] < '0' || s[6] > '9' {
+			if s[6] == 'e' || s[6] == 'E' {
+				s = s[7:]
+				goto EXPONENT_SIGN
+			}
+			s = s[6:]
+			goto RETURN
+		}
+		if s[7] < '0' || s[7] > '9' {
+			if s[7] == 'e' || s[7] == 'E' {
+				s = s[8:]
+				goto EXPONENT_SIGN
+			}
+			s = s[7:]
+			goto RETURN
+		}
+		s = s[8:]
+	}
+	for i = 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			if s[i] == 'e' || s[i] == 'E' {
+				s = s[i+1:]
+				goto EXPONENT_SIGN
+			}
+			s = s[i:]
+			goto RETURN
+		}
+	}
+	s = s[i:]
 
 	if len(s) < 1 {
 		// Number (with fraction but) without exponent
-		return end + i + 1, false
+		goto RETURN
 	}
 
 EXPONENT_SIGN:
@@ -260,32 +255,66 @@ EXPONENT_SIGN:
 		// Missing exponent value
 		return 0, true
 	}
-	switch s[0] {
-	case '-', '+':
+	if s[0] == '-' || s[0] == '+' {
 		s = s[1:]
-		end++
 	}
-
-	for i, c = range s {
-		switch c {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		case ' ', '\t', '\r', '\n', ',', '}', ']':
-			if i < 1 {
-				// Expected at least one digit
-				return 0, true
-			}
-			// Number with (fraction and) exponent
-			return end + i, false
-		default:
-			// Unexpected rune
-			return 0, true
-		}
-	}
-	if i == -1 {
-		// Unexpected end of string
+	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
+		// Expected at least one digit
 		return 0, true
 	}
+	s = s[1:]
 
-	// Number with (fraction and) exponent
-	return end + i + 1, false
+	for len(s) >= 8 {
+		if s[0] < '0' || s[0] > '9' {
+			// Number with (fraction and) exponent
+			goto RETURN
+		}
+		if s[1] < '0' || s[1] > '9' {
+			// Number with (fraction and) exponent
+			s = s[1:]
+			goto RETURN
+		}
+		if s[2] < '0' || s[2] > '9' {
+			// Number with (fraction and) exponent
+			s = s[2:]
+			goto RETURN
+		}
+		if s[3] < '0' || s[3] > '9' {
+			// Number with (fraction and) exponent
+			s = s[3:]
+			goto RETURN
+		}
+		if s[4] < '0' || s[4] > '9' {
+			// Number with (fraction and) exponent
+			s = s[4:]
+			goto RETURN
+		}
+		if s[5] < '0' || s[5] > '9' {
+			// Number with (fraction and) exponent
+			s = s[5:]
+			goto RETURN
+		}
+		if s[6] < '0' || s[6] > '9' {
+			// Number with (fraction and) exponent
+			s = s[6:]
+			goto RETURN
+		}
+		if s[7] < '0' || s[7] > '9' {
+			// Number with (fraction and) exponent
+			s = s[7:]
+			goto RETURN
+		}
+		s = s[8:]
+	}
+	for i = 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			// Number with (fraction and) exponent
+			s = s[i:]
+			goto RETURN
+		}
+	}
+	s = s[i:]
+
+RETURN:
+	return originalLen - len(s), false
 }

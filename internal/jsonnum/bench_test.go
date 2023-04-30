@@ -22,7 +22,7 @@ func BenchmarkValid(b *testing.B) {
 		b.Run("", func(b *testing.B) {
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.Parse(bb)
+					gend, err = jsonnum.EndIndex(bb)
 					if err {
 						b.Fatal("unexpected error")
 					}
@@ -33,7 +33,7 @@ func BenchmarkValid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.ParseBytes(bb)
+					gend, err = jsonnum.EndIndex(bb)
 					if err {
 						b.Fatal("unexpected error")
 					}
@@ -61,7 +61,7 @@ func BenchmarkInvalid(b *testing.B) {
 		b.Run("", func(b *testing.B) {
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.Parse(bb)
+					gend, err = jsonnum.EndIndex(bb)
 					if !err {
 						b.Fatal("error expected")
 					}
@@ -72,7 +72,7 @@ func BenchmarkInvalid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.ParseBytes(bb)
+					gend, err = jsonnum.EndIndex(bb)
 					if !err {
 						b.Fatal("error expected")
 					}
