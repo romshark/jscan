@@ -516,7 +516,7 @@ func ScanBytesOne(
 	}
 
 	i := getItrBytesFromPool(s, o.EscapePath, startIndex)
-	defer itrPool.Put(i)
+	defer itrPoolBytes.Put(i)
 
 	if o.CachePath {
 		return i.scanWithCachedPath(s, fn)
