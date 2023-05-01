@@ -1026,14 +1026,21 @@ func TestScanError(t *testing.T) {
 
 func TestControlCharacters(t *testing.T) {
 	test := func(t *testing.T, in, expectErr string) {
-		t.Run("validate", func(t *testing.T) {
+		t.Run("Validate", func(t *testing.T) {
 			err := jscan.Validate(in)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
-		t.Run("validateOne", func(t *testing.T) {
+		t.Run("ValidateBytes", func(t *testing.T) {
+			err := jscan.ValidateBytes([]byte(in))
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+
+		t.Run("ValidateOne", func(t *testing.T) {
 			for s := in; s != ""; {
 				trailing, err := jscan.ValidateOne(s)
 				require.Equal(t, expectErr, err.Error())
@@ -1044,14 +1051,7 @@ func TestControlCharacters(t *testing.T) {
 			}
 		})
 
-		t.Run("validbytes", func(t *testing.T) {
-			err := jscan.ValidateBytes([]byte(in))
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-		})
-
-		t.Run("validateBytesOne", func(t *testing.T) {
+		t.Run("ValidateBytesOne", func(t *testing.T) {
 			for s := []byte(in); len(s) > 0; {
 				trailing, err := jscan.ValidateBytesOne(s)
 				require.Equal(t, expectErr, err.Error())
@@ -1062,15 +1062,59 @@ func TestControlCharacters(t *testing.T) {
 			}
 		})
 
-		t.Run("valid", func(t *testing.T) {
+		t.Run("Valid", func(t *testing.T) {
 			require.False(t, jscan.Valid(in))
 		})
 
-		t.Run("validbytes", func(t *testing.T) {
+		t.Run("ValidBytes", func(t *testing.T) {
 			require.False(t, jscan.ValidBytes([]byte(in)))
 		})
 
-		t.Run("cachepath", func(t *testing.T) {
+		t.Run("ScanOne", func(t *testing.T) {
+			trailing, err := jscan.ScanOne(
+				jscan.Options{}, in,
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			require.Zero(t, trailing)
+		})
+
+		t.Run("ScanBytesOne", func(t *testing.T) {
+			trailing, err := jscan.ScanBytesOne(
+				jscan.Options{}, []byte(in),
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			require.Zero(t, trailing)
+		})
+
+		t.Run("ScanOne/cachepath", func(t *testing.T) {
+			trailing, err := jscan.ScanOne(
+				jscan.Options{CachePath: true}, in,
+				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			require.Zero(t, trailing)
+		})
+
+		t.Run("ScanBytesOne/cachepath", func(t *testing.T) {
+			trailing, err := jscan.ScanBytesOne(
+				jscan.Options{CachePath: true}, []byte(in),
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			require.Zero(t, trailing)
+		})
+
+		t.Run("Scan/cachepath", func(t *testing.T) {
 			err := jscan.Scan(
 				jscan.Options{CachePath: true}, in,
 				func(i *jscan.Iterator) (err bool) { return false },
@@ -1080,10 +1124,30 @@ func TestControlCharacters(t *testing.T) {
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
-		t.Run("nocachepath", func(t *testing.T) {
+		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
 				jscan.Options{}, in,
 				func(i *jscan.Iterator) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+
+		t.Run("ScanBytes/cachepath", func(t *testing.T) {
+			err := jscan.ScanBytes(
+				jscan.Options{CachePath: true}, []byte(in),
+				func(i *jscan.IteratorBytes) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+
+		t.Run("ScanBytes", func(t *testing.T) {
+			err := jscan.ScanBytes(
+				jscan.Options{}, []byte(in),
+				func(i *jscan.IteratorBytes) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1093,7 +1157,7 @@ func TestControlCharacters(t *testing.T) {
 
 	// Control characters in a string value
 	t.Run("string", func(t *testing.T) {
-		ForASCIIControlChars(func(b byte) {
+		ForASCIIControlChars(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteByte('"')
 			buf.WriteByte(b)
@@ -1106,7 +1170,7 @@ func TestControlCharacters(t *testing.T) {
 
 	// Control characters in a string field value
 	t.Run("field string", func(t *testing.T) {
-		ForASCIIControlChars(func(b byte) {
+		ForASCIIControlChars(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString(`{"x":"`)
 			buf.WriteByte(b)
@@ -1119,7 +1183,7 @@ func TestControlCharacters(t *testing.T) {
 
 	// Control characters in an array item string
 	t.Run("array item string", func(t *testing.T) {
-		ForASCIIControlChars(func(b byte) {
+		ForASCIIControlChars(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString(`["`)
 			buf.WriteByte(b)
@@ -1130,9 +1194,22 @@ func TestControlCharacters(t *testing.T) {
 		})
 	})
 
+	// Control characters in head
+	t.Run("head", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			var buf bytes.Buffer
+			buf.WriteByte('\t')
+			buf.WriteByte(b)
+			buf.WriteString(`[]`)
+			test(t, buf.String(), fmt.Sprintf(
+				"error at index 1 (0x%x): illegal control character", b,
+			))
+		})
+	})
+
 	// Control characters outside of strings
 	t.Run("nonstring", func(t *testing.T) {
-		ForASCIIControlCharsExceptTRN(func(b byte) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteByte(b)
 			buf.WriteString("null")
@@ -1141,7 +1218,7 @@ func TestControlCharacters(t *testing.T) {
 			))
 		})
 
-		ForASCIIControlCharsExceptTRN(func(b byte) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString("[")
 			buf.WriteByte(b)
@@ -1151,7 +1228,7 @@ func TestControlCharacters(t *testing.T) {
 			))
 		})
 
-		ForASCIIControlCharsExceptTRN(func(b byte) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString("[\n")
 			buf.WriteByte(b)
@@ -1161,7 +1238,7 @@ func TestControlCharacters(t *testing.T) {
 			))
 		})
 
-		ForASCIIControlCharsExceptTRN(func(b byte) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString("{")
 			buf.WriteByte(b)
@@ -1171,7 +1248,7 @@ func TestControlCharacters(t *testing.T) {
 			))
 		})
 
-		ForASCIIControlCharsExceptTRN(func(b byte) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
 			var buf bytes.Buffer
 			buf.WriteString(`{"foo":`)
 			buf.WriteByte(b)
@@ -1293,25 +1370,6 @@ func ForPossibleOptions(fn func(name string, o jscan.Options)) {
 		CachePath:  false,
 		EscapePath: false,
 	})
-}
-
-// ForASCIIControlChars calls fn with each possible ASCII control character
-func ForASCIIControlChars(fn func(b byte)) {
-	for b := byte(0); b < 32; b++ {
-		fn(b)
-	}
-}
-
-// ForASCIIControlCharsExceptTRN calls fn with each possible ASCII
-// control character except '\t', '\r', '\n'
-func ForASCIIControlCharsExceptTRN(fn func(b byte)) {
-	for b := byte(0); b < 32; b++ {
-		switch b {
-		case '\t', '\r', '\n':
-			continue
-		}
-		fn(b)
-	}
 }
 
 func TestGet(t *testing.T) {
@@ -1579,4 +1637,27 @@ func TestScanOne(t *testing.T) {
 			}
 		})
 	})
+}
+
+// ForASCIIControlChars calls fn with each possible ASCII control character
+func ForASCIIControlChars(t *testing.T, fn func(t *testing.T, b byte)) {
+	for b := byte(0); b < 32; b++ {
+		t.Run(fmt.Sprintf("%U", b), func(t *testing.T) {
+			fn(t, b)
+		})
+	}
+}
+
+// ForASCIIControlCharsExceptTRN calls fn with each possible ASCII
+// control character except '\t', '\r', '\n'
+func ForASCIIControlCharsExceptTRN(t *testing.T, fn func(t *testing.T, b byte)) {
+	for b := byte(0); b < 32; b++ {
+		switch b {
+		case '\t', '\r', '\n':
+			continue
+		}
+		t.Run(fmt.Sprintf("%U", b), func(t *testing.T) {
+			fn(t, b)
+		})
+	}
 }
