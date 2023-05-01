@@ -117,8 +117,5 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 }
 
 func unsafeB2S(b []byte) string {
-	if len(b) < 1 {
-		return ""
-	}
 	return unsafe.String(unsafe.SliceData(b), len(b))
 }

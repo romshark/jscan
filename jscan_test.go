@@ -1033,11 +1033,33 @@ func TestControlCharacters(t *testing.T) {
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 
+		t.Run("validateOne", func(t *testing.T) {
+			for s := in; s != ""; {
+				trailing, err := jscan.ValidateOne(s)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+				require.Zero(t, trailing)
+				s = trailing
+			}
+		})
+
 		t.Run("validbytes", func(t *testing.T) {
 			err := jscan.ValidateBytes([]byte(in))
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+
+		t.Run("validateBytesOne", func(t *testing.T) {
+			for s := []byte(in); len(s) > 0; {
+				trailing, err := jscan.ValidateBytesOne(s)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+				require.Zero(t, trailing)
+				s = trailing
+			}
 		})
 
 		t.Run("valid", func(t *testing.T) {
@@ -1126,6 +1148,16 @@ func TestControlCharacters(t *testing.T) {
 			buf.WriteString("]")
 			test(t, buf.String(), fmt.Sprintf(
 				"error at index 1 (0x%x): illegal control character", b,
+			))
+		})
+
+		ForASCIIControlCharsExceptTRN(func(b byte) {
+			var buf bytes.Buffer
+			buf.WriteString("[\n")
+			buf.WriteByte(b)
+			buf.WriteString("]")
+			test(t, buf.String(), fmt.Sprintf(
+				"error at index 2 (0x%x): illegal control character", b,
 			))
 		})
 
