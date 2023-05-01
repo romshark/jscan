@@ -883,6 +883,11 @@ func TestScanError(t *testing.T) {
 			expect: `error at index 8 ('}'): unexpected token`,
 		},
 		{
+			name:   "unexpected object",
+			input:  `{"key":12,{}}`,
+			expect: `error at index 10 ('{'): unexpected token`,
+		},
+		{
 			name:   `missing array item`,
 			input:  `["okay",]`,
 			expect: `error at index 8 (']'): unexpected token`,
