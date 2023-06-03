@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"sync"
 	"unicode/utf8"
-	"unsafe"
 
 	"github.com/romshark/jscan/internal/jsonnum"
 	"github.com/romshark/jscan/internal/keyescape"
@@ -467,10 +466,6 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 	)
 }
 
-func unsafeB2S(b []byte) string {
-	return unsafe.String(unsafe.SliceData(b), len(b))
-}
-
 // lutSX maps space characters such as whitespace, tab, line-break and
 // carriage-return to 1, valid hex digits to 2 and others to 0.
 var lutSX = [256]byte{
@@ -518,7 +513,6 @@ func scan[S ~string | ~[]byte](
 ) (S, Error[S]) {
 	var (
 		s      = i.src
-		err    error
 		b      bool
 		ks, ke int
 	)
@@ -617,19 +611,6 @@ VALUE_NUMBER:
 		}
 		i.valueIndexEnd = len(i.src) - len(s)
 		i.valueType = ValueTypeNumber
-		switch src := any(i.src).(type) {
-		case string:
-			_, err = strconv.ParseFloat(
-				src[i.valueIndex:i.valueIndexEnd], 64,
-			)
-		case []byte:
-			_, err = strconv.ParseFloat(
-				unsafeB2S(src[i.valueIndex:i.valueIndexEnd]), 64,
-			)
-		}
-		if err != nil {
-			return s, getError(ErrorCodeMalformedNumber, i.src, s)
-		}
 		if i.callFn(fn) {
 			return s, i.getError(ErrorCodeCallback)
 		}
@@ -979,7 +960,6 @@ func validate[S ~string | ~[]byte](s S) (S, Error[S]) {
 	var (
 		src = s
 		top stackNodeType
-		err error
 		b   bool
 		st  = make([]stackNodeType, 0, 128)
 	)
@@ -1068,24 +1048,8 @@ VALUE_ARRAY:
 	goto VALUE_OR_ARR_TERM
 
 VALUE_NUMBER:
-	{
-		before := s
-		if s, b = jsonnum.ReadNumber(s); b {
-			return s, getError(ErrorCodeMalformedNumber, src, s)
-		}
-		switch before := any(before).(type) {
-		case string:
-			_, err = strconv.ParseFloat(
-				before[:len(before)-len(s)], 64,
-			)
-		case []byte:
-			_, err = strconv.ParseFloat(
-				unsafeB2S(before[:len(before)-len(s)]), 64,
-			)
-		}
-		if err != nil {
-			return s, getError(ErrorCodeMalformedNumber, src, s)
-		}
+	if s, b = jsonnum.ReadNumber(s); b {
+		return s, getError(ErrorCodeMalformedNumber, src, s)
 	}
 	goto AFTER_VALUE
 
