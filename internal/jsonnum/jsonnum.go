@@ -1,9 +1,8 @@
 package jsonnum
 
-// EndIndex returns the index of the end of the number value
+// ReadNumber returns the index of the end of the number value
 // and err=true if a syntax error was encountered.
-func EndIndex[S ~string | ~[]byte](s S) (indexEnd int, err bool) {
-	originalLen := len(s)
+func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 	var i int
 
 	if s[0] == '-' {
@@ -11,7 +10,7 @@ func EndIndex[S ~string | ~[]byte](s S) (indexEnd int, err bool) {
 		s = s[1:]
 		if len(s) < 1 {
 			// Expected at least one digit
-			return 0, true
+			return s, true
 		}
 	}
 
@@ -38,7 +37,7 @@ func EndIndex[S ~string | ~[]byte](s S) (indexEnd int, err bool) {
 	// Integer
 	if len(s) < 1 || (s[0] < '1' || s[0] > '9') {
 		// Expected at least one digit
-		return 0, true
+		return s, true
 	}
 	s = s[1:]
 	for len(s) >= 8 {
@@ -163,7 +162,7 @@ func EndIndex[S ~string | ~[]byte](s S) (indexEnd int, err bool) {
 FRACTION:
 	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
 		// Expected at least one digit
-		return 0, true
+		return s, true
 	}
 	s = s[1:]
 
@@ -253,14 +252,14 @@ FRACTION:
 EXPONENT_SIGN:
 	if len(s) < 1 {
 		// Missing exponent value
-		return 0, true
+		return s, true
 	}
 	if s[0] == '-' || s[0] == '+' {
 		s = s[1:]
 	}
 	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
 		// Expected at least one digit
-		return 0, true
+		return s, true
 	}
 	s = s[1:]
 
@@ -316,5 +315,5 @@ EXPONENT_SIGN:
 	s = s[i:]
 
 RETURN:
-	return originalLen - len(s), false
+	return s, false
 }

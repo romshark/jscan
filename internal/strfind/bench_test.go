@@ -7,15 +7,15 @@ import (
 )
 
 var (
-	GI int
+	GS string
 	GE strfind.ErrCode
 )
 
-func BenchmarkIndexTerm(b *testing.B) {
-	for _, bb := range testsIndexTerm {
+func BenchmarkReadString(b *testing.B) {
+	for _, bb := range testsReadString {
 		b.Run(bb.name, func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				GI, GE = strfind.IndexTerm(bb.input, bb.i)
+				GS, GE = strfind.ReadString(bb.input)
 			}
 		})
 	}

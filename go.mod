@@ -7,7 +7,6 @@ require (
 	github.com/go-faster/jx v1.0.0
 	github.com/goccy/go-json v0.10.2
 	github.com/json-iterator/go v1.1.12
-	github.com/sinhashubham95/jsonic v1.1.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tidwall/gjson v1.14.4
 	github.com/valyala/fastjson v1.6.4
@@ -27,5 +26,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/sys v0.1.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
