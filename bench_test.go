@@ -307,31 +307,31 @@ func TestImplementations(t *testing.T) {
 	})
 }
 
-//go:embed miniscule.json
+//go:embed testdata/miniscule.json
 var jsonMiniscule []byte
 
-//go:embed tiny.json
+//go:embed testdata/tiny.json
 var jsonTiny []byte
 
-//go:embed small.json
+//go:embed testdata/small.json
 var jsonSmall []byte
 
-//go:embed large.json
+//go:embed testdata/large.json
 var jsonLarge []byte
 
-//go:embed escaped.json
+//go:embed testdata/escaped.json
 var jsonEscaped []byte
 
-//go:embed array_int_1024.json
+//go:embed testdata/array_int_1024.json
 var jsonArrayInt1024 []byte
 
-//go:embed array_dec_1024.json
+//go:embed testdata/array_dec_1024.json
 var jsonArrayDec1024 []byte
 
-//go:embed array_nullbool_1024.json
+//go:embed testdata/array_nullbool_1024.json
 var jsonArrayNullBool1024 []byte
 
-//go:embed array_str_1024.json
+//go:embed testdata/array_str_1024.json
 var jsonArrayStr1024 []byte
 
 var gs Stats
@@ -386,112 +386,6 @@ func BenchmarkCalcStats(b *testing.B) {
 		})
 	}
 }
-
-// func TestBenchGet(t *testing.T) {
-// 	j := `[false,[[2, {"[foo]":[{"bar-baz":true}]}]]]`
-
-// 	t.Run("jscan", func(t *testing.T) {
-// 		path := `[1][0][1].\[foo\][0].bar-baz`
-// 		err := jscan.GetBytes(
-// 			[]byte(j), []byte(path), true, func(i *jscan.IteratorBytes) {
-// 				require.Equal(t, jscan.ValueTypeTrue, i.ValueType)
-// 				require.Equal(t, "true", string(i.Value()))
-// 			},
-// 		)
-// 		require.False(t, err.IsErr())
-// 	})
-
-// 	t.Run("jsoniter", func(t *testing.T) {
-// 		r := jsoniter.Get([]byte(j), 1, 0, 1, "[foo]", 0, "bar-baz")
-// 		r.MustBeValid()
-// 		require.NoError(t, r.LastError())
-// 		require.True(t, r.ToBool())
-// 	})
-
-// 	t.Run("tidwallgjson", func(t *testing.T) {
-// 		r := tidwallgjson.GetBytes([]byte(j), `1.0.1.\[foo\].0.bar-baz`)
-// 		require.True(t, r.Exists())
-// 		require.True(t, r.Bool())
-// 	})
-
-// 	t.Run("valyalafastjson", func(t *testing.T) {
-// 		path := []string{"1", "0", "1", "[foo]", "0", "bar-baz"}
-// 		require.True(t, valyalafastjson.Exists([]byte(j), path...))
-// 		v := valyalafastjson.GetBool([]byte(j), path...)
-// 		require.True(t, v)
-// 	})
-
-// 	t.Run("sinhashubham95jsonic", func(t *testing.T) {
-// 		p, err := sinhashubham95jsonic.New([]byte(j))
-// 		require.NoError(t, err)
-// 		v, err := p.GetBool(`[1].[0].[1].[foo].[0].bar-baz`)
-// 		require.NoError(t, err)
-// 		require.True(t, v)
-// 	})
-// }
-
-// func BenchmarkGet(b *testing.B) {
-// 	json := `[false,[[2, {"[foo]":[{"bar-baz":true}]}]]]`
-
-// 	b.Run("jscan", func(b *testing.B) {
-// 		bytesTrue := []byte("true")
-// 		path := []byte(`[1][0][1].\[foo\][0].bar-baz`)
-// 		json := []byte(json)
-// 		b.ResetTimer()
-
-// 		for i := 0; i < b.N; i++ {
-// 			_ = jscan.GetBytes(
-// 				json, path, true, func(i *jscan.IteratorBytes) {
-// 					gbool = bytes.Equal(i.Value(), bytesTrue)
-// 				},
-// 			)
-// 		}
-// 	})
-
-// 	b.Run("jsoniter", func(b *testing.B) {
-// 		json := []byte(json)
-// 		b.ResetTimer()
-
-// 		for i := 0; i < b.N; i++ {
-// 			gbool = jsoniter.Get(
-// 				json, 1, 0, 1, "[foo]", 0, "bar-baz",
-// 			).ToBool()
-// 		}
-// 	})
-
-// 	b.Run("tidwallgjson", func(b *testing.B) {
-// 		json := []byte(json)
-// 		path := `1.0.1.\[foo\].0.bar-baz`
-// 		b.ResetTimer()
-
-// 		for i := 0; i < b.N; i++ {
-// 			gbool = tidwallgjson.GetBytes(json, path).Bool()
-// 		}
-// 	})
-
-// 	b.Run("valyalafastjson", func(b *testing.B) {
-// 		jb := []byte(json)
-// 		b.ResetTimer()
-
-// 		for i := 0; i < b.N; i++ {
-// 			gbool = valyalafastjson.GetBool(
-// 				jb, "1", "0", "1", `\[foo\]`, "0", `bar-baz`,
-// 			)
-// 		}
-// 	})
-
-// 	b.Run("sinhashubham95jsonic", func(b *testing.B) {
-// 		p, err := sinhashubham95jsonic.New([]byte(json))
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		b.ResetTimer()
-
-// 		for i := 0; i < b.N; i++ {
-// 			gbool, _ = p.GetBool(`[1].[0].[1].[foo].[0].bar-baz`)
-// 		}
-// 	})
-// }
 
 func TestValid(t *testing.T) {
 	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
