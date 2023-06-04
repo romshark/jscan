@@ -272,9 +272,26 @@ func CalcStatsValyalaFastjson(p *valyalafastjson.Parser, str []byte) (s Stats) {
 }
 
 func TestImplementations(t *testing.T) {
-	const input = `{"s":"value","t":true,"f":false,"0":null,"n":-9.123e3,` +
-		`"o0":{},"a0":[],"o":{"k":"\"v\"",` +
-		`"a":[true,null,"item",-67.02e9,["foo"]]},"[abc]":[0]}`
+	const input = `{
+		"s":"value",
+		"t":true,
+		"f":false,
+		"0":null,
+		"n":-9.123e3,
+		"o0":{},
+		"a0":[],
+		"o":{
+			"k":"\"v\"",
+			"a":[
+				true,
+				null,
+				"item",
+				-67.02e9,
+				["foo"]
+			]
+		},
+		"[abc]":[0]
+	}`
 	expect := Stats{
 		TotalStrings:  4,
 		TotalNulls:    2,
