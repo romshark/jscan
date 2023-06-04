@@ -2,13 +2,18 @@ package jscan_test
 
 import (
 	"bytes"
-	_ "embed"
+	"compress/gzip"
 	"encoding/json"
-	encodingjson "encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/romshark/jscan"
+
+	encodingjson "encoding/json"
 
 	bytedancesonic "github.com/bytedance/sonic"
 	gofasterjx "github.com/go-faster/jx"
@@ -324,51 +329,28 @@ func TestImplementations(t *testing.T) {
 	})
 }
 
-//go:embed testdata/miniscule.json
-var jsonMiniscule []byte
-
-//go:embed testdata/tiny.json
-var jsonTiny []byte
-
-//go:embed testdata/small.json
-var jsonSmall []byte
-
-//go:embed testdata/large.json
-var jsonLarge []byte
-
-//go:embed testdata/escaped.json
-var jsonEscaped []byte
-
-//go:embed testdata/array_int_1024.json
-var jsonArrayInt1024 []byte
-
-//go:embed testdata/array_dec_1024.json
-var jsonArrayDec1024 []byte
-
-//go:embed testdata/array_nullbool_1024.json
-var jsonArrayNullBool1024 []byte
-
-//go:embed testdata/array_str_1024.json
-var jsonArrayStr1024 []byte
-
 var gs Stats
 
 func BenchmarkCalcStats(b *testing.B) {
-	for _, b2 := range []struct {
-		name string
-		json []byte
+	for _, bd := range []struct {
+		name  string
+		input SourceProvider
 	}{
-		{"miniscule__________", jsonMiniscule},
-		{"tiny_______________", jsonTiny},
-		{"small______________", jsonSmall},
-		{"large______________", jsonLarge},
-		{"escaped____________", jsonEscaped},
-		{"array_int_1024_____", jsonArrayInt1024},
-		{"array_dec_1024_____", jsonArrayDec1024},
-		{"array_nullbool_1024", jsonArrayNullBool1024},
-		{"array_str_1024_____", jsonArrayStr1024},
+		{"miniscule___________", SrcFile("miniscule.json")},
+		{"tiny________________", SrcFile("tiny.json")},
+		{"small_______________", SrcFile("small.json")},
+		{"large_______________", SrcFile("large.json")},
+		// {"gh_archive_433mb____", SrcFile("gh_archive_2023-01-01-1.json.gz")},
+		{"escaped_____________", SrcFile("escaped.json")},
+		{"array_int_1024______", SrcFile("array_int_1024.json")},
+		{"array_dec_1024______", SrcFile("array_dec_1024.json")},
+		{"array_nullbool_1024_", SrcFile("array_nullbool_1024.json")},
+		{"array_str_1024______", SrcFile("array_str_1024.json")},
 	} {
-		b.Run(b2.name, func(b *testing.B) {
+		b.Run(bd.name, func(b *testing.B) {
+			src, err := bd.input.GetJSON()
+			require.NoError(b, err)
+
 			b.Run("jscan", func(b *testing.B) {
 				p := jscan.NewParser[[]byte](64)
 				b.ResetTimer()
@@ -448,38 +430,42 @@ func repeat(s string, n int) string {
 }
 
 func BenchmarkValid(b *testing.B) {
-	for _, bb := range []struct {
+	for _, bd := range []struct {
 		name  string
-		input []byte
+		input SourceProvider
 	}{
-		{"deeparray", []byte(repeat("[", 1024) + repeat("]", 1024))},
-		{"miniscule", jsonMiniscule},
-		{"tiny", jsonTiny},
-		{"small", jsonSmall},
-		{"large", jsonLarge},
-		{"escaped", jsonEscaped},
-		{"unwind_stack", MakeRepeated("[", 1024)},
-		{"array_int_1024", jsonArrayInt1024},
-		{"array_dec_1024", jsonArrayDec1024},
-		{"array_nullbool_1024", jsonArrayNullBool1024},
-		{"array_str_1024", jsonArrayStr1024},
+		{"deeparray__________", SrcBytes(repeat("[", 1024) + repeat("]", 1024))},
+		{"miniscule__________", SrcFile("miniscule.json")},
+		{"tiny_______________", SrcFile("tiny.json")},
+		{"small______________", SrcFile("small.json")},
+		{"large______________", SrcFile("large.json")},
+		// {"gh_archive_433mb___", SrcFile("gh_archive_2023-01-01-1.json.gz")},
+		{"escaped____________", SrcFile("escaped.json")},
+		{"unwind_stack_______", SrcBytes(MakeRepeated("[", 1024))},
+		{"array_int_1024_____", SrcFile("array_int_1024.json")},
+		{"array_dec_1024_____", SrcFile("array_dec_1024.json")},
+		{"array_nullbool_1024", SrcFile("array_nullbool_1024.json")},
+		{"array_str_1024_____", SrcFile("array_str_1024.json")},
 	} {
-		b.Run(bb.name, func(b *testing.B) {
+		b.Run(bd.name, func(b *testing.B) {
+			src, err := bd.input.GetJSON()
+			require.NoError(b, err)
+
 			b.Run("jscan___________", func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gbool = jscan.Valid(bb.input)
+					gbool = jscan.Valid(src)
 				}
 			})
 
 			b.Run("encoding-json___", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = json.Valid(bb.input)
+					gbool = json.Valid(src)
 				}
 			})
 
 			b.Run("jsoniter________", func(b *testing.B) {
-				jb := []byte(bb.input)
+				jb := []byte(src)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gbool = jsoniter.Valid(jb)
@@ -487,7 +473,7 @@ func BenchmarkValid(b *testing.B) {
 			})
 
 			b.Run("gofaster-jx_____", func(b *testing.B) {
-				jb := []byte(bb.input)
+				jb := []byte(src)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gbool = gofasterjx.Valid(jb)
@@ -495,7 +481,7 @@ func BenchmarkValid(b *testing.B) {
 			})
 
 			b.Run("tidwallgjson____", func(b *testing.B) {
-				j := string(bb.input)
+				j := string(src)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gbool = tidwallgjson.Valid(j)
@@ -504,19 +490,19 @@ func BenchmarkValid(b *testing.B) {
 
 			b.Run("valyala-fastjson", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = (valyalafastjson.ValidateBytes(bb.input) != nil)
+					gbool = (valyalafastjson.ValidateBytes(src) != nil)
 				}
 			})
 
 			b.Run("goccy-go-json___", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = goccygojson.Valid(bb.input)
+					gbool = goccygojson.Valid(src)
 				}
 			})
 
 			b.Run("bytedance-sonic_", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gbool = bytedancesonic.ConfigFastest.Valid(bb.input)
+					gbool = bytedancesonic.ConfigFastest.Valid(src)
 				}
 			})
 		})
@@ -530,4 +516,35 @@ func MakeRepeated(s string, n int) []byte {
 		b.WriteString(s)
 	}
 	return b.Bytes()
+}
+
+type SourceProvider interface{ GetJSON() ([]byte, error) }
+
+type SrcBytes []byte
+
+func (s SrcBytes) GetJSON() ([]byte, error) { return []byte(s), nil }
+
+type SrcFile string
+
+func (s SrcFile) GetJSON() ([]byte, error) {
+	p := filepath.Join("testdata", string(s))
+	switch {
+	case strings.HasSuffix(string(s), ".json"):
+		return os.ReadFile(p)
+	case strings.HasSuffix(string(s), ".gz"):
+		f, err := os.Open(p)
+		if err != nil {
+			return nil, fmt.Errorf("opening archive file: %w", err)
+		}
+		r, err := gzip.NewReader(f)
+		if err != nil {
+			return nil, fmt.Errorf("initializing gzip reader: %w", err)
+		}
+		b, err := io.ReadAll(r)
+		if err != nil {
+			return nil, fmt.Errorf("reading from gzip reader: %w", err)
+		}
+		return b, nil
+	}
+	return nil, fmt.Errorf("unsupported file: %q", s)
 }
