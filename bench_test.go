@@ -336,22 +336,22 @@ func BenchmarkCalcStats(b *testing.B) {
 		name  string
 		input SourceProvider
 	}{
-		{"miniscule___________", SrcFile("miniscule.json")},
-		{"tiny________________", SrcFile("tiny.json")},
-		{"small_______________", SrcFile("small.json")},
-		{"large_______________", SrcFile("large.json")},
-		// {"gh_archive_433mb____", SrcFile("gh_archive_2023-01-01-1.json.gz")},
-		{"escaped_____________", SrcFile("escaped.json")},
-		{"array_int_1024______", SrcFile("array_int_1024.json")},
-		{"array_dec_1024______", SrcFile("array_dec_1024.json")},
-		{"array_nullbool_1024_", SrcFile("array_nullbool_1024.json")},
-		{"array_str_1024______", SrcFile("array_str_1024.json")},
+		{"miniscule_1b__________", SrcFile("miniscule_1b.json")},
+		{"tiny_8b_______________", SrcFile("tiny_8b.json")},
+		{"small_336b____________", SrcFile("small_336b.json")},
+		{"large_26m_____________", SrcFile("large_26m.json")},
+		{"nasa_SxSW_2016_125k___", SrcFile("nasa_SxSW_2016_125k.json")},
+		{"escaped_3k____________", SrcFile("escaped_3k.json")},
+		{"array_int_1024_12k____", SrcFile("array_int_1024_12k.json")},
+		{"array_dec_1024_10k____", SrcFile("array_dec_1024_10k.json")},
+		{"array_nullbool_1024_5k", SrcFile("array_nullbool_1024_5k.json")},
+		{"array_str_1024_639k___", SrcFile("array_str_1024_639k.json")},
 	} {
 		b.Run(bd.name, func(b *testing.B) {
 			src, err := bd.input.GetJSON()
 			require.NoError(b, err)
 
-			b.Run("jscan", func(b *testing.B) {
+			b.Run("jscan___________", func(b *testing.B) {
 				p := jscan.NewParser[[]byte](64)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
@@ -359,7 +359,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				}
 			})
 
-			b.Run("jsoniter", func(b *testing.B) {
+			b.Run("jsoniter________", func(b *testing.B) {
 				p := jsoniter.NewIterator(jsoniter.ConfigFastest)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
@@ -367,7 +367,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				}
 			})
 
-			b.Run("gofaster-jx", func(b *testing.B) {
+			b.Run("gofaster-jx_____", func(b *testing.B) {
 				p := new(gofasterjx.Decoder)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
@@ -434,18 +434,18 @@ func BenchmarkValid(b *testing.B) {
 		name  string
 		input SourceProvider
 	}{
-		{"deeparray__________", SrcBytes(repeat("[", 1024) + repeat("]", 1024))},
-		{"miniscule__________", SrcFile("miniscule.json")},
-		{"tiny_______________", SrcFile("tiny.json")},
-		{"small______________", SrcFile("small.json")},
-		{"large______________", SrcFile("large.json")},
-		// {"gh_archive_433mb___", SrcFile("gh_archive_2023-01-01-1.json.gz")},
-		{"escaped____________", SrcFile("escaped.json")},
-		{"unwind_stack_______", SrcBytes(MakeRepeated("[", 1024))},
-		{"array_int_1024_____", SrcFile("array_int_1024.json")},
-		{"array_dec_1024_____", SrcFile("array_dec_1024.json")},
-		{"array_nullbool_1024", SrcFile("array_nullbool_1024.json")},
-		{"array_str_1024_____", SrcFile("array_str_1024.json")},
+		{"deeparray_____________", SrcBytes(repeat("[", 1024) + repeat("]", 1024))},
+		{"unwind_stack__________", SrcBytes(MakeRepeated("[", 1024))},
+		{"miniscule_1b__________", SrcFile("miniscule_1b.json")},
+		{"tiny_8b_______________", SrcFile("tiny_8b.json")},
+		{"small_336b____________", SrcFile("small_336b.json")},
+		{"large_26m_____________", SrcFile("large_26m.json")},
+		{"nasa_SxSW_2016_125k___", SrcFile("nasa_SxSW_2016_125k.json")},
+		{"escaped_3k____________", SrcFile("escaped_3k.json")},
+		{"array_int_1024_12k____", SrcFile("array_int_1024_12k.json")},
+		{"array_dec_1024_10k____", SrcFile("array_dec_1024_10k.json")},
+		{"array_nullbool_1024_5k", SrcFile("array_nullbool_1024_5k.json")},
+		{"array_str_1024_639k___", SrcFile("array_str_1024_639k.json")},
 	} {
 		b.Run(bd.name, func(b *testing.B) {
 			src, err := bd.input.GetJSON()

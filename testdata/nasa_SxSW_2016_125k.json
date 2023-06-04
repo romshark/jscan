@@ -1,0 +1,977 @@
+{
+    "meta" : {
+      "view" : {
+        "id" : "yvxp-ccvk",
+        "name" : "SxSW 2016 Leads",
+        "assetType" : "dataset",
+        "averageRating" : 0,
+        "category" : "Management/Operations",
+        "createdAt" : 1458835039,
+        "description" : "Companies that visited the NASA boot at the SxSW 2016 conference.",
+        "displayType" : "table",
+        "downloadCount" : 4580,
+        "hideFromCatalog" : false,
+        "hideFromDataJson" : false,
+        "indexUpdatedAt" : 1530121487,
+        "licenseId" : "PUBLIC_DOMAIN",
+        "newBackend" : true,
+        "numberOfComments" : 0,
+        "oid" : 19231257,
+        "provenance" : "official",
+        "publicationAppendEnabled" : false,
+        "publicationDate" : 1458846920,
+        "publicationGroup" : 9270885,
+        "publicationStage" : "published",
+        "rowClass" : "",
+        "rowsUpdatedAt" : 1458846864,
+        "rowsUpdatedBy" : "rgr9-eae6",
+        "tableId" : 9275298,
+        "totalTimesRated" : 0,
+        "viewCount" : 8331,
+        "viewLastModified" : 1675176930,
+        "viewType" : "tabular",
+        "approvals" : [ {
+          "reviewedAt" : 1458846920,
+          "reviewedAutomatically" : true,
+          "state" : "approved",
+          "submissionId" : 650332,
+          "submissionObject" : "public_audience_request",
+          "submissionOutcome" : "change_audience",
+          "submittedAt" : 1458846920,
+          "workflowId" : 2019,
+          "submissionDetails" : {
+            "permissionType" : "READ"
+          },
+          "submissionOutcomeApplication" : {
+            "failureCount" : 0,
+            "status" : "success"
+          },
+          "submitter" : {
+            "id" : "rgr9-eae6",
+            "displayName" : "VPhillips"
+          }
+        } ],
+        "clientContext" : {
+          "clientContextVariables" : [ ],
+          "inheritedVariables" : { }
+        },
+        "columns" : [ {
+          "id" : -1,
+          "name" : "sid",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":sid",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "id",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":id",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "position",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":position",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "created_at",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":created_at",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "created_meta",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":created_meta",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "updated_at",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":updated_at",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "updated_meta",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":updated_meta",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : -1,
+          "name" : "meta",
+          "dataTypeName" : "meta_data",
+          "fieldName" : ":meta",
+          "position" : 0,
+          "renderTypeName" : "meta_data",
+          "format" : { },
+          "flags" : [ "hidden" ]
+        }, {
+          "id" : 248261796,
+          "name" : "Company",
+          "dataTypeName" : "text",
+          "fieldName" : "company",
+          "position" : 1,
+          "renderTypeName" : "text",
+          "tableColumnId" : 35203136,
+          "width" : 184,
+          "cachedContents" : {
+            "non_null" : "312",
+            "largest" : "YouTube",
+            "null" : "12",
+            "top" : [ {
+              "item" : "SXSW Volunteer",
+              "count" : "10"
+            }, {
+              "item" : "N/A",
+              "count" : "7"
+            }, {
+              "item" : "National Instruments",
+              "count" : "4"
+            }, {
+              "item" : "Capital One",
+              "count" : "4"
+            }, {
+              "item" : "Overstock.com",
+              "count" : "3"
+            }, {
+              "item" : "Amoeba Culture",
+              "count" : "3"
+            }, {
+              "item" : "The University of Texas at Austin",
+              "count" : "3"
+            }, {
+              "item" : "M/C/C",
+              "count" : "3"
+            }, {
+              "item" : "Decker MS",
+              "count" : "2"
+            }, {
+              "item" : "Allen High School",
+              "count" : "2"
+            }, {
+              "item" : "P-N Designs Inc",
+              "count" : "2"
+            }, {
+              "item" : "Telewander",
+              "count" : "2"
+            }, {
+              "item" : "Medtronic",
+              "count" : "2"
+            }, {
+              "item" : "Globoforce",
+              "count" : "2"
+            }, {
+              "item" : "Nestle",
+              "count" : "2"
+            }, {
+              "item" : "MD Financial Management",
+              "count" : "2"
+            }, {
+              "item" : "CHIEF",
+              "count" : "2"
+            }, {
+              "item" : "Arlington Economic Development",
+              "count" : "2"
+            }, {
+              "item" : "Open Health Network",
+              "count" : "2"
+            }, {
+              "item" : "IBM",
+              "count" : "2"
+            } ],
+            "smallest" : "180LA",
+            "not_null" : "312",
+            "count" : "324",
+            "cardinality" : "260"
+          },
+          "format" : { }
+        }, {
+          "id" : 248261797,
+          "name" : "Position",
+          "dataTypeName" : "text",
+          "fieldName" : "position",
+          "position" : 2,
+          "renderTypeName" : "text",
+          "tableColumnId" : 35203137,
+          "width" : 196,
+          "cachedContents" : {
+            "non_null" : "318",
+            "largest" : "Yimay Yang",
+            "null" : "6",
+            "top" : [ {
+              "item" : "CEO",
+              "count" : "8"
+            }, {
+              "item" : "Owner",
+              "count" : "6"
+            }, {
+              "item" : "Founder & CEO",
+              "count" : "4"
+            }, {
+              "item" : "Producer",
+              "count" : "4"
+            }, {
+              "item" : "Dir",
+              "count" : "3"
+            }, {
+              "item" : "Interaction Designer",
+              "count" : "3"
+            }, {
+              "item" : "Student",
+              "count" : "3"
+            }, {
+              "item" : "Project Mgr",
+              "count" : "3"
+            }, {
+              "item" : "Founder",
+              "count" : "3"
+            }, {
+              "item" : "Creative Dir",
+              "count" : "3"
+            }, {
+              "item" : "Mktg Mgr",
+              "count" : "3"
+            }, {
+              "item" : "CTO",
+              "count" : "3"
+            }, {
+              "item" : "Asst Professor",
+              "count" : "2"
+            }, {
+              "item" : "IT Specialist",
+              "count" : "2"
+            }, {
+              "item" : "Managing Dir",
+              "count" : "2"
+            }, {
+              "item" : "PR",
+              "count" : "2"
+            }, {
+              "item" : "Web Developer",
+              "count" : "2"
+            }, {
+              "item" : "Animator/Student",
+              "count" : "2"
+            }, {
+              "item" : "8th Grade Student",
+              "count" : "2"
+            }, {
+              "item" : "Sr Designer",
+              "count" : "2"
+            } ],
+            "smallest" : "8th Grade Student",
+            "not_null" : "318",
+            "count" : "324",
+            "cardinality" : "266"
+          },
+          "format" : { }
+        }, {
+          "id" : 248261798,
+          "name" : "Country",
+          "dataTypeName" : "text",
+          "fieldName" : "country",
+          "position" : 3,
+          "renderTypeName" : "text",
+          "tableColumnId" : 35203138,
+          "width" : 184,
+          "cachedContents" : {
+            "non_null" : "315",
+            "largest" : "USA",
+            "null" : "9",
+            "top" : [ {
+              "item" : "USA",
+              "count" : "227"
+            }, {
+              "item" : "UNITED KINGDOM",
+              "count" : "12"
+            }, {
+              "item" : "CANADA",
+              "count" : "11"
+            }, {
+              "item" : "JAPAN",
+              "count" : "11"
+            }, {
+              "item" : "TURKEY",
+              "count" : "6"
+            }, {
+              "item" : "MEXICO",
+              "count" : "6"
+            }, {
+              "item" : "NETHERLANDS",
+              "count" : "5"
+            }, {
+              "item" : "SPAIN",
+              "count" : "5"
+            }, {
+              "item" : "GERMANY",
+              "count" : "3"
+            }, {
+              "item" : "SOUTH KOREA",
+              "count" : "3"
+            }, {
+              "item" : "SWEDEN",
+              "count" : "3"
+            }, {
+              "item" : "BRAZIL",
+              "count" : "3"
+            }, {
+              "item" : "NORWAY",
+              "count" : "3"
+            }, {
+              "item" : "AUSTRALIA",
+              "count" : "3"
+            }, {
+              "item" : "DENMARK",
+              "count" : "3"
+            }, {
+              "item" : "COLOMBIA",
+              "count" : "2"
+            }, {
+              "item" : "SWITZERLAND",
+              "count" : "2"
+            }, {
+              "item" : "BELGIUM",
+              "count" : "2"
+            }, {
+              "item" : "IRELAND",
+              "count" : "1"
+            }, {
+              "item" : "RUSSIAN FEDERATION",
+              "count" : "1"
+            } ],
+            "smallest" : "AUSTRALIA",
+            "not_null" : "315",
+            "count" : "324",
+            "cardinality" : "23"
+          },
+          "format" : { }
+        }, {
+          "id" : 248261799,
+          "name" : "Email Hosts",
+          "dataTypeName" : "text",
+          "fieldName" : "email_hosts",
+          "position" : 4,
+          "renderTypeName" : "text",
+          "tableColumnId" : 35203139,
+          "width" : 232,
+          "cachedContents" : {
+            "non_null" : "324",
+            "largest" : "yomiko.co.jp",
+            "null" : "0",
+            "top" : [ {
+              "item" : "gmail.com",
+              "count" : "85"
+            }, {
+              "item" : "yahoo.com",
+              "count" : "5"
+            }, {
+              "item" : "me.com",
+              "count" : "4"
+            }, {
+              "item" : "nasa.gov",
+              "count" : "3"
+            }, {
+              "item" : "txstate.edu",
+              "count" : "3"
+            }, {
+              "item" : "capitalone.com",
+              "count" : "3"
+            }, {
+              "item" : "hotmail.com",
+              "count" : "3"
+            }, {
+              "item" : "overstock.com",
+              "count" : "3"
+            }, {
+              "item" : "ni.com",
+              "count" : "3"
+            }, {
+              "item" : "mccom.com",
+              "count" : "3"
+            }, {
+              "item" : "180la.com",
+              "count" : "2"
+            }, {
+              "item" : "saatchiny.com",
+              "count" : "2"
+            }, {
+              "item" : "arlingtonva.us",
+              "count" : "2"
+            }, {
+              "item" : "agencychief.com",
+              "count" : "2"
+            }, {
+              "item" : "wnyu.org",
+              "count" : "2"
+            }, {
+              "item" : "neurodigital.es",
+              "count" : "2"
+            }, {
+              "item" : "thethingsnetwork.org",
+              "count" : "2"
+            }, {
+              "item" : "globoforce.com",
+              "count" : "2"
+            }, {
+              "item" : "chrobinson.com",
+              "count" : "2"
+            }, {
+              "item" : "matchdayintelligence.com",
+              "count" : "2"
+            } ],
+            "smallest" : "180la.com",
+            "not_null" : "324",
+            "count" : "324",
+            "cardinality" : "197"
+          },
+          "format" : { }
+        }, {
+          "id" : 248261800,
+          "name" : "Domain",
+          "dataTypeName" : "text",
+          "fieldName" : "domain",
+          "position" : 5,
+          "renderTypeName" : "text",
+          "tableColumnId" : 35203140,
+          "width" : 172,
+          "cachedContents" : {
+            "non_null" : "324",
+            "largest" : "us",
+            "null" : "0",
+            "top" : [ {
+              "item" : "com",
+              "count" : "234"
+            }, {
+              "item" : "edu",
+              "count" : "23"
+            }, {
+              "item" : "org",
+              "count" : "12"
+            }, {
+              "item" : "gov",
+              "count" : "8"
+            }, {
+              "item" : "jp",
+              "count" : "7"
+            }, {
+              "item" : "net",
+              "count" : "4"
+            }, {
+              "item" : "uk",
+              "count" : "3"
+            }, {
+              "item" : "mx",
+              "count" : "3"
+            }, {
+              "item" : "ca",
+              "count" : "3"
+            }, {
+              "item" : "us",
+              "count" : "2"
+            }, {
+              "item" : "br",
+              "count" : "2"
+            }, {
+              "item" : "co",
+              "count" : "2"
+            }, {
+              "item" : "dk",
+              "count" : "2"
+            }, {
+              "item" : "es",
+              "count" : "2"
+            }, {
+              "item" : "mil",
+              "count" : "2"
+            }, {
+              "item" : "nl",
+              "count" : "2"
+            }, {
+              "item" : "no",
+              "count" : "2"
+            }, {
+              "item" : "se",
+              "count" : "2"
+            }, {
+              "item" : "tv",
+              "count" : "1"
+            }, {
+              "item" : "be",
+              "count" : "1"
+            } ],
+            "smallest" : "au",
+            "not_null" : "324",
+            "count" : "324",
+            "cardinality" : "27"
+          },
+          "format" : { }
+        }, {
+          "id" : 248261801,
+          "name" : "Location 1",
+          "dataTypeName" : "location",
+          "fieldName" : "location_1",
+          "position" : 6,
+          "renderTypeName" : "location",
+          "tableColumnId" : 35203141,
+          "width" : 220,
+          "format" : { },
+          "subColumnTypes" : [ "human_address", "latitude", "longitude", "machine_address", "needs_recoding" ]
+        }, {
+          "id" : 428785711,
+          "name" : "World Map",
+          "dataTypeName" : "number",
+          "fieldName" : ":@computed_region_bigw_e76g",
+          "position" : 11,
+          "renderTypeName" : "number",
+          "tableColumnId" : 87673708,
+          "computationStrategy" : {
+            "source_columns" : [ "location_1" ],
+            "type" : "georegion_match_on_point",
+            "parameters" : {
+              "region" : "_bigw-e76g",
+              "primary_key" : "_feature_id"
+            }
+          },
+          "format" : { }
+        }, {
+          "id" : 428785712,
+          "name" : "States",
+          "dataTypeName" : "number",
+          "fieldName" : ":@computed_region_cbhk_fwbd",
+          "position" : 12,
+          "renderTypeName" : "number",
+          "tableColumnId" : 87673709,
+          "computationStrategy" : {
+            "source_columns" : [ "location_1" ],
+            "type" : "georegion_match_on_point",
+            "parameters" : {
+              "region" : "_cbhk-fwbd",
+              "primary_key" : "_feature_id"
+            }
+          },
+          "format" : { }
+        }, {
+          "id" : 428785713,
+          "name" : "Counties",
+          "dataTypeName" : "number",
+          "fieldName" : ":@computed_region_nnqa_25f4",
+          "position" : 13,
+          "renderTypeName" : "number",
+          "tableColumnId" : 87673710,
+          "computationStrategy" : {
+            "source_columns" : [ "location_1" ],
+            "type" : "georegion_match_on_point",
+            "parameters" : {
+              "region" : "_nnqa-25f4",
+              "primary_key" : "_feature_id"
+            }
+          },
+          "format" : { }
+        } ],
+        "grants" : [ {
+          "inherited" : false,
+          "type" : "viewer",
+          "flags" : [ "public" ]
+        } ],
+        "license" : {
+          "name" : "Public Domain"
+        },
+        "metadata" : {
+          "rdfClass" : "",
+          "rdfSubject" : "0",
+          "custom_fields" : {
+            "Common Core" : {
+              "Contact Email" : "jason.duley@nasa.gov",
+              "Language" : "en-US",
+              "Contact Name" : "Jason Duley",
+              "Issued" : "2016-03-24T00:00:00Z",
+              "Update Frequency" : "irregular",
+              "License" : "http://www.usa.gov/publicdomain/label/1.0/",
+              "Program Code" : "026:046",
+              "Publisher" : "National Aeronautics and Space Administration",
+              "Is Quality Data" : "yes",
+              "Bureau Code" : [ "026:00" ],
+              "Public Access Level" : "public"
+            }
+          },
+          "rowIdentifier" : "0",
+          "availableDisplayTypes" : [ "table", "fatrow", "page" ],
+          "rowLabel" : "Row",
+          "renderTypeConfig" : {
+            "visible" : {
+              "table" : true
+            }
+          }
+        },
+        "owner" : {
+          "id" : "rgr9-eae6",
+          "displayName" : "VPhillips",
+          "profileImageUrlLarge" : "/api/users/rgr9-eae6/profile_images/LARGE",
+          "profileImageUrlMedium" : "/api/users/rgr9-eae6/profile_images/THUMB",
+          "profileImageUrlSmall" : "/api/users/rgr9-eae6/profile_images/TINY",
+          "screenName" : "VPhillips",
+          "type" : "interactive"
+        },
+        "query" : { },
+        "rights" : [ "read" ],
+        "tableAuthor" : {
+          "id" : "rgr9-eae6",
+          "displayName" : "VPhillips",
+          "profileImageUrlLarge" : "/api/users/rgr9-eae6/profile_images/LARGE",
+          "profileImageUrlMedium" : "/api/users/rgr9-eae6/profile_images/THUMB",
+          "profileImageUrlSmall" : "/api/users/rgr9-eae6/profile_images/TINY",
+          "screenName" : "VPhillips",
+          "type" : "interactive"
+        },
+        "tags" : [ "sxsw", "conference", "leads", "company", "spaceapps", "space apps" ],
+        "flags" : [ "default", "ownerMayBeContacted", "restorable", "restorePossibleForType", "unsaved" ]
+      }
+    },
+    "data" : [ [ "row-ea8n~iism_43qk", "00000000-0000-0000-CB76-1D37B97482E3", 0, 1568761192, null, 1568761194, null, "{ }", "Samsung", "Dir", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Fremont\", \"state\": \"CA\", \"zip\": \"\"}", "37.54827", "-121.988572", null, false ], "173", "8", "1141" ]
+  , [ "row-dksw.5ye4.kpm5", "00000000-0000-0000-DF83-40E8AB831B6C", 0, 1568761192, null, 1568761194, null, "{ }", "Digital Hollywood Venture Capital", "General Partner", "JAPAN", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Tokyo\", \"state\": \"\", \"zip\": \"\"}", "35.689488", "139.691706", null, false ], "88", null, null ]
+  , [ "row-mmia.kecz-ywsx", "00000000-0000-0000-712F-7CEE7B2328B4", 0, 1568761192, null, 1568761194, null, "{ }", "MD Financial Management", "Innovation Evangelist", "CANADA", "cma.ca", "ca", [ "{\"address\": \"\", \"city\": \"Ottawa\", \"state\": \"ON\", \"zip\": \"\"}", "45.42153", "-75.697193", null, false ], "29", null, null ]
+  , [ "row-3iia-hmbw~24vs", "00000000-0000-0000-AAF6-964C58D505F1", 0, 1568761192, null, 1568761194, null, "{ }", "Hexagon Safety and Infrastructure", "Sr User Experience Designer", "USA", "hexagonsi.com", "com", [ "{\"address\": \"\", \"city\": \"Madison\", \"state\": \"AL\", \"zip\": \"\"}", "43.073052", "-89.40123", null, false ], "173", "41", "867" ]
+  , [ "row-2nfx.kz2f~qym6", "00000000-0000-0000-4856-CE3B51848A34", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Amber Roberson", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-4s6t~rjuh.isjm", "00000000-0000-0000-2611-471B5913D1FD", 0, 1568761192, null, 1568761194, null, "{ }", "Student at Virginia tech ", "Alex Ganglia no", null, "vt.edu", "edu", [ null, "37.1314053", "-79.293693", null, false ], "173", "40", "2759" ]
+  , [ "row-9ssi.aeuh_g5v4", "00000000-0000-0000-6EAA-7B405E7DE1DE", 0, 1568761192, null, 1568761194, null, "{ }", "180LA", "New Business Mgr", "USA", "180la.com", "com", [ "{\"address\": \"\", \"city\": \"Los Angeles\", \"state\": \"CA\", \"zip\": \"\"}", "34.052234", "-118.243685", null, false ], "173", "8", "1195" ]
+  , [ "row-7ycq_42n4-25n5", "00000000-0000-0000-F137-BD201B987B12", 0, 1568761192, null, 1568761194, null, "{ }", "Garmin International", "Product Architect, Mobile & Wearable Devices", "USA", "garmin.com", "com", [ "{\"address\": \"\", \"city\": \"Olathe\", \"state\": \"KS\", \"zip\": \"\"}", "38.881396", "-94.819128", null, false ], "173", "17", "1237" ]
+  , [ "row-ipzn.xpcf_5np2", "00000000-0000-0000-200A-F1A2E049E0DE", 0, 1568761192, null, 1568761194, null, "{ }", "Neurodigiital Technologies", "COO", "SPAIN", "neurodigital.es", "es", [ "{\"address\": \"\", \"city\": \"Almeria\", \"state\": \"\", \"zip\": \"\"}", "36.834047", "-2.463714", null, false ], "51", null, null ]
+  , [ "row-dnxt-83k4-nn5b", "00000000-0000-0000-E9AA-8150E37AC627", 0, 1568761192, null, 1568761194, null, "{ }", "K2 Music Management", "Sr Consultant/Engineering", "UNITED KINGDOM", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Glasgow\", \"state\": \"\", \"zip\": \"\"}", "55.864237", "-4.251806", null, false ], "59", null, null ]
+  , [ "row-e6gg_zzuh~is75", "00000000-0000-0000-F2B3-04707D90AB45", 0, 1568761192, null, 1568761194, null, "{ }", "Saatchi & Saatchi", "Brand Planning Dir", "USA", "saatchiny.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-s9ig.3qdz~v5ek", "00000000-0000-0000-F731-FDCB9E5A732F", 0, 1568761192, null, 1568761194, null, "{ }", "TRIGGER AS", "Project Mgr", "NORWAY", "trigger.no", "no", [ "{\"address\": \"\", \"city\": \"Oslo\", \"state\": \"\", \"zip\": \"\"}", "59.913869", "10.752245", null, false ], "124", null, null ]
+  , [ "row-26y9-8ii4_8qtd", "00000000-0000-0000-C24F-8875348102E5", 0, 1568761192, null, 1568761194, null, "{ }", "Yahoo! JAPAN", "Sr Research Analyst", "JAPAN", "yahoo-corp.jp", "jp", [ "{\"address\": \"\", \"city\": \"Minatoku\", \"state\": \"\", \"zip\": \"\"}", "35.658068", "139.751599", null, false ], "88", null, null ]
+  , [ "row-2gj2-cc7n-74ba", "00000000-0000-0000-261B-7B8DAD9525B6", 0, 1568761192, null, 1568761194, null, "{ }", "Allen High School", "Animator/Student", "USA", "allenisd.org", "org", [ "{\"address\": \"\", \"city\": \"Allen\", \"state\": \"TX\", \"zip\": \"\"}", "33.103174", "-96.67055", null, false ], "173", "23", "3110" ]
+  , [ "row-q4xg~44z7_z95t", "00000000-0000-0000-663A-0B088C503607", 0, 1568761192, null, 1568761194, null, "{ }", "launch strategies", "CTO", "USA", "launchflix.com", "com", [ "{\"address\": \"\", \"city\": \"Miami Beach\", \"state\": \"FL\", \"zip\": \"\"}", "25.790654", "-80.130045", null, false ], null, null, "1074" ]
+  , [ "row-ddrc.7bix~czsj", "00000000-0000-0000-CAE4-0CF78F5893DC", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Marco Roselli", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-pc5u-w8kp-tn3k", "00000000-0000-0000-126E-840ECCBE2B0E", 0, 1568761192, null, 1568761194, null, "{ }", "The Things Network", "Tech Lead", "NETHERLANDS", "thethingsnetwork.org", "org", [ "{\"address\": \"\", \"city\": \"Amsterdam\", \"state\": \"\", \"zip\": \"\"}", "52.370216", "4.895168", null, false ], "123", null, null ]
+  , [ "row-rn8m_46b5-2g83", "00000000-0000-0000-AD74-27B35E709A69", 0, 1568761192, null, 1568761194, null, "{ }", "PRIME", "Planning Dir", "SWEDEN", "primegroup.com", "com", [ "{\"address\": \"\", \"city\": \"Stockholm\", \"state\": \"\", \"zip\": \"\"}", "59.329323", "18.068581", null, false ], "154", null, null ]
+  , [ "row-eanu-qbwg.gh9b", "00000000-0000-0000-F40F-22758E37326F", 0, 1568761192, null, 1568761194, null, "{ }", "Amazon Web Services", "Sr Designer", "USA", "amazon.com", "com", [ "{\"address\": \"\", \"city\": \"Seattle\", \"state\": \"WA\", \"zip\": \"\"}", "47.60621", "-122.332071", null, false ], "173", "6", "3009" ]
+  , [ "row-zhty~s2yr~bc99", "00000000-0000-0000-B619-3E1EB5DE54E1", 0, 1568761192, null, 1568761194, null, "{ }", "City Of Cologne", "Media", "GERMANY", "stadt-koeln.de", "de", [ "{\"address\": \"\", \"city\": \"Cologne\", \"state\": \"\", \"zip\": \"\"}", "50.937531", "6.960279", null, false ], "43", null, null ]
+  , [ "row-z3ms-2u7b-gu5b", "00000000-0000-0000-0951-6EF5BB6139DE", 0, 1568761192, null, 1568761194, null, "{ }", null, null, null, "sqore.com", "com", null, null, null, null ]
+  , [ "row-7zj8~ugrj_x343", "00000000-0000-0000-D3DE-5AF0F58A0C61", 0, 1568761192, null, 1568761194, null, "{ }", "Mediabrands Publishing", "Managing Dir", "BELGIUM", "mediabrands.be", "be", [ "{\"address\": \"\", \"city\": \"Hoeilaart\", \"state\": \"\", \"zip\": \"\"}", "50.767486", "4.474046", null, false ], "16", null, null ]
+  , [ "row-785y_9zfu.2h6r", "00000000-0000-0000-8A19-FF4746C32618", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Michelle Stuart", "CANADA", "marineharvest.com", "com", [ "{\"address\": \"\", \"city\": \"Black Creek\", \"state\": \"BC\", \"zip\": \"\"}", "46.535755", "-84.287108", null, false ], "29", null, null ]
+  , [ "row-2xmy~68yc_nt4i", "00000000-0000-0000-B5AB-2F1566F6F110", 0, 1568761192, null, 1568761194, null, "{ }", "NHK Japan Broadcasting Corporation", "Producer", "USA", "nhkny.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-j2y6_2rsi~3pwz", "00000000-0000-0000-1A0D-9C9AE483656F", 0, 1568761192, null, 1568761194, null, "{ }", "Omrop FryslÃ¢n", "CTO", "NETHERLANDS", "omropfryslan.nl", "nl", [ "{\"address\": \"\", \"city\": \"Leeuwarden\", \"state\": \"\", \"zip\": \"\"}", "53.201233", "5.799913", null, false ], "123", null, null ]
+  , [ "row-uqc9-3qu8.ynd5", "00000000-0000-0000-C0DD-CB798C5F24DF", 0, 1568761192, null, 1568761194, null, "{ }", "CDI Interactive", "Sr VP Managing Dir", "COLOMBIA", "cdi-interactive.com", "com", [ "{\"address\": \"\", \"city\": \"Bogota\", \"state\": \"\", \"zip\": \"\"}", "4.710989", "-74.072092", null, false ], "33", null, null ]
+  , [ "row-6ib9.k4i7.kb37", "00000000-0000-0000-2CFF-17977058D630", 0, 1568761192, null, 1568761194, null, "{ }", "Austin chamber", "Allison Scharf", "USA", "hotmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-wzkc~tkeq_zybr", "00000000-0000-0000-833F-DC470C6E7CDB", 0, 1568761192, null, 1568761194, null, "{ }", "US Army", "Medical Officer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Fort Hood\", \"state\": \"TX\", \"zip\": \"\"}", "31.136331", "-97.779705", null, false ], "173", "23", "834" ]
+  , [ "row-im4s_6g8u~bf54", "00000000-0000-0000-3381-9FD7F14588CF", 0, 1568761192, null, 1568761194, null, "{ }", "Weekly Refresh WNYU FM", "Producer", "USA", "wnyu.org", "org", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-nffj~trnb~hc3t", "00000000-0000-0000-204E-F445B9ECFBC0", 0, 1568761192, null, 1568761194, null, "{ }", "Capital One", "UX Rockstar", "USA", "allthingschris.com", "com", [ "{\"address\": \"\", \"city\": \"Plano\", \"state\": \"TX\", \"zip\": \"\"}", "33.019843", "-96.698886", null, false ], "173", "23", "3110" ]
+  , [ "row-h3rv_mz7b~hmdw", "00000000-0000-0000-8756-94C81778366C", 0, 1568761192, null, 1568761194, null, "{ }", "Austin Chamber of Commerce", "SVP", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-icd4~kgjf.kmqv", "00000000-0000-0000-19BC-2B63584192F8", 0, 1568761192, null, 1568761194, null, "{ }", "Techmatrix Co Ltd", "Ryo Oba", "JAPAN", "or.knt.co.jp", "jp", [ "{\"address\": \"\", \"city\": \"Koutouku\", \"state\": \"\", \"zip\": \"\"}", "37.946861", "23.828688", null, false ], "67", null, null ]
+  , [ "row-e4jq.dgsc-77za", "00000000-0000-0000-3A40-CF5966E14C39", 0, 1568761192, null, 1568761194, null, "{ }", "CI&T", "Program Mgr", "USA", "ciandt.com", "com", [ "{\"address\": \"\", \"city\": \"Bensalem\", \"state\": \"PA\", \"zip\": \"\"}", "40.112555", "-74.943514", null, false ], "173", "48", "2458" ]
+  , [ "row-ejtf.v3ck~hdxf", "00000000-0000-0000-DABE-2ECF3F07DB3F", 0, 1568761192, null, 1568761194, null, "{ }", "AnalogFolk", "Founder & Chief Strategy Officer", "UNITED KINGDOM", "analogfolk.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-6hyh-p8ck-jate", "00000000-0000-0000-62CB-F9276BBC9B32", 0, 1568761192, null, 1568761194, null, "{ }", "Ohio University", "Producer/Engineer", "USA", "ohio.edu", "edu", [ "{\"address\": \"\", \"city\": \"Athens\", \"state\": \"OH\", \"zip\": \"\"}", "37.983917", "23.72936", null, false ], "67", null, null ]
+  , [ "row-swex.smje_xgis", "00000000-0000-0000-6CFA-9CA81CDF5C2B", 0, 1568761192, null, 1568761194, null, "{ }", "Intrepid Solutions", "Owner", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ebxm.49k9~hary", "00000000-0000-0000-0CAD-D182B96EB139", 0, 1568761192, null, 1568761194, null, "{ }", "Lioness", "Co-founder/CEO", "USA", "lioness.io", "io", [ "{\"address\": \"\", \"city\": \"Berkeley\", \"state\": \"CA\", \"zip\": \"\"}", "37.871593", "-122.272747", null, false ], "173", "8", "1141" ]
+  , [ "row-ttsd.uuua_4yd3", "00000000-0000-0000-E3ED-053678E421A3", 0, 1568761192, null, 1568761194, null, "{ }", "PepsiCo", "Assoc Research & Dev Engineer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-76z5_tyub_kw9x", "00000000-0000-0000-2142-7B333124F1B6", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Illustrator", "USA", "earthlink.net", "net", [ "{\"address\": \"\", \"city\": \"North Hollywood\", \"state\": \"CA\", \"zip\": \"\"}", "34.187044", "-118.381256", null, false ], "173", "8", "1195" ]
+  , [ "row-jdi9~ju6x_2uh3", "00000000-0000-0000-8A93-D224DB3094E8", 0, 1568761192, null, 1568761194, null, "{ }", "Overstock.com", "Dir SEO", "USA", "overstock.com", "com", [ "{\"address\": \"\", \"city\": \"Cottonwood Heights\", \"state\": \"UT\", \"zip\": \"\"}", "40.618316", "-111.816293", null, false ], "173", "13", "3176" ]
+  , [ "row-3ca8-7pcj_w9n6", "00000000-0000-0000-18AF-00221FB9CAC8", 0, 1568761192, null, 1568761194, null, "{ }", "Arlington Economic Development", "Salesforce Admin", "USA", "arlingtonva.us", "us", [ "{\"address\": \"\", \"city\": \"Arlington\", \"state\": \"VA\", \"zip\": \"\"}", "32.735687", "-97.108066", null, false ], "173", "23", "2919" ]
+  , [ "row-2dmt-zsgd~eqnf", "00000000-0000-0000-7035-B352FE625547", 0, 1568761192, null, 1568761194, null, "{ }", "CH Robinson", "Web Designer", "USA", "chrobinson.com", "com", [ "{\"address\": \"\", \"city\": \"Eden Prairie\", \"state\": \"MN\", \"zip\": \"\"}", "44.854686", "-93.470786", null, false ], "173", "1", "1406" ]
+  , [ "row-sz6g~rgyf-vspg", "00000000-0000-0000-DEEF-D50075FD1430", 0, 1568761192, null, 1568761194, null, "{ }", "Globoforce", "Sr Business Analyst", "IRELAND", "globoforce.com", "com", [ "{\"address\": \"\", \"city\": \"Dublin\", \"state\": \"\", \"zip\": \"\"}", "53.349805", "-6.26031", null, false ], "80", null, null ]
+  , [ "row-jxgs-sidj-fky9", "00000000-0000-0000-418D-B203F65513FB", 0, 1568761192, null, 1568761194, null, "{ }", "University of Michigan", "Dir, Institutional Positioning", "USA", "med.umich.edu", "edu", [ "{\"address\": \"\", \"city\": \"Ann Arbor\", \"state\": \"MI\", \"zip\": \"\"}", "42.280826", "-83.743038", null, false ], "173", "50", "366" ]
+  , [ "row-cwty.g6xk-rucj", "00000000-0000-0000-4189-0282DF015DEE", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Graphic Designer/Photographer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-kkcm~d7jx_5k55", "00000000-0000-0000-B591-903DFDB9EEF8", 0, 1568761192, null, 1568761194, null, "{ }", "Sno-Isle Libraries", "Lead Librarian for Business", "USA", "sno-isle.org", "org", [ "{\"address\": \"\", \"city\": \"Marysville\", \"state\": \"WA\", \"zip\": \"\"}", "-37.510423", "145.74737", null, false ], "12", null, null ]
+  , [ "row-65wh.nfyw.itx5", "00000000-0000-0000-745C-44FB9FE2FC52", 0, 1568761192, null, 1568761194, null, "{ }", "UT", "MBA student ", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-zk84-zttv_v78m", "00000000-0000-0000-3839-D8485879665A", 0, 1568761192, null, 1568761194, null, "{ }", "Cohn & Wolfe", "Head of Digital & Integrated Mktg UK & EMEA", "UNITED KINGDOM", "cohnwolfe.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-s2f8_used~zgjk", "00000000-0000-0000-2419-2DC1726A5EBA", 0, 1568761192, null, 1568761194, null, "{ }", null, "Aaron Marks", "USA", "aaronmarks.net", "net", [ "{\"address\": \"\", \"city\": \"Pittsburgh\", \"state\": \"PA\", \"zip\": \"\"}", "40.440625", "-79.995886", null, false ], "173", "48", "2455" ]
+  , [ "row-5ct2_ppzs-jc99", "00000000-0000-0000-9AEC-5DF68C93D2D5", 0, 1568761192, null, 1568761194, null, "{ }", "Editora Globo S/A", "Digital Strategy Dir", "BRAZIL", "edglobo.com.br", "br", [ "{\"address\": \"\", \"city\": \"Sao Paulo\", \"state\": \"SP\", \"zip\": \"\"}", "-23.55052", "-46.633309", null, false ], "24", null, null ]
+  , [ "row-vt6i-zkd8~d95s", "00000000-0000-0000-E1A4-DA2271A5BDAD", 0, 1568761192, null, 1568761194, null, "{ }", "Texas State University", "Asst Professor", "USA", "txstate.edu", "edu", [ "{\"address\": \"\", \"city\": \"San Marcos\", \"state\": \"TX\", \"zip\": \"\"}", "29.883275", "-97.941394", null, false ], "173", "23", "755" ]
+  , [ "row-byir-vzk8.bzj2", "00000000-0000-0000-C3AD-23D9978F16D0", 0, 1568761192, null, 1568761194, null, "{ }", "Beyond the Box Office", "Founder", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Wrightsville Beach\", \"state\": \"NC\", \"zip\": \"\"}", "34.208504", "-77.796371", null, false ], "173", "37", "2432" ]
+  , [ "row-mme5~5tcx_x6y4", "00000000-0000-0000-AB29-86349CD70BC9", 0, 1568761192, null, 1568761194, null, "{ }", "Roskilde Festival", "Board Member", "DENMARK", "roskilde-festival.dk", "dk", [ "{\"address\": \"\", \"city\": \"Roskilde\", \"state\": \"\", \"zip\": \"\"}", "55.64191", "12.087845", null, false ], "45", null, null ]
+  , [ "row-3x4i-rx47-nzve", "00000000-0000-0000-4FE1-27AC8C371EF0", 0, 1568761192, null, 1568761194, null, "{ }", "National Instruments", "Design Team Lead", "USA", "ni.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-dmim~8qsz~e4pi", "00000000-0000-0000-FEED-F6C535ED1201", 0, 1568761192, null, 1568761194, null, "{ }", "Now sourcing", "Creative director", "USA", "nowsourcing.com", "com", [ "{\"address\": \"\", \"city\": \"Louisville\", \"state\": \"KY\", \"zip\": \"\"}", "38.1889912", "-85.8171978", null, false ], "173", "36", "1327" ]
+  , [ "row-9u4f.gau3.3pfv", "00000000-0000-0000-4FEC-452E1187EE78", 0, 1568761192, null, 1568761194, null, "{ }", null, "Tomas Caquias", null, "gmail.com", "com", null, null, null, null ]
+  , [ "row-4cbe~fkp9.8z9u", "00000000-0000-0000-F555-2F6E228306B8", 0, 1568761192, null, 1568761194, null, "{ }", "Refinery Hotel", "Dir of Sales & Mktg", "USA", "refineryhotelnewyork.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-4qgk-gt7u~5pe2", "00000000-0000-0000-DF5D-1E15DFCD3528", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Emily Richards", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Kerrville\", \"state\": \"TX\", \"zip\": \"\"}", "30.047433", "-99.140319", null, false ], "173", "23", "766" ]
+  , [ "row-83ig.4b4n.rvez", "00000000-0000-0000-A720-FC9236310D4B", 0, 1568761192, null, 1568761194, null, "{ }", "iCiDIGITAL", "Vice President/Digital and Emerging Technologies", "USA", "icidigital.com", "com", [ "{\"address\": \"\", \"city\": \"Raleigh\", \"state\": \"NC\", \"zip\": \"\"}", "35.77959", "-78.638179", null, false ], "173", "37", "3158" ]
+  , [ "row-a2f6-xebg.r9ci", "00000000-0000-0000-AED7-80C2A6A6304D", 0, 1568761192, null, 1568761194, null, "{ }", "Swedish Ministry of Enterprise and Innovation", "Desk Officer", "SWEDEN", "gov.se", "se", [ "{\"address\": \"\", \"city\": \"Stockholm\", \"state\": \"\", \"zip\": \"\"}", "59.329323", "18.068581", null, false ], "154", null, null ]
+  , [ "row-fvq2.sdk9-fa55", "00000000-0000-0000-2D13-20061F7A917E", 0, 1568761192, null, 1568761194, null, "{ }", "Lenel Systems International", "UX Interaction Designer", "USA", "lenel.com", "com", [ "{\"address\": \"\", \"city\": \"Pittsford\", \"state\": \"NY\", \"zip\": \"\"}", "43.090619", "-77.514997", null, false ], "173", "47", "2093" ]
+  , [ "row-gyfv_hv8d.hmsq", "00000000-0000-0000-FA22-AC916A719979", 0, 1568761192, null, 1568761194, null, "{ }", "Federal Reserve Bank of San Francisco", "Dir", "USA", "sf.frb.org", "org", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-n9r5_d4zy-jc5y", "00000000-0000-0000-2E6A-C1A7387F80CD", 0, 1568761192, null, 1568761194, null, "{ }", "Milwaukee Tool", "Asst Product Mgr", "USA", "milwaukeetool.com", "com", [ "{\"address\": \"\", \"city\": \"Brookfield\", \"state\": \"WI\", \"zip\": \"\"}", "43.060567", "-88.106479", null, false ], "173", "41", "3075" ]
+  , [ "row-94g7.peun_zqjj", "00000000-0000-0000-6508-EB44FC3BAD33", 0, 1568761192, null, 1568761194, null, "{ }", "Twelve South", "Mktg Mgr", "USA", "me.com", "com", [ "{\"address\": \"\", \"city\": \"Mount Pleasant\", \"state\": \"SC\", \"zip\": \"\"}", "32.832322", "-79.828426", null, false ], "173", "33", "1968" ]
+  , [ "row-cshh~tu8k-uhja", "00000000-0000-0000-D398-1C9C280773FB", 0, 1568761192, null, 1568761194, null, "{ }", "Dagbladet", "Project Mgr", "NORWAY", "dagbladet.no", "no", [ "{\"address\": \"\", \"city\": \"Oslo\", \"state\": \"\", \"zip\": \"\"}", "59.913869", "10.752245", null, false ], "124", null, null ]
+  , [ "row-6mc5-ujvs.akif", "00000000-0000-0000-2422-39DA662FD093", 0, 1568761192, null, 1568761194, null, "{ }", "Samsung Electronics", "Homayoon Shahinfar", "USA", "yahoo.com", "com", [ "{\"address\": \"\", \"city\": \"San Jose\", \"state\": \"CA\", \"zip\": \"\"}", "37.338208", "-121.886329", null, false ], "173", "8", "1334" ]
+  , [ "row-v658_t2fw.727b", "00000000-0000-0000-EE9E-1CBC9A636C2E", 0, 1568761192, null, 1568761194, null, "{ }", "Viget", "FED", "USA", "viget.com", "com", [ "{\"address\": \"\", \"city\": \"Falls Church\", \"state\": \"VA\", \"zip\": \"\"}", "38.882334", "-77.171091", null, false ], "173", "40", "930" ]
+  , [ "row-i9bs-upyy.kkd2", "00000000-0000-0000-5007-03F37E04A835", 0, 1568761192, null, 1568761194, null, "{ }", "M/C/C", "Ad Coord", "USA", "mccom.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-jdr9.afz3_xff5", "00000000-0000-0000-B14A-C28D9C6B48F3", 0, 1568761192, null, 1568761194, null, "{ }", "GE Aviation", "Sr Designer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-ayad~7ina_ec9v", "00000000-0000-0000-6B19-2358A8930095", 0, 1568761192, null, 1568761194, null, "{ }", "M/C/C", "Account Coord", "USA", "mccom.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-rr6e.9nh8~q3k5", "00000000-0000-0000-0EEB-D64ED08B8DE0", 0, 1568761192, null, 1568761194, null, "{ }", "Karbonat", "Partner & Creative Director", "TURKEY", "karbonat.com", "com", [ "{\"address\": \"\", \"city\": \"Besiktas\", \"state\": \"\", \"zip\": \"\"}", "40.912522", "42.874365", null, false ], "165", null, null ]
+  , [ "row-9u7h~5pcp.tqat", "00000000-0000-0000-C27E-40A3B01DADBD", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Photographer", "Photography", "USA", "yahoo.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-fryd~fz6v~eeek", "00000000-0000-0000-1ABC-16F88E6F7AC4", 0, 1568761192, null, 1568761194, null, "{ }", "180LA", "PR", "USA", "180la.com", "com", [ "{\"address\": \"\", \"city\": \"Santa Monica\", \"state\": \"CA\", \"zip\": \"\"}", "34.019454", "-118.491191", null, false ], "173", "8", "1195" ]
+  , [ "row-q4gb~xakd~cy89", "00000000-0000-0000-0810-95FAAECA7C34", 0, 1568761192, null, 1568761194, null, "{ }", "The Mirage Hotel & Casino", "VP Mktg & Advertising", "USA", "mirage.com", "com", [ "{\"address\": \"\", \"city\": \"Las Vegas\", \"state\": \"NV\", \"zip\": \"\"}", "36.169941", "-115.13983", null, false ], "173", "10", "480" ]
+  , [ "row-e39d.4n3k-g6hu", "00000000-0000-0000-C654-31F8F32EBEC2", 0, 1568761192, null, 1568761194, null, "{ }", null, "Michelle Dennis", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-z3r3~ja78-xzb4", "00000000-0000-0000-7DDD-A404FC90B1B2", 0, 1568761192, null, 1568761194, null, "{ }", "Duety", "Founder/CEO", "COLOMBIA", "duety.co", "co", [ "{\"address\": \"\", \"city\": \"Bogota\", \"state\": \"CUN\", \"zip\": \"\"}", "4.710989", "-74.072092", null, false ], "33", null, null ]
+  , [ "row-g3ui~gbh4-gicb", "00000000-0000-0000-9716-6761F3E73AD4", 0, 1568761192, null, 1568761194, null, "{ }", "Quadrant SMA LLC", "Production Dir", "USA", "matchdayintelligence.com", "com", [ "{\"address\": \"\", \"city\": \"Boerne\", \"state\": \"TX\", \"zip\": \"\"}", "29.794664", "-98.73197", null, false ], "173", "23", "2081" ]
+  , [ "row-hvpg-29y3.bm2f", "00000000-0000-0000-7621-F4595AD8F9D7", 0, 1568761192, null, 1568761194, null, "{ }", "Yahoo", "Prod Evangelist", "JAPAN", "yahoo-corp.jp", "jp", [ "{\"address\": \"\", \"city\": \"Minatoku\", \"state\": \"\", \"zip\": \"\"}", "35.658068", "139.751599", null, false ], "88", null, null ]
+  , [ "row-f9ud-swsg.x75u", "00000000-0000-0000-0952-B21C62EE3E92", 0, 1568761192, null, 1568761194, null, "{ }", "Verre", "Gianni Matera", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Pelham\", \"state\": \"NY\", \"zip\": \"\"}", "33.285669", "-86.809989", null, false ], "173", "29", "1636" ]
+  , [ "row-hed6_5yfq~qrgq", "00000000-0000-0000-AEF1-E57C461156DC", 0, 1568761192, null, 1568761194, null, "{ }", "StemBox", "CEO", "USA", "mystembox.com", "com", [ "{\"address\": \"\", \"city\": \"Seattle\", \"state\": \"WA\", \"zip\": \"\"}", "47.60621", "-122.332071", null, false ], "173", "6", "3009" ]
+  , [ "row-va9a.ne95.6nzj", "00000000-0000-0000-AA6C-CB8E31AA653C", 0, 1568761192, null, 1568761194, null, "{ }", "Allen High School", "Animator/Student", "USA", "allenisd.org", "org", [ "{\"address\": \"\", \"city\": \"Allen\", \"state\": \"TX\", \"zip\": \"\"}", "33.103174", "-96.67055", null, false ], "173", "23", "3110" ]
+  , [ "row-bqcg~285g_5bz9", "00000000-0000-0000-EFE6-E1D000432C25", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Thomas Lea", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-9s7m_rhvi_uvyy", "00000000-0000-0000-208C-C43ABF3127C2", 0, 1568761192, null, 1568761194, null, "{ }", "Crystal Crew", "Artist", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ce2r.9kmc_767b", "00000000-0000-0000-DCB6-C1B7B11DB613", 0, 1568761192, null, 1568761194, null, "{ }", "Katapult", "Project Mgr", "NORWAY", "me.com", "com", [ "{\"address\": \"\", \"city\": \"Oslo\", \"state\": \"\", \"zip\": \"\"}", "59.913869", "10.752245", null, false ], "124", null, null ]
+  , [ "row-75bi-f2ih_864g", "00000000-0000-0000-FCE1-7D8FD09936B4", 0, 1568761192, null, 1568761194, null, "{ }", "The University of Texas at Austin", "Dir Longhorn Maker Studio", "USA", "utexas.edu", "edu", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-mhdq~64re~x9n2", "00000000-0000-0000-F916-0E6390E7D5B3", 0, 1568761192, null, 1568761194, null, "{ }", "Folk", "Co-Founder/Brand Strategist", "CANADA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Montreal\", \"state\": \"QC\", \"zip\": \"\"}", "45.501689", "-73.567256", null, false ], "29", null, null ]
+  , [ "row-cv5h-h9dz.bund", "00000000-0000-0000-B637-937409121AE2", 0, 1568761192, null, 1568761194, null, "{ }", "Pride Star Apps", "CEO & Dir", "LEBANON", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Beirut\", \"state\": \"\", \"zip\": \"\"}", "33.888629", "35.495479", null, false ], "97", null, null ]
+  , [ "row-9bzx.hyhe~mjmd", "00000000-0000-0000-54B8-135B188F2DFE", 0, 1568761192, null, 1568761194, null, "{ }", "House of Kooser", "Owner", "USA", "houseofkooser.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-2kkd~ts8b.xqgg", "00000000-0000-0000-B571-1BA70918D2B0", 0, 1568761192, null, 1568761194, null, "{ }", "WeGoLook", "Digital Mktg Dir", "USA", "wegolook.com", "com", [ "{\"address\": \"\", \"city\": \"Oklahoma City\", \"state\": \"OK\", \"zip\": \"\"}", "35.46756", "-97.516428", null, false ], "173", "20", "712" ]
+  , [ "row-bpq4~g46t-4adb", "00000000-0000-0000-3752-78A55CDBF7EB", 0, 1568761192, null, 1568761194, null, "{ }", "Texas A&M University", "Student", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-prad-zey7~667c", "00000000-0000-0000-FAF2-73FA3381D175", 0, 1568761192, null, 1568761194, null, "{ }", "Beanstream", "Developer Liaison", "CANADA", "beanstream.com", "com", [ "{\"address\": \"\", \"city\": \"Victoria\", \"state\": \"BC\", \"zip\": \"\"}", "-37.471308", "144.785153", null, false ], "12", null, null ]
+  , [ "row-rrx6.dty2~2q65", "00000000-0000-0000-5FD3-6528227735DA", 0, 1568761192, null, 1568761194, null, "{ }", "Capital One", "Dir, Learning", "USA", "capitalone.com", "com", [ "{\"address\": \"\", \"city\": \"Plano\", \"state\": \"TX\", \"zip\": \"\"}", "33.019843", "-96.698886", null, false ], "173", "23", "3110" ]
+  , [ "row-hiri_jm37~jec5", "00000000-0000-0000-94EC-C500538D4497", 0, 1568761192, null, 1568761194, null, "{ }", "NASA HQ (Koansys)", "NASA HQ", "USA", "nasa.gov", "gov", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-4gm4_hu7k_7zyp", "00000000-0000-0000-596B-BE6421C56A13", 0, 1568761192, null, 1568761194, null, "{ }", "Vroom digital", "Nick Lad art", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Atlanta\", \"state\": \"GA\", \"zip\": \"\"}", "33.748995", "-84.387982", null, false ], "173", "31", "1137" ]
+  , [ "row-jsgt.j2ga-gxv4", "00000000-0000-0000-C71B-13C298095213", 0, 1568761192, null, 1568761194, null, "{ }", "Direct Marketing News", "Special Features Editor", "USA", "dmnews.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-jkgb_8axz_8xyr", "00000000-0000-0000-5CCB-9EF4CD294628", 0, 1568761192, null, 1568761194, null, "{ }", "P-N Designs Inc", "Owner", "USA", "aol.com", "com", [ "{\"address\": \"\", \"city\": \"Tucson\", \"state\": \"AZ\", \"zip\": \"\"}", "32.221743", "-110.926479", null, false ], "173", "7", "942" ]
+  , [ "row-xr38.fgjb.h6hy", "00000000-0000-0000-275D-9C2C2113ACC2", 0, 1568761192, null, 1568761194, null, "{ }", "Tillvaxtverket", "Head of Boot Camp", "SWEDEN", "tillvaxtverket.se", "se", [ "{\"address\": \"\", \"city\": \"Stockholm\", \"state\": \"\", \"zip\": \"\"}", "59.329323", "18.068581", null, false ], "154", null, null ]
+  , [ "row-jrhw_4rs6-kcr9", "00000000-0000-0000-045B-DB40A6D6FDB5", 0, 1568761192, null, 1568761194, null, "{ }", "Arlington Economic Development", "Business Dev Mgr", "USA", "arlingtonva.us", "us", [ "{\"address\": \"\", \"city\": \"Arlington\", \"state\": \"VA\", \"zip\": \"\"}", "32.735687", "-97.108066", null, false ], "173", "23", "2919" ]
+  , [ "row-b7du.tvve_sp6f", "00000000-0000-0000-6B8D-0DC09BD38122", 0, 1568761192, null, 1568761194, null, "{ }", "MD Financial Management", "VP", "CANADA", "cma.ca", "ca", [ "{\"address\": \"\", \"city\": \"Ottawa\", \"state\": \"ON\", \"zip\": \"\"}", "45.42153", "-75.697193", null, false ], "29", null, null ]
+  , [ "row-kgpc.ep7g_3yn3", "00000000-0000-0000-B8FC-C709007641C1", 0, 1568761192, null, 1568761194, null, "{ }", "National Instruments", "Staff Software Engineer", "USA", "ni.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-7f79.bsk5.qsnm", "00000000-0000-0000-1C41-4F3D2478B17C", 0, 1568761192, null, 1568761194, null, "{ }", "BuckleDown Systems", "Inventor/CEO", "USA", "mechtech007.com", "com", [ "{\"address\": \"\", \"city\": \"Albuquerque\", \"state\": \"NM\", \"zip\": \"\"}", "35.085334", "-106.605553", null, false ], "173", "11", "491" ]
+  , [ "row-qrkr-5ija_mwms", "00000000-0000-0000-CD48-E3C23127AF3A", 0, 1568761192, null, 1568761194, null, "{ }", "glispa GmbH", "Sr Front-End Dev", "GERMANY", "glispamedia.com", "com", [ "{\"address\": \"\", \"city\": \"Berlin\", \"state\": \"\", \"zip\": \"\"}", "52.520007", "13.404954", null, false ], "43", null, null ]
+  , [ "row-6uyd_my37~cksu", "00000000-0000-0000-EA12-90427DD504ED", 0, 1568761192, null, 1568761194, null, "{ }", "SQLI", "Founder & CEO", "FRANCE", "sqli.com", "com", [ "{\"address\": \"\", \"city\": \"Paris\", \"state\": \"\", \"zip\": \"\"}", "48.856614", "2.352222", null, false ], "57", null, null ]
+  , [ "row-jbq6~jz8n_yqjr", "00000000-0000-0000-A579-06A32522C4FA", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Kai Wong", "USA", "ieee.org", "org", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-df8w_sizf_fakk", "00000000-0000-0000-A630-13B95D3CE776", 0, 1568761192, null, 1568761194, null, "{ }", "PLOTPOINT", "Sr Producer", "USA", "plotpointcreative.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-dwx7_n6w8-sjx2", "00000000-0000-0000-6182-C8ACD6B6EB54", 0, 1568761192, null, 1568761194, null, "{ }", "Decker MS", "8th Grade Student", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-635i-zjqd-ghj2", "00000000-0000-0000-EBE2-B146BECCA5B9", 0, 1568761192, null, 1568761194, null, "{ }", "Google", "Data Scientist", "UNITED KINGDOM", "google.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"LND\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-if72.hxnv.hmqw", "00000000-0000-0000-FA51-7AD782CA7BD0", 0, 1568761192, null, 1568761194, null, "{ }", "University of NV Reno", "Professor", "USA", "dailey.net", "net", [ "{\"address\": \"\", \"city\": \"Reno\", \"state\": \"NV\", \"zip\": \"\"}", "39.529633", "-119.813803", null, false ], "173", "10", "2403" ]
+  , [ "row-94v3~3d5j~hmwf", "00000000-0000-0000-F3E1-D46F45629196", 0, 1568761192, null, 1568761194, null, "{ }", "SevenThree Dev", "Front-end developer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Blacksburg\", \"state\": \"VA\", \"zip\": \"\"}", "37.229573", "-80.413939", null, false ], "173", "40", "917" ]
+  , [ "row-7rm8~57za~hpje", "00000000-0000-0000-AA0A-6B3A331D39FE", 0, 1568761192, null, 1568761194, null, "{ }", null, null, "SPAIN", "gmail.com", "com", null, null, null, null ]
+  , [ "row-bp95-aha2.v3jc", "00000000-0000-0000-190D-2315774528F7", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Creative Strategist", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Los Angeles\", \"state\": \"CA\", \"zip\": \"\"}", "34.052234", "-118.243685", null, false ], "173", "8", "1195" ]
+  , [ "row-qr6p-nnar-qg9j", "00000000-0000-0000-4D95-74081A53070C", 0, 1568761192, null, 1568761194, null, "{ }", "Amazon", "Mktg Mgr Kindle Content", "USA", "amazon.com", "com", [ "{\"address\": \"\", \"city\": \"Seattle\", \"state\": \"WA\", \"zip\": \"\"}", "47.60621", "-122.332071", null, false ], "173", "6", "3009" ]
+  , [ "row-qbam.52i5~ruda", "00000000-0000-0000-E131-8C19C3D25535", 0, 1568761192, null, 1568761194, null, "{ }", "Orbital Media/ Sonar +D", "Producer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-zzp4-t9je_4cdj", "00000000-0000-0000-7A0E-8D5C02783789", 0, 1568761192, null, 1568761194, null, "{ }", "Kidu", "Creative Dir", "USA", "kidu.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-5qyj_99e2-7qux", "00000000-0000-0000-24EA-9D1CF282DBCD", 0, 1568761192, null, 1568761194, null, "{ }", "Cinmar", "Creative Dir", "USA", "cinmar.com", "com", [ "{\"address\": \"\", \"city\": \"West Chester\", \"state\": \"OH\", \"zip\": \"\"}", "39.960664", "-75.605488", null, false ], "173", "48", "2496" ]
+  , [ "row-ne6s~pf66~c289", "00000000-0000-0000-73FB-CBD2B6E7F30A", 0, 1568761192, null, 1568761194, null, "{ }", "Nestle Mexico SA", "CEO", "MEXICO", "turycon.com.mx", "mx", [ "{\"address\": \"\", \"city\": \"Mexico City\", \"state\": \"\", \"zip\": \"\"}", "19.432608", "-99.133208", null, false ], "108", null, null ]
+  , [ "row-yei7~78d9.b7dj", "00000000-0000-0000-6ECD-D7EE2BBD9D81", 0, 1568761192, null, 1568761194, null, "{ }", "Mediabrands", "Head of Strategy", "BELGIUM", "mediabrands.com", "com", [ "{\"address\": \"\", \"city\": \"Hoeilaart\", \"state\": \"\", \"zip\": \"\"}", "50.767486", "4.474046", null, false ], "16", null, null ]
+  , [ "row-sp8z-jytp.hfhw", "00000000-0000-0000-73C8-C88433900957", 0, 1568761192, null, 1568761194, null, "{ }", "Indie Game Developers", "Founder", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Carlsbad\", \"state\": \"CA\", \"zip\": \"\"}", "33.158093", "-117.350594", null, false ], "173", "8", "1179" ]
+  , [ "row-vpsn.849z.h7f5", "00000000-0000-0000-CB25-02B686381A2C", 0, 1568761192, null, 1568761194, null, "{ }", "Synteny", "Founder/Investor/Cheerleader", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-e4eh_y8xj.3zsd", "00000000-0000-0000-7B9F-906F98B8DB15", 0, 1568761192, null, 1568761194, null, "{ }", "LIFT Agency", "Dir of Strategy", "USA", "wearelift.com", "com", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-mvgm~ep2t.47n8", "00000000-0000-0000-0621-3659C6C18B3E", 0, 1568761192, null, 1568761194, null, "{ }", "Shoptelligence", "Founder & CEO", "USA", "shoptelligence.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-wnqj.unvk-gb3u", "00000000-0000-0000-ED48-0C49F4425533", 0, 1568761192, null, 1568761194, null, "{ }", "Eatlimmo", "Cofounder", "MEXICO", "eatlimmo.com", "com", [ "{\"address\": \"\", \"city\": \"Monterrey\", \"state\": \"\", \"zip\": \"\"}", "25.686614", "-100.316113", null, false ], "108", null, null ]
+  , [ "row-fe2p-jf95~tbh8", "00000000-0000-0000-42FD-0176697313CB", 0, 1568761192, null, 1568761194, null, "{ }", "P-N Designs Inc", "Owner", "USA", "aol.com", "com", [ "{\"address\": \"\", \"city\": \"Tucson\", \"state\": \"AZ\", \"zip\": \"\"}", "32.221743", "-110.926479", null, false ], "173", "7", "942" ]
+  , [ "row-d2f7_bc48.5y5x", "00000000-0000-0000-1F12-35B3FC6F05CC", 0, 1568761192, null, 1568761194, null, "{ }", "Regency Centers", "Sr Mktg Mgr", "USA", "regencycenters.com", "com", [ "{\"address\": \"\", \"city\": \"Vienna\", \"state\": \"VA\", \"zip\": \"\"}", "48.208174", "16.373819", null, false ], "13", null, null ]
+  , [ "row-a3ub.gs97.ys7j", "00000000-0000-0000-FF1F-325A906F274C", 0, 1568761192, null, 1568761194, null, "{ }", "Go Co", "Mktg Mgr", "USA", "go.co", "co", [ "{\"address\": \"\", \"city\": \"McLean\", \"state\": \"VA\", \"zip\": \"\"}", "38.933868", "-77.17726", null, false ], "173", "40", "2770" ]
+  , [ "row-5w5s~5vbf-pswz", "00000000-0000-0000-ED20-8F66C8EE2C3E", 0, 1568761192, null, 1568761194, null, "{ }", "New York University", "Meredith Broussard", "USA", "nyu.edu", "edu", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-9gch_hbab~qskm", "00000000-0000-0000-5AF4-C4847074A932", 0, 1568761192, null, 1568761194, null, "{ }", "Amoeba Culture", "Mktg Dir", "SOUTH KOREA", "amoebaculture.com", "com", [ "{\"address\": \"\", \"city\": \"Seoul\", \"state\": \"\", \"zip\": \"\"}", "37.566535", "126.977969", null, false ], "93", null, null ]
+  , [ "row-i36x_yzpf-upjf", "00000000-0000-0000-FF26-90655B779200", 0, 1568761192, null, 1568761194, null, "{ }", "Lone Star College System", "Multimedia Producer", "USA", "lonestar.edu", "edu", [ "{\"address\": \"\", \"city\": \"The Woodlands\", \"state\": \"TX\", \"zip\": \"\"}", "30.165821", "-95.461262", null, false ], "173", "23", "2824" ]
+  , [ "row-jy3b_2uwh-6d3t", "00000000-0000-0000-2F90-8396D060AEE5", 0, 1568761192, null, 1568761194, null, "{ }", "Cataldo Designs", "Instructional Designer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-g973.dirg-iqgq", "00000000-0000-0000-8E42-4FFA83CA62C2", 0, 1568761192, null, 1568761194, null, "{ }", "make.tv", "CTO", "GERMANY", "make.tv", "tv", [ "{\"address\": \"\", \"city\": \"Cologne\", \"state\": \"\", \"zip\": \"\"}", "50.937531", "6.960279", null, false ], "43", null, null ]
+  , [ "row-sbew-7sgu~xpnb", "00000000-0000-0000-E538-83FCBB3FA33B", 0, 1568761192, null, 1568761194, null, "{ }", "DR-Danish Broadcasting Corporation", "Managing Editor", "DENMARK", "dr.dk", "dk", [ "{\"address\": \"\", \"city\": \"Copenhagen\", \"state\": \"\", \"zip\": \"\"}", "55.676097", "12.568337", null, false ], "45", null, null ]
+  , [ "row-w2fr~wfze-6bmk", "00000000-0000-0000-0A77-F21D896B3E9C", 0, 1568761192, null, 1568761194, null, "{ }", "Lone Star College", "Multimedia Producer", "USA", "yahoo.com", "com", [ "{\"address\": \"\", \"city\": \"The Woodlands\", \"state\": \"TX\", \"zip\": \"\"}", "30.165821", "-95.461262", null, false ], "173", "23", "2824" ]
+  , [ "row-jvhs_pdcc~gp7x", "00000000-0000-0000-EB79-F47F44526DDA", 0, 1568761192, null, 1568761194, null, "{ }", "Swarovski", "Head of Press & Media", "USA", "swarovski.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-h72s.a8am-2eba", "00000000-0000-0000-63FD-6077CDD6B4AA", 0, 1568761192, null, 1568761194, null, "{ }", "IBM", "WW Cloud and Developer Programs", "USA", "us.ibm.com", "com", [ "{\"address\": \"\", \"city\": \"Levittown\", \"state\": \"PA\", \"zip\": \"\"}", "40.725934", "-73.514292", null, false ], "173", "47", "2094" ]
+  , [ "row-rib8-shss_qe9g", "00000000-0000-0000-027D-918563E079B7", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Site Manager", "SXSW Site Mgr", "USA", "hotmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-pn22_bka9_beir", "00000000-0000-0000-A448-64B41C57472C", 0, 1568761192, null, 1568761194, null, "{ }", "791 Technologies", "Chief Creative Officer", "CANADA", "me.com", "com", [ "{\"address\": \"\", \"city\": \"Victoria\", \"state\": \"BC\", \"zip\": \"\"}", "-37.471308", "144.785153", null, false ], "12", null, null ]
+  , [ "row-6pbq_e6g5.9qdr", "00000000-0000-0000-4282-47DA407AA6B7", 0, 1568761192, null, 1568761194, null, "{ }", "The Peabody School", "Science Teacher", "USA", "peabodyschool.org", "org", [ "{\"address\": \"\", \"city\": \"Charlottesville\", \"state\": \"VA\", \"zip\": \"\"}", "38.029306", "-78.476678", null, false ], "173", "40", "2906" ]
+  , [ "row-3nhx-iezy-bkbn", "00000000-0000-0000-77C0-8A65648242D5", 0, 1568761192, null, 1568761194, null, "{ }", "Quadrant SMA LLC", "Principal", "USA", "matchdayintelligence.com", "com", [ "{\"address\": \"\", \"city\": \"Boerne\", \"state\": \"TX\", \"zip\": \"\"}", "29.794664", "-98.73197", null, false ], "173", "23", "2081" ]
+  , [ "row-j3rd-d9wm_4psh", "00000000-0000-0000-B363-A6CE0725152A", 0, 1568761192, null, 1568761194, null, "{ }", "YouTube", "Business Dev", "USA", "google.com", "com", [ "{\"address\": \"\", \"city\": \"San Bruno\", \"state\": \"CA\", \"zip\": \"\"}", "37.63049", "-122.411084", null, false ], "173", "8", "1333" ]
+  , [ "row-wfda~97a4~qn3d", "00000000-0000-0000-8548-B101EA08FC66", 0, 1568761192, null, 1568761194, null, "{ }", "Watchdog Management", "Director of Digital Media and Creative Services", "CANADA", "watchdogmgt.com", "com", [ "{\"address\": \"\", \"city\": \"Vancouver\", \"state\": \"BC\", \"zip\": \"\"}", "45.638728", "-122.661486", null, false ], "173", "12", "2977" ]
+  , [ "row-56as-mydw_6ed3", "00000000-0000-0000-9A97-9AFE4141AED0", 0, 1568761192, null, 1568761194, null, "{ }", "Nesta", "Head of Events", "UNITED KINGDOM", "nesta.org.uk", "uk", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-g27g_xm7k.9f8p", "00000000-0000-0000-6F23-A524D05F2487", 0, 1568761192, null, 1568761194, null, "{ }", "Brand Pit", "Pit Boss", "JAPAN", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Tokyo\", \"state\": \"\", \"zip\": \"\"}", "35.689488", "139.691706", null, false ], "88", null, null ]
+  , [ "row-dkhc-xvc7_6jud", "00000000-0000-0000-EDED-8C3861F9199E", 0, 1568761192, null, 1568761194, null, "{ }", "by-tekniikka it", "Senior adviser ", null, "gmail.com", "com", [ null, "60.1637088", "24.7600956", null, false ], "54", null, null ]
+  , [ "row-ve6t-rf29-7hiv", "00000000-0000-0000-32DC-6104A3530DD4", 0, 1568761192, null, 1568761194, null, "{ }", "Mindshare Studios Inc", "AdminOps", "USA", "mindsharelabs.com", "com", [ "{\"address\": \"\", \"city\": \"Santa Fe\", \"state\": \"NM\", \"zip\": \"\"}", "35.686975", "-105.937799", null, false ], "173", "11", "1990" ]
+  , [ "row-yjyf-pg89_29hz", "00000000-0000-0000-B610-942F04A8218F", 0, 1568761192, null, 1568761194, null, "{ }", "The British Library", "Digital Curator", "UNITED KINGDOM", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-dbeh.t5sa_gn7i", "00000000-0000-0000-195B-037D495A691F", 0, 1568761192, null, 1568761194, null, "{ }", "CH Robinson", "Web Developer", "USA", "chrobinson.com", "com", [ "{\"address\": \"\", \"city\": \"Bee Cave\", \"state\": \"TX\", \"zip\": \"\"}", "30.306098", "-97.952377", null, false ], "173", "23", "2924" ]
+  , [ "row-i9fb~k8jk~w79f", "00000000-0000-0000-47CF-0F1964A96489", 0, 1568761192, null, 1568761194, null, "{ }", "NASA Jet Propulsion Laboratory", "Associate CTO", "USA", "jpl.nasa.gov", "gov", [ "{\"address\": \"\", \"city\": \"Pasadena\", \"state\": \"CA\", \"zip\": \"\"}", "34.147785", "-118.144516", null, false ], "173", "8", "1195" ]
+  , [ "row-afkg-5jb2_848y", "00000000-0000-0000-A34B-6FE9C3D52E6E", 0, 1568761192, null, 1568761194, null, "{ }", "Tunlist", "CEO of Tunlist", "MEXICO", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Toluca\", \"state\": \"\", \"zip\": \"\"}", "19.28261", "-99.655665", null, false ], "108", null, null ]
+  , [ "row-8659.cmqw.fsqy", "00000000-0000-0000-5FF1-707E11B6EE37", 0, 1568761192, null, 1568761194, null, "{ }", "DDB Latina Puerto Rico", "Digital Connections Director", "USA", "ddblatinapr.com", "com", [ "{\"address\": \"\", \"city\": \"San Juan\", \"state\": \"PR\", \"zip\": \"\"}", "18.465539", "-66.105735", null, false ], "134", null, null ]
+  , [ "row-avkm.zify~fg6s", "00000000-0000-0000-557D-E739639A6726", 0, 1568761192, null, 1568761194, null, "{ }", "NTR", "Science editor", "NETHERLANDS", "ntr.nl", "nl", [ "{\"address\": \"\", \"city\": \"Hilversum\", \"state\": \"NH\", \"zip\": \"\"}", "52.22917", "5.166897", null, false ], "123", null, null ]
+  , [ "row-8esf_ssfv.jzd4", "00000000-0000-0000-4255-1E573CCCCF11", 0, 1568761192, null, 1568761194, null, "{ }", "Voqal", "Board of Director", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Boulder\", \"state\": \"CO\", \"zip\": \"\"}", "40.014986", "-105.270546", null, false ], "173", "9", "85" ]
+  , [ "row-2zj6.xdbm-svsd", "00000000-0000-0000-A2BA-59A3C35635AB", 0, 1568761192, null, 1568761194, null, "{ }", "Apple Inc", "Enterprise Support Engineer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ygia-fzb7_5h4k", "00000000-0000-0000-51CA-47C3B6F9A165", 0, 1568761192, null, 1568761194, null, "{ }", "Mobiltron, Inc.", "CEO & Co-Founder", "USA", "mobiltron.com", "com", [ "{\"address\": \"\", \"city\": \"Boston\", \"state\": \"MA\", \"zip\": \"\"}", "42.360083", "-71.05888", null, false ], "173", "25", "1918" ]
+  , [ "row-dzan_sxdw.xjx3", "00000000-0000-0000-8906-E4DAFDB76B4A", 0, 1568761192, null, 1568761194, null, "{ }", "North Dakota State University", "Asst Professor", "USA", "ndsu.edu", "edu", [ "{\"address\": \"\", \"city\": \"Fargo\", \"state\": \"ND\", \"zip\": \"\"}", "46.877186", "-96.789803", null, false ], "173", "3", "557" ]
+  , [ "row-5iep-x68r-im5i", "00000000-0000-0000-D968-FEC7A675EC40", 0, 1568761192, null, 1568761194, null, "{ }", "Overstock.com", "User Experience Mgr", "USA", "overstock.com", "com", [ "{\"address\": \"\", \"city\": \"Salt Lake City\", \"state\": \"UT\", \"zip\": \"\"}", "40.760779", "-111.891047", null, false ], "173", "13", "3176" ]
+  , [ "row-5edg-53dw_gdeb", "00000000-0000-0000-9865-ED693807BA3C", 0, 1568761192, null, 1568761194, null, "{ }", "Asterozoa Inc", "Fire Extinguisher", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Chelmsford\", \"state\": \"MA\", \"zip\": \"\"}", "51.735587", "0.46855", null, false ], "59", null, null ]
+  , [ "row-24a4_bskd~ding", "00000000-0000-0000-04A7-9728445D96ED", 0, 1568761192, null, 1568761194, null, "{ }", "Central Intelligence Agency", "Chief/ Public Communications Branch", "USA", "ucia.gov", "gov", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-kwuq-q4qx.ygsy", "00000000-0000-0000-40B0-AEF7D588E875", 0, 1568761192, null, 1568761194, null, "{ }", "University of Oregon", "Chambers Distinguished Professor of Advertising", "USA", "uoregon.edu", "edu", [ "{\"address\": \"\", \"city\": \"Eugene\", \"state\": \"OR\", \"zip\": \"\"}", "44.052069", "-123.086754", null, false ], "173", "12", "2371" ]
+  , [ "row-6grv-6q4f_b4z7", "00000000-0000-0000-B952-83F9D09277A0", 0, 1568761192, null, 1568761194, null, "{ }", "VCU Brandcenter", "Student", "USA", "mymail.vcu.edu", "edu", [ "{\"address\": \"\", \"city\": \"Richmond\", \"state\": \"VA\", \"zip\": \"\"}", "37.540725", "-77.436048", null, false ], "173", "40", "2947" ]
+  , [ "row-uxey~8uis-6g22", "00000000-0000-0000-46C5-87414F2AAE86", 0, 1568761192, null, 1568761194, null, "{ }", "Creative Commons", "Regional Coord", "TURKEY", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Istanbul\", \"state\": \"\", \"zip\": \"\"}", "41.008238", "28.978359", null, false ], null, null, null ]
+  , [ "row-s8ey~cm4d~krxe", "00000000-0000-0000-1202-39446E2625CA", 0, 1568761192, null, 1568761194, null, "{ }", "U.S. Army Institute of Surgical Research", "Medical Informatics Fellow", "USA", "mail.mil", "mil", [ "{\"address\": \"\", \"city\": \"San Antonio\", \"state\": \"TX\", \"zip\": \"\"}", "29.424122", "-98.493628", null, false ], "173", "23", "3027" ]
+  , [ "row-bnva.i58n.gspz", "00000000-0000-0000-EDB8-93943B959F57", 0, 1568761192, null, 1568761194, null, "{ }", "Purdue University", "Student", "USA", "purdue.edu", "edu", [ "{\"address\": \"\", \"city\": \"Wood Dale\", \"state\": \"IL\", \"zip\": \"\"}", "41.963363", "-87.978956", null, false ], "173", "34", "1866" ]
+  , [ "row-a4rv~p9wa-3j34", "00000000-0000-0000-63C2-861462FD4665", 0, 1568761192, null, 1568761194, null, "{ }", "Telewander", "Jose Manuel Lizama Gonzalez", "CHILE", "telewander.com", "com", [ "{\"address\": \"\", \"city\": \"Santiago de Chile\", \"state\": \"\", \"zip\": \"\"}", "-33.44889", "-70.669265", null, false ], "31", null, null ]
+  , [ "row-j6fa.nf7e_2tf5", "00000000-0000-0000-5D12-57B0EE16438B", 0, 1568761192, null, 1568761194, null, "{ }", "Automated Insights", "Chief Prod Officer", "USA", "automatedinsights.com", "com", [ "{\"address\": \"\", \"city\": \"Durham\", \"state\": \"NC\", \"zip\": \"\"}", "35.994033", "-78.898619", null, false ], "173", "37", "641" ]
+  , [ "row-nng2~ywjn~5nxc", "00000000-0000-0000-B375-3AC1687804C9", 0, 1568761192, null, 1568761194, null, "{ }", "Disney", "Exec Dir Strategy", "USA", "disney.com", "com", [ "{\"address\": \"\", \"city\": \"Burbank\", \"state\": \"CA\", \"zip\": \"\"}", "34.180839", "-118.308966", null, false ], "173", "8", "1195" ]
+  , [ "row-rmdx.j3yb_ch23", "00000000-0000-0000-BABD-87CEE2BE557D", 0, 1568761192, null, 1568761194, null, "{ }", "Amoeba Culture", "Music Producer", "SOUTH KOREA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Seoul\", \"state\": \"\", \"zip\": \"\"}", "37.566535", "126.977969", null, false ], "93", null, null ]
+  , [ "row-mkxy_cpdv.nh3a", "00000000-0000-0000-C9F2-009BEC5F799F", 0, 1568761192, null, 1568761194, null, "{ }", "Cisco Systems Inc", "CTO/Evangelist, New Frontiers", "USA", "cisco.com", "com", [ "{\"address\": \"\", \"city\": \"San Jose\", \"state\": \"CA\", \"zip\": \"\"}", "37.338208", "-121.886329", null, false ], "173", "8", "1334" ]
+  , [ "row-7bse~txda-7q89", "00000000-0000-0000-C9D7-1DA940FD707A", 0, 1568761192, null, 1568761194, null, "{ }", null, "Melissa Dangler", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Denver\", \"state\": \"CO\", \"zip\": \"\"}", "39.739236", "-104.990251", null, false ], "173", "9", "1444" ]
+  , [ "row-cex3.kfd4_3iug", "00000000-0000-0000-685E-B8DE1DC73549", 0, 1568761192, null, 1568761194, null, "{ }", "Medtronic", "Sr Software Engineer", "USA", "medtronic.com", "com", [ "{\"address\": \"\", \"city\": \"Tempe\", \"state\": \"AZ\", \"zip\": \"\"}", "33.42551", "-111.940005", null, false ], "173", "7", "989" ]
+  , [ "row-i44c-t29f-eqrw", "00000000-0000-0000-EB5F-3E465C64F0DA", 0, 1568761192, null, 1568761194, null, "{ }", "Charleston|Orwig", "Dir of Digital Services", "USA", "charlestonorwig.com", "com", [ "{\"address\": \"\", \"city\": \"Hartland\", \"state\": \"WI\", \"zip\": \"\"}", "50.990226", "-4.479349", null, false ], "59", null, null ]
+  , [ "row-ru5f~vkwf.hau4", "00000000-0000-0000-96BE-406B24D86067", 0, 1568761192, null, 1568761194, null, "{ }", "Sunlight Foundation", "Comms Dir", "USA", "sunlightfoundation.com", "com", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-zc8e_kfwx_k2ch", "00000000-0000-0000-FCE6-CADC5BCA4364", 0, 1568761192, null, 1568761194, null, "{ }", "NTT Resonant Inc", "Researcher", "JAPAN", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Minatoku\", \"state\": \"\", \"zip\": \"\"}", "35.658068", "139.751599", null, false ], "88", null, null ]
+  , [ "row-ugv2.7kuc.35ye", "00000000-0000-0000-00A7-235575471365", 0, 1568761192, null, 1568761194, null, "{ }", "Food Design", "Owner", "USA", "msu.edu", "edu", [ "{\"address\": \"\", \"city\": \"East Lansing\", \"state\": \"MI\", \"zip\": \"\"}", "42.736979", "-84.483865", null, false ], "173", "50", "344" ]
+  , [ "row-ihkh_qc33-wjb6", "00000000-0000-0000-8380-0CF95B0163AC", 0, 1568761192, null, 1568761194, null, "{ }", "NASA", "Chief Technology Officer", "USA", "nasa.gov", "gov", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-jpb3.3dzw.zdp4", "00000000-0000-0000-8982-AACE36F90E32", 0, 1568761192, null, 1568761194, null, "{ }", "Open Health Network", "CEO", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Los Altos\", \"state\": \"CA\", \"zip\": \"\"}", "37.385218", "-122.11413", null, false ], "173", "8", "1334" ]
+  , [ "row-4c9n.igwi_dr2j", "00000000-0000-0000-5CB7-9517443F90C9", 0, 1568761192, null, 1568761194, null, "{ }", "New Media Manitoba", "Training Dir", "CANADA", "newmediamanitoba.com", "com", [ "{\"address\": \"\", \"city\": \"Winnipeg\", \"state\": \"MB\", \"zip\": \"\"}", "49.899754", "-97.137494", null, false ], "29", null, null ]
+  , [ "row-z83x-z7ha~mk5m", "00000000-0000-0000-931D-88DB68B6DA8C", 0, 1568761192, null, 1568761194, null, "{ }", "Jackrabbit Mobile", "Sales", "USA", "jackrabbitmobile.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-sng4.ccun_fxrx", "00000000-0000-0000-DAD1-55F88C1C8043", 0, 1568761192, null, 1568761194, null, "{ }", "Saint Louis University", "Intern", "USA", "slu.edu", "edu", [ "{\"address\": \"\", \"city\": \"St Louis\", \"state\": \"MO\", \"zip\": \"\"}", "38.627003", "-90.199404", null, false ], "173", "34", "2223" ]
+  , [ "row-7i2i_bp9r_2txa", "00000000-0000-0000-39B9-FB4CE4E08EC3", 0, 1568761192, null, 1568761194, null, "{ }", "TheMotion", "Chief Prod Officer", "SPAIN", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Madrid\", \"state\": \"\", \"zip\": \"\"}", "40.416775", "-3.70379", null, false ], "51", null, null ]
+  , [ "row-35j3-gr27_qg2g", "00000000-0000-0000-AADE-800F81E2DBA4", 0, 1568761192, null, 1568761194, null, "{ }", "Ekmstudios Inc", "Owner", "USA", "ekmstudios.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-a48x_cuqs-bxvp", "00000000-0000-0000-DC3B-D54C8153C632", 0, 1568761192, null, 1568761194, null, "{ }", "St Edward's University", "Digital Projects Mgr", "USA", "stedwards.edu", "edu", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-abm9-bmzn-7rzf", "00000000-0000-0000-DA5D-193770957FF1", 0, 1568761192, null, 1568761194, null, "{ }", "Earnest", "Head of Earnest Labs", "UNITED KINGDOM", "earnest-agency.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-5gya_uj5g_xrxz", "00000000-0000-0000-399A-E64310720AFD", 0, 1568761192, null, 1568761194, null, "{ }", "Alley Interactive", "Software Engineer", "USA", "foster.solutions", "ons", [ "{\"address\": \"\", \"city\": \"Brooklyn\", \"state\": \"NY\", \"zip\": \"\"}", "40.678178", "-73.944158", null, false ], "173", "47", "2090" ]
+  , [ "row-ibi2_zwpt_dq6n", "00000000-0000-0000-7592-084346D65970", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW VIP Guest Team", "Yimay Yang", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-tnf4~wmva.crad", "00000000-0000-0000-5E8B-8E7744FC391A", 0, 1568761192, null, 1568761194, null, "{ }", null, null, null, "thetileapp.com", "com", null, null, null, null ]
+  , [ "row-ndjv-ravf-3p5f", "00000000-0000-0000-14D3-4C213450465E", 0, 1568761192, null, 1568761194, null, "{ }", "Capital One", "Mobile UI/UX Designer", "USA", "capitalone.com", "com", [ "{\"address\": \"\", \"city\": \"Richmond\", \"state\": \"VA\", \"zip\": \"\"}", "37.540725", "-77.436048", null, false ], "173", "40", "2947" ]
+  , [ "row-8uuk_ic7c.nnnx", "00000000-0000-0000-F933-A7B333A195DB", 0, 1568761192, null, 1568761194, null, "{ }", "Hackquarters", "Founder/CEO", "TURKEY", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Istanbul\", \"state\": \"\", \"zip\": \"\"}", "41.008238", "28.978359", null, false ], null, null, null ]
+  , [ "row-arx3_3kvn-4nzp", "00000000-0000-0000-852E-C95D16E4F8BE", 0, 1568761192, null, 1568761194, null, "{ }", "West Virginia University", "Assoc Professor/Research Assoc", "USA", "mail.wvu.edu", "edu", [ "{\"address\": \"\", \"city\": \"Morgantown\", \"state\": \"WV\", \"zip\": \"\"}", "39.629526", "-79.955897", null, false ], "173", "42", "858" ]
+  , [ "row-ypbz-8t8d.fmtx", "00000000-0000-0000-F9B8-BFA0C0AF9D82", 0, 1568761192, null, 1568761194, null, "{ }", "The University of Texas at Austin", "Software Developer", "USA", "austin.utexas.edu", "edu", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-kdf9.a5v4~a6e3", "00000000-0000-0000-0506-C6BAAD69DF34", 0, 1568761192, null, 1568761194, null, "{ }", "Raw Ideas", "Sr Developer", "AUSTRALIA", "finno.com", "com", [ "{\"address\": \"\", \"city\": \"Sydney\", \"state\": \"NSW\", \"zip\": \"\"}", "-33.867487", "151.20699", null, false ], "12", null, null ]
+  , [ "row-b4zp.4tmx.ing3", "00000000-0000-0000-D15C-77ECCB12507F", 0, 1568761192, null, 1568761194, null, "{ }", "HSN", "VP New Business Development", "USA", "cornerstonebrands.com", "com", [ "{\"address\": \"\", \"city\": \"St Petersburg\", \"state\": \"FL\", \"zip\": \"\"}", "27.751828", "-82.626734", null, false ], "173", "30", null ]
+  , [ "row-t89y.d7cj-n6q4", "00000000-0000-0000-D67A-81E4EAD7E312", 0, 1568761192, null, 1568761194, null, "{ }", null, null, null, "utexas.edu", "edu", null, null, null, null ]
+  , [ "row-3qp5_m996_xiz8", "00000000-0000-0000-1CEB-811DF1101E73", 0, 1568761192, null, 1568761194, null, "{ }", "Mediaan/abs bv", "CEO", "NETHERLANDS", "mediaan.com", "com", [ "{\"address\": \"\", \"city\": \"Heerlen\", \"state\": \"\", \"zip\": \"\"}", "50.888174", "5.979499", null, false ], "123", null, null ]
+  , [ "row-6zhc-brh7.rbqc", "00000000-0000-0000-C0DE-0A250C58AB2C", 0, 1568761192, null, 1568761194, null, "{ }", "Renovation Systems", "Brand & Mktg Mgr", "USA", "renovationsystems.com", "com", [ "{\"address\": \"\", \"city\": \"Plymouth\", \"state\": \"MN\", \"zip\": \"\"}", "50.375457", "-4.142656", null, false ], "59", null, null ]
+  , [ "row-zf4y-2vr8.vsvk", "00000000-0000-0000-BEFD-60402AB1CBBA", 0, 1568761192, null, 1568761194, null, "{ }", "Give Lively", "Head of Prod", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-rieg_v3cx-je7r", "00000000-0000-0000-B76D-38867DFAD162", 0, 1568761192, null, 1568761194, null, "{ }", "Decker MS", "8th Grade Student", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-7nca~pfui-gnce", "00000000-0000-0000-2AE2-F40987436951", 0, 1568761192, null, 1568761194, null, "{ }", "SX Cheer Up Charlie's Stage Crew", "Emil Hessellund Boedker", "USA", "hotmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-v9dt~jg5e~nj9k", "00000000-0000-0000-2604-7853705CE3F5", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Samantha Drake", "USA", "txstate.edu", "edu", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-kfzn.hhpp~kkfy", "00000000-0000-0000-1A3F-AB9007CE01AD", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Creative Strategist", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Los Angeles\", \"state\": \"CA\", \"zip\": \"\"}", "34.052234", "-118.243685", null, false ], "173", "8", "1195" ]
+  , [ "row-3kfe~teax_dag7", "00000000-0000-0000-EE55-69C065163C01", 0, 1568761192, null, 1568761194, null, "{ }", "Predictable.ly", "Head Honcho", "USA", "amyvernon.net", "net", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-yxbw_jen3-wrmg", "00000000-0000-0000-EA50-BAF8671EE34B", 0, 1568761192, null, 1568761194, null, "{ }", "Incendo", "Distribution & Mktg Coord", "CANADA", "incendo.ca", "ca", [ "{\"address\": \"\", \"city\": \"Westmount\", \"state\": \"QC\", \"zip\": \"\"}", "45.485719", "-73.595699", null, false ], "29", null, null ]
+  , [ "row-wrqi_buj4-7wus", "00000000-0000-0000-804F-EF007DAAE66C", 0, 1568761192, null, 1568761194, null, "{ }", "Luna Data Solutions", "Dir of Business Solutions", "USA", "lunadatasolutions.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ineg-vj87_4dpe", "00000000-0000-0000-FCC6-4C4B7B30C732", 0, 1568761192, null, 1568761194, null, "{ }", "TSIA", "Web Mgr", "USA", "tsia.com", "com", [ "{\"address\": \"\", \"city\": \"San Diego\", \"state\": \"CA\", \"zip\": \"\"}", "32.715738", "-117.161084", null, false ], "173", "8", "1179" ]
+  , [ "row-b3v6-6wpt.2i6i", "00000000-0000-0000-7A53-9EBB1E9A49E0", 0, 1568761192, null, 1568761194, null, "{ }", "SendGrid Inc", "Community Dev", "USA", "sendgrid.com", "com", [ "{\"address\": \"\", \"city\": \"Boulder\", \"state\": \"CO\", \"zip\": \"\"}", "40.014986", "-105.270546", null, false ], "173", "9", "85" ]
+  , [ "row-fyvh~d3bj.424c", "00000000-0000-0000-F931-21F52191244C", 0, 1568761192, null, 1568761194, null, "{ }", "Xplor", "Dir of Mktg & IT", "USA", "xplortoday.com", "com", [ "{\"address\": \"\", \"city\": \"Arlington\", \"state\": \"TX\", \"zip\": \"\"}", "32.735687", "-97.108066", null, false ], "173", "23", "2919" ]
+  , [ "row-et66-8d4m~3vjf", "00000000-0000-0000-C783-83F5227922FB", 0, 1568761192, null, 1568761194, null, "{ }", "MakerSquare", "Managing Dir", "USA", "makersquare.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-k82t~mzzw.kzka", "00000000-0000-0000-B3A0-1231C5B77A77", 0, 1568761192, null, 1568761194, null, "{ }", "Water Design", "Advisor", "JAPAN", "conconcom.jp", "jp", [ "{\"address\": \"\", \"city\": \"Tokyo\", \"state\": \"\", \"zip\": \"\"}", "35.689488", "139.691706", null, false ], "88", null, null ]
+  , [ "row-r8i6_5d7x-pwqp", "00000000-0000-0000-1F55-ACDE379A0369", 0, 1568761192, null, 1568761194, null, "{ }", "Silicon Rust Belt", "Founder/Editor-in-Chief", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Perrysburg\", \"state\": \"OH\", \"zip\": \"\"}", "41.556996", "-83.627157", null, false ], "173", "38", "2667" ]
+  , [ "row-ysp4~wum8_xbh9", "00000000-0000-0000-47BF-499A6A76FD8E", 0, 1568761192, null, 1568761194, null, "{ }", "Adservice", "Lead Developer", "DENMARK", "adservice.com", "com", [ "{\"address\": \"\", \"city\": \"Aarhus\", \"state\": \"\", \"zip\": \"\"}", "56.162939", "10.203921", null, false ], "45", null, null ]
+  , [ "row-qp65_k65v_gqwv", "00000000-0000-0000-355A-4109F60457FF", 0, 1568761192, null, 1568761194, null, "{ }", "The Social Edge", "Chief Exec Officer", "USA", "the-social-edge.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-rtx7_75pv_bxaq", "00000000-0000-0000-D7C9-4A4A3EEB943B", 0, 1568761192, null, 1568761194, null, "{ }", "SX The Majestic Stage Crew", "Michalis Theodosiou", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ydbs-735b_h6i5", "00000000-0000-0000-CAEE-748A88B22B22", 0, 1568761192, null, 1568761194, null, "{ }", "EFX Technical Solutions", "Independent Software Developer", "USA", "jerryross.com", "com", [ "{\"address\": \"\", \"city\": \"Bellevue\", \"state\": \"WA\", \"zip\": \"\"}", "47.610377", "-122.200679", null, false ], "173", "6", "3009" ]
+  , [ "row-hchn.rjsu.sgxd", "00000000-0000-0000-9A5B-3DCD1FA458DF", 0, 1568761192, null, 1568761194, null, "{ }", "Nestle", "Digital Innovation Mgr", "USA", "us.nestle.com", "com", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-jtzc_zhfi-9xiw", "00000000-0000-0000-59C1-135DCBE17FF4", 0, 1568761192, null, 1568761194, null, "{ }", "Callpicker", "CEO", "MEXICO", "digitum.com.mx", "mx", [ "{\"address\": \"\", \"city\": \"Queretaro\", \"state\": \"\", \"zip\": \"\"}", "20.588793", "-100.389888", null, false ], "108", null, null ]
+  , [ "row-69rk~3rk6_9has", "00000000-0000-0000-0650-DEDF19B3A707", 0, 1568761192, null, 1568761194, null, "{ }", "National Instruments", "Software Engineer", "USA", "ni.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-wwh7-kcdv~tpqm", "00000000-0000-0000-123C-F46FA3A6BB5F", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Jose Daniel Leal Avila", "MEXICO", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Zapopan\", \"state\": \"Jalisco\", \"zip\": \"\"}", "20.671956", "-103.416501", null, false ], "108", null, null ]
+  , [ "row-u2e5-qerf_4rt4", "00000000-0000-0000-613D-62475B7B63A4", 0, 1568761192, null, 1568761194, null, "{ }", "realestate.com.au Pty Ltd", "Sr Developer Innovation Team", "AUSTRALIA", "rea-group.com", "com", [ "{\"address\": \"\", \"city\": \"Richmond\", \"state\": \"VIC\", \"zip\": \"\"}", "37.540725", "-77.436048", null, false ], "173", "40", "2947" ]
+  , [ "row-s7e4-2zqz~6h5w", "00000000-0000-0000-F77C-8425A66A6524", 0, 1568761192, null, 1568761194, null, "{ }", "J Walter Thompson", "Sr Planner", "USA", "jwt.com", "com", [ "{\"address\": \"\", \"city\": \"Buckhead\", \"state\": \"GA\", \"zip\": \"\"}", "33.837266", "-84.406761", null, false ], "173", "31", "1137" ]
+  , [ "row-3857.bi6j_ewk6", "00000000-0000-0000-5BB5-4E3AA33E26BC", 0, 1568761192, null, 1568761194, null, "{ }", "LG Electronics", "Asst Researcher", "USA", "lge.com", "com", [ "{\"address\": \"\", \"city\": \"Seoul\", \"state\": \"AL\", \"zip\": \"\"}", "37.566535", "126.977969", null, false ], "93", null, null ]
+  , [ "row-2mqp_4epg_9myv", "00000000-0000-0000-E2CB-8319F58300F2", 0, 1568761192, null, 1568761194, null, "{ }", "PCCW Global", "Business Dev Mgr", "USA", "pccwglobal.com", "com", [ "{\"address\": \"\", \"city\": \"Los Angeles\", \"state\": \"CA\", \"zip\": \"\"}", "34.052234", "-118.243685", null, false ], "173", "8", "1195" ]
+  , [ "row-6xq5-xacw~dgun", "00000000-0000-0000-C01C-9687E687CBED", 0, 1568761192, null, 1568761194, null, "{ }", "Memorial Hermann", "Digital Mktg Specialist", "USA", "memorialhermann.org", "org", [ "{\"address\": \"\", \"city\": \"Houston\", \"state\": \"TX\", \"zip\": \"\"}", "29.760427", "-95.369803", null, false ], "173", "23", "2024" ]
+  , [ "row-2fzv_np9f_h9hk", "00000000-0000-0000-22EC-5C7707887081", 0, 1568761192, null, 1568761194, null, "{ }", "CHANEL", "E-Commerce Dir", "USA", "chanelusa.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-53t5.wak5.ugd5", "00000000-0000-0000-8E08-CCA2A167333E", 0, 1568761192, null, 1568761194, null, "{ }", "Day for Night", "Developer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Sugar Land\", \"state\": \"TX\", \"zip\": \"\"}", "29.619679", "-95.634946", null, false ], "173", "23", "3190" ]
+  , [ "row-dzrz-wih8_a8b5", "00000000-0000-0000-CCD7-28A9B29C0B7B", 0, 1568761192, null, 1568761194, null, "{ }", "Virginia Tech", "Professor", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Blacksburg\", \"state\": \"VA\", \"zip\": \"\"}", "37.229573", "-80.413939", null, false ], "173", "40", "917" ]
+  , [ "row-ptt7_av6p-cdfu", "00000000-0000-0000-4161-F33A6B75EB15", 0, 1568761192, null, 1568761194, null, "{ }", "Apple Inc", "AC Team Mgr", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-2cqy.de8b.ahz5", "00000000-0000-0000-9158-EA7D6E1EA371", 0, 1568761192, null, 1568761194, null, "{ }", "University of Applied Sciences Zurich", "Founder Center for Digital Business", "SWITZERLAND", "fh-hwz.ch", "ch", [ "{\"address\": \"\", \"city\": \"Zurich\", \"state\": \"\", \"zip\": \"\"}", "47.376887", "8.541694", null, false ], "30", null, null ]
+  , [ "row-gr9h.txjx.7t93", "00000000-0000-0000-FC2E-A24B79C751CD", 0, 1568761192, null, 1568761194, null, "{ }", "Monsanto", "Social Media Manager", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"St Louis\", \"state\": \"MO\", \"zip\": \"\"}", "38.627003", "-90.199404", null, false ], "173", "34", "2223" ]
+  , [ "row-49qs-q6xg-t23m", "00000000-0000-0000-157B-99F0FCEB22D2", 0, 1568761192, null, 1568761194, null, "{ }", "Glover Park Group", "Sr Assoc", "USA", "gpg.com", "com", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-vvek_k977~bvyx", "00000000-0000-0000-71AB-A1E3242AD70A", 0, 1568761192, null, 1568761194, null, "{ }", "The Austin Chronicle", "Writer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-zisa.qeiw-fr5r", "00000000-0000-0000-277F-E2AAA8C823CB", 0, 1568761192, null, 1568761194, null, "{ }", "youPIX", "Content Creator", "BRAZIL", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Barueri\", \"state\": \"SP\", \"zip\": \"\"}", "-23.511369", "-46.872942", null, false ], "24", null, null ]
+  , [ "row-p239_dvub-b9yv", "00000000-0000-0000-325E-24EAC1B0DD9A", 0, 1568761192, null, 1568761194, null, "{ }", "CHIEF", "Principal & Chief Creative Officer", "USA", "agencychief.com", "com", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-qgpk-syq3_zijg", "00000000-0000-0000-7FF9-B85182AE5320", 0, 1568761192, null, 1568761194, null, "{ }", "Dentsu Inc", "Art Dir", "JAPAN", "dentsu.co.jp", "jp", [ "{\"address\": \"\", \"city\": \"Minatoku\", \"state\": \"\", \"zip\": \"\"}", "35.658068", "139.751599", null, false ], "88", null, null ]
+  , [ "row-2g4u-vjgh~wyyf", "00000000-0000-0000-2032-BA8AFA12EF89", 0, 1568761192, null, 1568761194, null, "{ }", "PredictifyMe", "Chief Data Scientist", "USA", "predictify.me", "me", [ "{\"address\": \"\", \"city\": \"Cary\", \"state\": \"NC\", \"zip\": \"\"}", "35.79154", "-78.781117", null, false ], "173", "37", "3158" ]
+  , [ "row-bnjm-tkr4_uqnz", "00000000-0000-0000-0C5E-C425C10C958E", 0, 1568761192, null, 1568761194, null, "{ }", "Northwestern Mutual", "Creative Consultant", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Milwaukee\", \"state\": \"WI\", \"zip\": \"\"}", "43.038903", "-87.906474", null, false ], "173", "41", "3030" ]
+  , [ "row-th32_wjj6~4p2a", "00000000-0000-0000-BE62-1A94079A1FC0", 0, 1568761192, null, 1568761194, null, "{ }", "nushkino / invstr", "Project Based Consultant", "UNITED KINGDOM", "yahoo.com", "com", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-zr3q~8twp.sa2z", "00000000-0000-0000-37E9-5876FDA47EB6", 0, 1568761192, null, 1568761194, null, "{ }", "Annual Reviews", "Dir of Production", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Palo Alto\", \"state\": \"CA\", \"zip\": \"\"}", "37.441883", "-122.143019", null, false ], "173", "8", "1334" ]
+  , [ "row-u3xz_vtqp-jwie", "00000000-0000-0000-8093-E19CCEE5FDBA", 0, 1568761192, null, 1568761194, null, "{ }", "Lojas Renner SA", "Macrotrends & Consumer Behavior Mgr", "BRAZIL", "lojasrenner.com.br", "br", [ "{\"address\": \"\", \"city\": \"Porto Alegre\", \"state\": \"RS\", \"zip\": \"\"}", "-30.034647", "-51.217658", null, false ], "24", null, null ]
+  , [ "row-8uzr.8t7v_2myu", "00000000-0000-0000-5A18-EEA0724118E7", 0, 1568761192, null, 1568761194, null, "{ }", "Brace", "Coating", "USA", "yahoo.com", "com", [ "{\"address\": \"\", \"city\": \"Corpus Christi\", \"state\": \"TX\", \"zip\": \"\"}", "27.800583", "-97.396381", null, false ], "173", "23", "2829" ]
+  , [ "row-b9jt.wya6-j6vq", "00000000-0000-0000-9F5F-0BDFFD673E9D", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Alan Vladimir", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Cherry Hill\", \"state\": \"NJ\", \"zip\": \"\"}", "39.926813", "-75.024631", null, false ], "173", "46", "2448" ]
+  , [ "row-uxdk_uj9h_9dvn", "00000000-0000-0000-9950-18722F42E741", 0, 1568761192, null, 1568761194, null, "{ }", "Amoeba Culture", "Music Producer", "SOUTH KOREA", "me.com", "com", [ "{\"address\": \"\", \"city\": \"Seoul\", \"state\": \"\", \"zip\": \"\"}", "37.566535", "126.977969", null, false ], "93", null, null ]
+  , [ "row-fhzd~2nyg_ip4q", "00000000-0000-0000-2B1F-999A00A33712", 0, 1568761192, null, 1568761194, null, "{ }", "DoStuff Media", "Person", "USA", "dostuffmedia.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-gf24-2hbz~sa9s", "00000000-0000-0000-0D89-8588DA8DC0D3", 0, 1568761192, null, 1568761194, null, "{ }", "NIH", "Deputy Comms Dir", "USA", "mail.nih.gov", "gov", [ "{\"address\": \"\", \"city\": \"Bethesda\", \"state\": \"MD\", \"zip\": \"\"}", "38.984652", "-77.094709", null, false ], "173", "45", "1814" ]
+  , [ "row-fk26_8xs5.7dcq", "00000000-0000-0000-D9B7-0FF5FC2AEF31", 0, 1568761192, null, 1568761194, null, "{ }", null, "Entry level campaign worker", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Highland\", \"state\": \"MD\", \"zip\": \"\"}", "57.459575", "-4.226395", null, false ], "59", null, null ]
+  , [ "row-xh8h~wxrh_vjxz", "00000000-0000-0000-6F17-31402FC32124", 0, 1568761192, null, 1568761194, null, "{ }", "Medtronic", "Implantable Microsystems", "USA", "medtronic.com", "com", [ "{\"address\": \"\", \"city\": \"Tempe\", \"state\": \"AZ\", \"zip\": \"\"}", "33.42551", "-111.940005", null, false ], "173", "7", "989" ]
+  , [ "row-phv3.gyfq_byp5", "00000000-0000-0000-B0DB-CF19F9B41357", 0, 1568761192, null, 1568761194, null, "{ }", "Central Intelligence Agency", "Social Media Lead", "USA", "ucia.gov", "gov", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-25wu_8j36~8b7f", "00000000-0000-0000-04BD-36199A5AB271", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Antoine Bonnefous", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-zf2v-3buv-s58h", "00000000-0000-0000-27C1-3B032DDB6386", 0, 1568761192, null, 1568761194, null, "{ }", "Stanford Athletics", "Graphic Designer", "USA", "stanford.edu", "edu", [ "{\"address\": \"\", \"city\": \"Palo Alto\", \"state\": \"CA\", \"zip\": \"\"}", "37.441883", "-122.143019", null, false ], "173", "8", "1334" ]
+  , [ "row-iqpv~7bsm~fzw4", "00000000-0000-0000-34F9-7D28FD955769", 0, 1568761192, null, 1568761194, null, "{ }", "Hemmersbach", "IT Specialist", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-r9xg.wu6h.k8ne", "00000000-0000-0000-59BE-101FABEB850A", 0, 1568761192, null, 1568761194, null, "{ }", "Fujitsu Limited", "Dir", "JAPAN", "jp.fujitsu.com", "com", [ "{\"address\": \"\", \"city\": \"Ota-ku\", \"state\": \"\", \"zip\": \"\"}", "35.561257", "139.716051", null, false ], "88", null, null ]
+  , [ "row-u4xi-zq7w.6c3x", "00000000-0000-0000-EEDF-105D62394B08", 0, 1568761192, null, 1568761194, null, "{ }", "Publicis NA", "SVP Dir of Strategic Research & Analytics", "USA", "publicisna.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-rwa8_j3h9-3m94", "00000000-0000-0000-A116-C3027E61157E", 0, 1568761192, null, 1568761194, null, "{ }", "Saatchi & Saatchi", "Strategic Planning Dir", "USA", "saatchiny.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-7373.zj8r_ks3k", "00000000-0000-0000-097D-542E3669AEFB", 0, 1568761192, null, 1568761194, null, "{ }", "IBM", "Digital Transformation Leader", "TURKEY", "tr.ibm.com", "com", [ "{\"address\": \"\", \"city\": \"Istanbul\", \"state\": \"\", \"zip\": \"\"}", "41.008238", "28.978359", null, false ], null, null, null ]
+  , [ "row-ghmm-md3d.2x4x", "00000000-0000-0000-66C3-63F26D1523A3", 0, 1568761192, null, 1568761194, null, "{ }", null, null, null, "gmail.com", "com", null, null, null, null ]
+  , [ "row-kknp~wm2r-prbb", "00000000-0000-0000-3247-2B56C4C9A468", 0, 1568761192, null, 1568761194, null, "{ }", "Capterra", "PR", "USA", "capterra.com", "com", [ "{\"address\": \"\", \"city\": \"Arlington\", \"state\": \"VA\", \"zip\": \"\"}", "32.735687", "-97.108066", null, false ], "173", "23", "2919" ]
+  , [ "row-r28n-m5bt~aber", "00000000-0000-0000-D2B8-611DE10FEC30", 0, 1568761192, null, 1568761194, null, "{ }", "Whole Foods Market", "Front-End Web Developer", "USA", "wholefoods.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-iz87-yxn5~jw4n", "00000000-0000-0000-226D-A756F7DD74F1", 0, 1568761192, null, 1568761194, null, "{ }", "Austin Free-Net", "Google Fellow", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-pq3a_8puc.x4pb", "00000000-0000-0000-F798-CC32D38F09A6", 0, 1568761192, null, 1568761194, null, "{ }", "Telewander", "CMO", "SPAIN", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Madrid\", \"state\": \"\", \"zip\": \"\"}", "40.416775", "-3.70379", null, false ], "51", null, null ]
+  , [ "row-a2aw.m4cw~4ke5", "00000000-0000-0000-691B-977949B9C340", 0, 1568761192, null, 1568761194, null, "{ }", "NASA", "NASA JSC", "USA", "nasa.gov", "gov", [ "{\"address\": \"\", \"city\": \"Houston\", \"state\": \"TX\", \"zip\": \"\"}", "29.760427", "-95.369803", null, false ], "173", "23", "2024" ]
+  , [ "row-g5mw.yuhq.hi3e", "00000000-0000-0000-867A-3BF32D6EF291", 0, 1568761192, null, 1568761194, null, "{ }", "Open Health Network", "CEO", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Los Altos\", \"state\": \"CA\", \"zip\": \"\"}", "37.385218", "-122.11413", null, false ], "173", "8", "1334" ]
+  , [ "row-avcf_w89r~m5dn", "00000000-0000-0000-8440-96F4893E7B51", 0, 1568761192, null, 1568761194, null, "{ }", "City of Centennial", "Innovation Team (i-team) Data Analyst", "USA", "centennialco.gov", "gov", [ "{\"address\": \"\", \"city\": \"Centennial\", \"state\": \"CO\", \"zip\": \"\"}", "39.580745", "-104.877173", null, false ], "173", "9", "1395" ]
+  , [ "row-s7m3~vee7_bc4a", "00000000-0000-0000-9AC0-B32CADCA55AB", 0, 1568761192, null, 1568761194, null, "{ }", "JBTV Music Television", "VP IT & Digital Media/Exec Producer", "USA", "jbtvonline.com", "com", [ "{\"address\": \"\", \"city\": \"Chicago\", \"state\": \"IL\", \"zip\": \"\"}", "41.878114", "-87.629798", null, false ], "173", "34", "1863" ]
+  , [ "row-ejva.cktg~xjz4", "00000000-0000-0000-C742-012995008E04", 0, 1568761192, null, 1568761194, null, "{ }", "NeuroDigital Technologies SL", "Founder & CEO", "SPAIN", "neurodigital.es", "es", [ "{\"address\": \"\", \"city\": \"Almeria\", \"state\": \"\", \"zip\": \"\"}", "36.834047", "-2.463714", null, false ], "51", null, null ]
+  , [ "row-awwd_nwz8-zgtd", "00000000-0000-0000-74FB-916067B9EBF3", 0, 1568761192, null, 1568761194, null, "{ }", "Mecha Media", "Founder & CEO", "USA", "icloud.com", "com", [ "{\"address\": \"\", \"city\": \"Los Angeles\", \"state\": \"CA\", \"zip\": \"\"}", "34.052234", "-118.243685", null, false ], "173", "8", "1195" ]
+  , [ "row-ryik_vg8u.ybe7", "00000000-0000-0000-31C2-5AB7AA3D12E4", 0, 1568761192, null, 1568761194, null, "{ }", "AT&T & Directv", "Sr QA Mgr", "USA", "live.com", "com", [ "{\"address\": \"\", \"city\": \"Redondo Beach\", \"state\": \"CA\", \"zip\": \"\"}", "33.849182", "-118.388408", null, false ], "173", "8", "1195" ]
+  , [ "row-eaj5-gvte-y443", "00000000-0000-0000-2830-F8C9358EF523", 0, 1568761192, null, 1568761194, null, "{ }", "Altria", "Strategic Prod Planner", "USA", "altria.com", "com", [ "{\"address\": \"\", \"city\": \"Richmond\", \"state\": \"VA\", \"zip\": \"\"}", "37.540725", "-77.436048", null, false ], "173", "40", "2947" ]
+  , [ "row-tja4_kw65-hcpq", "00000000-0000-0000-5323-B3800CB1C57D", 0, 1568761192, null, 1568761194, null, "{ }", "Dyson", "Dir Tech Scouting Head University Research", "USA", "dyson.com", "com", [ "{\"address\": \"\", \"city\": \"San Jose\", \"state\": \"CA\", \"zip\": \"\"}", "37.338208", "-121.886329", null, false ], "173", "8", "1334" ]
+  , [ "row-auch~5wwr~ujga", "00000000-0000-0000-99BC-48324F684EEF", 0, 1568761192, null, 1568761194, null, "{ }", "vArmour", "Sr Staff Engineer", "USA", "varmour.com", "com", [ "{\"address\": \"\", \"city\": \"Mountain View\", \"state\": \"CA\", \"zip\": \"\"}", "37.386052", "-122.083851", null, false ], "173", "8", "1334" ]
+  , [ "row-dab3~yjj9-cpej", "00000000-0000-0000-B35D-E18C86080B74", 0, 1568761192, null, 1568761194, null, "{ }", "Killer Infographics", "Chief of Project Mgmt", "USA", "killerinfographics.com", "com", [ "{\"address\": \"\", \"city\": \"Seattle\", \"state\": \"WA\", \"zip\": \"\"}", "47.60621", "-122.332071", null, false ], "173", "6", "3009" ]
+  , [ "row-m8xk_qak5-ebzf", "00000000-0000-0000-36A1-11C7A2B24BEC", 0, 1568761192, null, 1568761194, null, "{ }", "Converse EDC", "Exec Dir", "USA", "converseedc.com", "com", [ "{\"address\": \"\", \"city\": \"Converse\", \"state\": \"TX\", \"zip\": \"\"}", "29.518008", "-98.316124", null, false ], "173", "23", "3027" ]
+  , [ "row-uspa~zwft-kiez", "00000000-0000-0000-DE25-C7B3CC071278", 0, 1568761192, null, 1568761194, null, "{ }", "Sugar men", "Luke Fenton", "UNITED KINGDOM", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Liverpool\", \"state\": \"\", \"zip\": \"\"}", "53.408371", "-2.991573", null, false ], "59", null, null ]
+  , [ "row-vnsp.nb7n.ystw", "00000000-0000-0000-3C6F-EA664943A972", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "James Plunkett", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-kzkm-f9y4-ejce", "00000000-0000-0000-BAE6-40184DC979BF", 0, 1568761192, null, 1568761194, null, "{ }", "Rambler & Co", "Head of B2B Department", "RUSSIAN FEDERATION", "rambler-co.ru", "ru", [ "{\"address\": \"\", \"city\": \"Moscow\", \"state\": \"\", \"zip\": \"\"}", "55.755826", "37.6173", null, false ], "140", null, null ]
+  , [ "row-985j~ebye~k2zg", "00000000-0000-0000-EC33-8A3630806DE7", 0, 1568761192, null, 1568761194, null, "{ }", "The University of Texas at Austin", "Sr Software Developer/Analyst", "USA", "austin.utexas.edu", "edu", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-trp9~xb5q~399q", "00000000-0000-0000-0547-5FAE29FFDA93", 0, 1568761192, null, 1568761194, null, "{ }", "Engine90", "CEO", "USA", "engine90.com", "com", [ "{\"address\": \"\", \"city\": \"Manchester\", \"state\": \"MA\", \"zip\": \"\"}", "53.480759", "-2.242631", null, false ], "59", null, null ]
+  , [ "row-4div_j66x-h8n7", "00000000-0000-0000-A950-575489DD973E", 0, 1568761192, null, 1568761194, null, "{ }", "RIT", "Prof", "USA", "mail.rit.edu", "edu", [ "{\"address\": \"\", \"city\": \"Rochester\", \"state\": \"NY\", \"zip\": \"\"}", "43.16103", "-77.610922", null, false ], "173", "47", "2093" ]
+  , [ "row-gn5g-anbf.ptfi", "00000000-0000-0000-3897-F40FA5EF94EB", 0, 1568761192, null, 1568761194, null, "{ }", "University of Oxford", "Doctoral Student", "UNITED KINGDOM", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Oxford\", \"state\": \"\", \"zip\": \"\"}", "51.752021", "-1.257726", null, false ], "59", null, null ]
+  , [ "row-yx4b.e25b~83iw", "00000000-0000-0000-BCEE-C9CE44E0E66C", 0, 1568761192, null, 1568761194, null, "{ }", "N/A", "Web Developer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-bwcn.deiv~8n6v", "00000000-0000-0000-F892-776CE3ED8D03", 0, 1568761192, null, 1568761194, null, "{ }", "Weekly Refresh WNYU FM", "Producer", "USA", "wnyu.org", "org", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-d3yu~7d82_uxy7", "00000000-0000-0000-ECAE-72899394F51E", 0, 1568761192, null, 1568761194, null, "{ }", null, "Jack McVann", "UNITED KINGDOM", "hotmail.co.uk", "uk", [ "{\"address\": \"\", \"city\": \"London\", \"state\": \"\", \"zip\": \"\"}", "51.507351", "-0.127758", null, false ], "59", null, null ]
+  , [ "row-axk8_8pgh~fja2", "00000000-0000-0000-1081-7D87F946820C", 0, 1568761192, null, 1568761194, null, "{ }", "Capital One", "Lead Software Developer", "USA", "capitalone.com", "com", [ "{\"address\": \"\", \"city\": \"Glen Allen\", \"state\": \"VA\", \"zip\": \"\"}", "37.665978", "-77.506374", null, false ], "173", "40", "2781" ]
+  , [ "row-stia-4ib7~4b4h", "00000000-0000-0000-73FF-8FA2E487835B", 0, 1568761192, null, 1568761194, null, "{ }", "Nestle", "VP Digital Svcs Innovation", "SWITZERLAND", "nestle.com", "com", [ "{\"address\": \"\", \"city\": \"Vevey\", \"state\": \"\", \"zip\": \"\"}", "46.462833", "6.841919", null, false ], "30", null, null ]
+  , [ "row-6fcx~np6i~zy8q", "00000000-0000-0000-B697-23A71E7DEA61", 0, 1568761192, null, 1568761194, null, "{ }", "The American Association for the Advancement of Science", "Social Media Dir", "USA", "aaas.org", "org", [ "{\"address\": \"\", \"city\": \"Chevy Chase\", \"state\": \"MD\", \"zip\": \"\"}", "38.994915", "-77.077205", null, false ], "173", "45", "1814" ]
+  , [ "row-hsys-ghv5_riyh", "00000000-0000-0000-CF10-D2728FCCADA9", 0, 1568761192, null, 1568761194, null, "{ }", "Microsoft", "Experience Designer", "USA", "microsoft.com", "com", [ "{\"address\": \"\", \"city\": \"Redmind\", \"state\": \"WA\", \"zip\": \"\"}", "47.673988", "-122.121512", null, false ], "173", "6", "3009" ]
+  , [ "row-t496-afpm.489t", "00000000-0000-0000-54DF-4ECABF557966", 0, 1568761192, null, 1568761194, null, "{ }", "BitCandy.com", "Photographer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-ztja~exsh-gk38", "00000000-0000-0000-6085-EF8DAA2EB8E0", 0, 1568761192, null, 1568761194, null, "{ }", "CHIEF", "Brand Warrior", "USA", "agencychief.com", "com", [ "{\"address\": \"\", \"city\": \"Washington, DC\", \"state\": \"DC\", \"zip\": \"\"}", "38.907192", "-77.036871", null, false ], "173", "44", "1049" ]
+  , [ "row-ef6w~3ekb.i5ue", "00000000-0000-0000-1790-CF1D02AB30BB", 0, 1568761192, null, 1568761194, null, "{ }", "Overstock.com", "Interaction Designer", "USA", "overstock.com", "com", [ "{\"address\": \"\", \"city\": \"Cottonwood Heights\", \"state\": \"UT\", \"zip\": \"\"}", "40.618316", "-111.816293", null, false ], "173", "13", "3176" ]
+  , [ "row-9zkh-zmiy_bszx", "00000000-0000-0000-40C6-9A789CC990BA", 0, 1568761192, null, 1568761194, null, "{ }", "O43", "Technical Architect", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Jersey City\", \"state\": \"NJ\", \"zip\": \"\"}", "40.728157", "-74.077642", null, false ], "173", "46", "488" ]
+  , [ "row-5km3-5r7k.uezi", "00000000-0000-0000-CF94-73574A0158DD", 0, 1568761192, null, 1568761194, null, "{ }", "Aquarian Technology Systems", "Pres", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Lexington\", \"state\": \"OH\", \"zip\": \"\"}", "38.040584", "-84.503716", null, false ], "173", "36", "1230" ]
+  , [ "row-4rcc-cc62.uqia", "00000000-0000-0000-8473-CE7BDA08FA46", 0, 1568761192, null, 1568761194, null, "{ }", "The Van Blargan Groups", "Consultant", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-r3gb_eps9~pvjh", "00000000-0000-0000-AA72-FCCA270981CA", 0, 1568761192, null, 1568761194, null, "{ }", "wonderMakr", "Mark Stewart", "CANADA", "wondermakr.com", "com", [ "{\"address\": \"\", \"city\": \"Toronto\", \"state\": \"ON\", \"zip\": \"\"}", "43.653226", "-79.383184", null, false ], "29", null, null ]
+  , [ "row-25ph.hirr-3zdv", "00000000-0000-0000-A6FC-B4DA4F4D91BA", 0, 1568761192, null, 1568761194, null, "{ }", "Reel FX", "SR Mktg & Outreach Mgr", "USA", "reelfx.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-vpz4~r46a.8z98", "00000000-0000-0000-755F-178B6B843779", 0, 1568761192, null, 1568761194, null, "{ }", "In-Part", "Co Founder", "UNITED KINGDOM", "in-part.co.uk", "uk", [ "{\"address\": \"\", \"city\": \"Sheffield\", \"state\": \"\", \"zip\": \"\"}", "53.381129", "-1.470085", null, false ], "59", null, null ]
+  , [ "row-p2q7~bci2.fbqy", "00000000-0000-0000-9FD3-0B99627A3C3F", 0, 1568761192, null, 1568761194, null, "{ }", "SX 800 Congress Stage Crew", "Lorena De La Cruz", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-t4rm.6ba6-8ahy", "00000000-0000-0000-FCF6-398FA1D90CF3", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Crew Chief", "Conference Tech", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-gv4c-6658~rdp9", "00000000-0000-0000-83CD-06C03F0ECDEC", 0, 1568761192, null, 1568761194, null, "{ }", "Al Jazeera Network", "Sr New Media Planner", "TURKEY", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Istanbul\", \"state\": \"\", \"zip\": \"\"}", "41.008238", "28.978359", null, false ], null, null, null ]
+  , [ "row-qvf8.ja8i_a8iz", "00000000-0000-0000-8A3A-6F2FF15C087F", 0, 1568761192, null, 1568761194, null, "{ }", "VIMN", "Sr Dir Media Technologies", "USA", "mac.com", "com", [ "{\"address\": \"\", \"city\": \"Miami Beach\", \"state\": \"FL\", \"zip\": \"\"}", "25.790654", "-80.130045", null, false ], null, null, "1074" ]
+  , [ "row-rztz-iwx6~k59e", "00000000-0000-0000-9F3F-129C42AE7855", 0, 1568761192, null, 1568761194, null, "{ }", "Loden Hotel", "Account Mgr Film & Ent", "CANADA", "theloden.com", "com", [ "{\"address\": \"\", \"city\": \"Vancouver\", \"state\": \"BC\", \"zip\": \"\"}", "45.638728", "-122.661486", null, false ], "173", "12", "2977" ]
+  , [ "row-rmhv-nwrq.zi93", "00000000-0000-0000-8524-A525ACC0D565", 0, 1568761192, null, 1568761194, null, "{ }", "Matterport", "Chief Strategy Officer", "USA", "matterport.com", "com", [ "{\"address\": \"\", \"city\": \"Mountain View\", \"state\": \"CA\", \"zip\": \"\"}", "37.386052", "-122.083851", null, false ], "173", "8", "1334" ]
+  , [ "row-we7u_eh7t.w8yg", "00000000-0000-0000-0947-0A05E00521F3", 0, 1568761192, null, 1568761194, null, "{ }", "The Things Network", "Initiator", "NETHERLANDS", "thethingsnetwork.org", "org", [ "{\"address\": \"\", \"city\": \"Amsterdam\", \"state\": \"\", \"zip\": \"\"}", "52.370216", "4.895168", null, false ], "123", null, null ]
+  , [ "row-wbgw_n2fq_t22e", "00000000-0000-0000-FCF3-637D4683A663", 0, 1568761192, null, 1568761194, null, "{ }", "Edmunds.com", "Front-End Engineer", "USA", "edmunds.com", "com", [ "{\"address\": \"\", \"city\": \"Santa Monica\", \"state\": \"CA\", \"zip\": \"\"}", "34.019454", "-118.491191", null, false ], "173", "8", "1195" ]
+  , [ "row-5672_kghe~jkgg", "00000000-0000-0000-69C1-53F1B228376D", 0, 1568761192, null, 1568761194, null, "{ }", "Penguin Random House", "Corey Nascenzi", "USA", "penguinrandomhouse.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-x2q9-4h5t.f4xk", "00000000-0000-0000-8DE2-F970929B0F6E", 0, 1568761192, null, 1568761194, null, "{ }", "Globoforce", "Head of Prod Innovation Labs", "USA", "globoforce.com", "com", [ "{\"address\": \"\", \"city\": \"Southborough\", \"state\": \"MA\", \"zip\": \"\"}", "42.30565", "-71.524509", null, false ], "173", "25", "1919" ]
+  , [ "row-7am7_mu94.ejfn", "00000000-0000-0000-7286-F86F7DEDEE1F", 0, 1568761192, null, 1568761194, null, "{ }", "University of Colorado Denver ", "Elysia Smith", null, "ucdenver.edu", "edu", [ null, "39.6766215", "-104.9640905", null, false ], "173", "9", "1444" ]
+  , [ "row-rp55-3w4m.2sph", "00000000-0000-0000-FCCA-FDD91A311E0C", 0, 1568761192, null, 1568761194, null, "{ }", "M/C/C", "Ad Coord", "USA", "mccom.com", "com", [ "{\"address\": \"\", \"city\": \"Dallas\", \"state\": \"TX\", \"zip\": \"\"}", "32.776664", "-96.796988", null, false ], "173", "23", "3162" ]
+  , [ "row-fg33~m98c-k2q7", "00000000-0000-0000-B3F1-913CFC287BFB", 0, 1568761192, null, 1568761194, null, "{ }", "ChaiOne Inc", "Interaction Designer", "USA", "chaione.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-a5aw_dhxd-c2kf", "00000000-0000-0000-EEA8-7E751D719060", 0, 1568761192, null, 1568761194, null, "{ }", "ANG Marketing and Advertising", "Chief, ANG Mktg & Advertising", "USA", "mail.mil", "mil", [ "{\"address\": \"\", \"city\": \"Joint Base Andrews\", \"state\": \"MD\", \"zip\": \"\"}", "38.79652", "-76.883626", null, false ], "173", "45", "1815" ]
+  , [ "row-4xec~fs34_6px6", "00000000-0000-0000-6798-B89B773DA31E", 0, 1568761192, null, 1568761194, null, "{ }", "National Instruments", "Interaction Designer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-x2dw.ctz4-5gbw", "00000000-0000-0000-302C-1F11E4B8734B", 0, 1568761192, null, 1568761194, null, "{ }", "Prezi", "Designer", "USA", "prezi.com", "com", [ "{\"address\": \"\", \"city\": \"San Francisco\", \"state\": \"CA\", \"zip\": \"\"}", "37.77493", "-122.419416", null, false ], "173", "8", "1180" ]
+  , [ "row-ykj4_56iq_cvq7", "00000000-0000-0000-F0EE-B3C2485CF294", 0, 1568761192, null, 1568761194, null, "{ }", "Dentsu.inc", "Copywriter", "JAPAN", "dentsu.co.jp", "jp", [ "{\"address\": \"\", \"city\": \"Tokyo\", \"state\": \"\", \"zip\": \"\"}", "35.689488", "139.691706", null, false ], "88", null, null ]
+  , [ "row-very-kbmw~dga3", "00000000-0000-0000-F989-C48528C27118", 0, 1568761192, null, 1568761194, null, "{ }", "Datiotec", "CEO", "MEXICO", "gabay.com.mx", "mx", [ "{\"address\": \"\", \"city\": \"San Luis Potosi\", \"state\": \"\", \"zip\": \"\"}", "22.15647", "-100.985541", null, false ], "108", null, null ]
+  , [ "row-vzki~9425_tezw", "00000000-0000-0000-C424-C73BB2E8276C", 0, 1568761192, null, 1568761194, null, "{ }", "Nottingham Spirk", "Principal", "USA", "nottinghamspirk.com", "com", [ "{\"address\": \"\", \"city\": \"Westlake\", \"state\": \"OH\", \"zip\": \"\"}", "41.455323", "-81.917917", null, false ], "173", "38", "2515" ]
+  , [ "row-7qkk_huj8-ewrq", "00000000-0000-0000-122D-426453B1A3B3", 0, 1568761192, null, 1568761194, null, "{ }", "Trinity Education Group", "CIO", "USA", "trinityeducationgroup.com", "com", [ "{\"address\": \"\", \"city\": \"Ellicott City\", \"state\": \"MD\", \"zip\": \"\"}", "39.267328", "-76.798307", null, false ], "173", "45", "421" ]
+  , [ "row-iu7p.fbaz.zvng", "00000000-0000-0000-F83C-2054087B3AE7", 0, 1568761192, null, 1568761194, null, "{ }", "General Dynamics", "Dir Strategic Innovation", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Pittsburgh\", \"state\": \"PA\", \"zip\": \"\"}", "40.440625", "-79.995886", null, false ], "173", "48", "2455" ]
+  , [ "row-z2b3-4dmk~fnu3", "00000000-0000-0000-38A3-2F9B81AB59E7", 0, 1568761192, null, 1568761194, null, "{ }", "iyzico", "Mktg Mgr", "TURKEY", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Istanbul\", \"state\": \"\", \"zip\": \"\"}", "41.008238", "28.978359", null, false ], null, null, null ]
+  , [ "row-fj8t-xcui.g6qa", "00000000-0000-0000-6EA8-408A27CDD350", 0, 1568761192, null, 1568761194, null, "{ }", "SXSW Volunteer", "Kathy Tran", "USA", "txstate.edu", "edu", [ "{\"address\": \"\", \"city\": \"San Marcos\", \"state\": \"TX\", \"zip\": \"\"}", "29.883275", "-97.941394", null, false ], "173", "23", "755" ]
+  , [ "row-9xe9-rw8t-tbj9", "00000000-0000-0000-1E30-BB8670B53D52", 0, 1568761192, null, 1568761194, null, "{ }", "Skift", "Sr Editor", "USA", "skift.com", "com", [ "{\"address\": \"\", \"city\": \"New York\", \"state\": \"NY\", \"zip\": \"\"}", "40.712784", "-74.005941", null, false ], "173", "46", "2095" ]
+  , [ "row-s6vm_k2hg~29j6", "00000000-0000-0000-F378-CBE78DD0B1C1", 0, 1568761192, null, 1568761194, null, "{ }", null, null, null, "cybercodetwins.com", "com", null, null, null, null ]
+  , [ "row-rrj9~z9kg-z79i", "00000000-0000-0000-90A7-663D508FB3C7", 0, 1568761192, null, 1568761194, null, "{ }", "Lenel Systems International", "Sr UX Designer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Pittsford\", \"state\": \"NY\", \"zip\": \"\"}", "43.090619", "-77.514997", null, false ], "173", "47", "2093" ]
+  , [ "row-28uh_8hbs_xtux", "00000000-0000-0000-9BA1-90902A5F47EA", 0, 1568761192, null, 1568761194, null, "{ }", "Evolve Productions LLC", "Founder", "USA", "evolveprods.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-xrpi.qfq9-n5rz", "00000000-0000-0000-3341-269A45D8EBA1", 0, 1568761192, null, 1568761194, null, "{ }", "Yomiko Advertising Inc", "Creative Dir", "JAPAN", "yomiko.co.jp", "jp", [ "{\"address\": \"\", \"city\": \"Tokyo\", \"state\": \"\", \"zip\": \"\"}", "35.689488", "139.691706", null, false ], "88", null, null ]
+  , [ "row-92b3~jnkt.mveu", "00000000-0000-0000-4AE6-B4F2A63B20AF", 0, 1568761192, null, 1568761194, null, "{ }", "Roar Music Management", "Mgr", "AUSTRALIA", "optusnet.com.au", "au", [ "{\"address\": \"\", \"city\": \"Templestowe\", \"state\": \"VIC\", \"zip\": \"\"}", "-37.756871", "145.129965", null, false ], "12", null, null ]
+  , [ "row-5f5q.d4hk-7s2c", "00000000-0000-0000-6689-44E5049C5F49", 0, 1568761192, null, 1568761194, null, "{ }", "Schneider Electric", "Dir of Strategic Mktg", "USA", "schneider-electric.com", "com", [ "{\"address\": \"\", \"city\": \"North Kingstown\", \"state\": \"RI\", \"zip\": \"\"}", "41.556832", "-71.453684", null, false ], "173", "27", "2703" ]
+  , [ "row-7crf.2y88~mjtf", "00000000-0000-0000-DCDC-A48A0120302B", 0, 1568761192, null, 1568761194, null, "{ }", "Starfield Productions", "Costume Designer", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+  , [ "row-w2fy-9mua-8gsz", "00000000-0000-0000-9865-A516EAB55858", 0, 1568761192, null, 1568761194, null, "{ }", "Hemmersbach", "IT Specialist", "USA", "gmail.com", "com", [ "{\"address\": \"\", \"city\": \"Austin\", \"state\": \"TX\", \"zip\": \"\"}", "30.267153", "-97.743061", null, false ], "173", "23", "2924" ]
+   ]
+  }
