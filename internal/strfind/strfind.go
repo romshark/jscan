@@ -21,9 +21,9 @@ var charMap = [256]byte{
 
 // EndOfWhitespaceSeq returns the index of the end of
 // the whitespace sequence.
-// If the returned ok == false then index points at an
+// If the returned ctrlChar == true then index points at an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ok bool) {
+func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
 	for ; len(s) > 15; s = s[16:] {
 		if charMap[s[0]] != 1 {
 			goto NONSPACE
@@ -97,5 +97,5 @@ func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ok bool) {
 	return s, false
 
 NONSPACE:
-	return s, s[0] <= 0x20
+	return s, s[0] < 0x20
 }
