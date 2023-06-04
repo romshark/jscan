@@ -253,17 +253,17 @@ func (p *Parser[S]) Scan(
 	reset(p.i)
 	p.i.src = s
 
-	trailing, err := scan(p.i, fn)
+	t, err := scan(p.i, fn)
 	if err.IsErr() {
 		return err
 	}
 	var illegalChar bool
-	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, trailing)
+		return getError(ErrorCodeIllegalControlChar, s, t)
 	}
-	if len(s) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, trailing)
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
 }
@@ -322,17 +322,17 @@ func Scan[S ~string | ~[]byte](
 	}
 	i.src = s
 	reset(i)
-	trailing, err := scan(i, fn)
+	t, err := scan(i, fn)
 	if err.IsErr() {
 		return err
 	}
 	var illegalChar bool
-	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, trailing)
+		return getError(ErrorCodeIllegalControlChar, s, t)
 	}
-	if len(s) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, trailing)
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
 }
@@ -350,17 +350,17 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 
 // Validate returns an error if s is invalid JSON.
 func Validate[S ~string | ~[]byte](s S) Error[S] {
-	trailing, err := validate(s)
+	t, err := validate(s)
 	if err.IsErr() {
 		return err
 	}
 	var illegalChar bool
-	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, trailing)
+		return getError(ErrorCodeIllegalControlChar, s, t)
 	}
-	if len(s) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, trailing)
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
 }
