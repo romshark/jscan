@@ -170,23 +170,6 @@ func ExampleScan_error_handling() {
 	// ERR: error at index 13: unexpected EOF
 }
 
-// func ExampleGet() {
-// 	j := `[false,[[2, {"[escaped]":[{"test-key":"string value"}]}]]]`
-
-// 	if err := jscan.Get(
-// 		j, `[1][0][1].\[escaped\][0].test-key`,
-// 		true, func(i *jscan.Iterator) {
-// 			fmt.Println(i.Value())
-// 		},
-// 	); err.IsErr() {
-// 		fmt.Printf("ERR: %s\n", err)
-// 		return
-// 	}
-
-// 	// Output:
-// 	// string value
-// }
-
 func ExampleValidateOne() {
 	s := `-120.4` +
 		`"string"` +
