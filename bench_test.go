@@ -434,8 +434,12 @@ func BenchmarkValid(b *testing.B) {
 		name  string
 		input SourceProvider
 	}{
-		{"deeparray_____________", SrcBytes(repeat("[", 1024) + repeat("]", 1024))},
-		{"unwind_stack__________", SrcBytes(MakeRepeated("[", 1024))},
+		{"deeparray_____________", SrcMake(func() []byte {
+			return []byte(repeat("[", 1024) + repeat("]", 1024))
+		})},
+		{"unwind_stack__________", SrcMake(func() []byte {
+			return MakeRepeated("[", 1024)
+		})},
 		{"miniscule_1b__________", SrcFile("miniscule_1b.json")},
 		{"tiny_8b_______________", SrcFile("tiny_8b.json")},
 		{"small_336b____________", SrcFile("small_336b.json")},
@@ -520,9 +524,9 @@ func MakeRepeated(s string, n int) []byte {
 
 type SourceProvider interface{ GetJSON() ([]byte, error) }
 
-type SrcBytes []byte
+type SrcMake func() []byte
 
-func (s SrcBytes) GetJSON() ([]byte, error) { return []byte(s), nil }
+func (s SrcMake) GetJSON() ([]byte, error) { return s(), nil }
 
 type SrcFile string
 
