@@ -257,7 +257,8 @@ func (p *Parser[S]) Scan(
 	if err.IsErr() {
 		return err
 	}
-	s, illegalChar := strfind.EndOfWhitespaceSeq(trailing)
+	var illegalChar bool
+	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
 	if illegalChar {
 		return getError(ErrorCodeIllegalControlChar, s, trailing)
 	}
@@ -325,7 +326,8 @@ func Scan[S ~string | ~[]byte](
 	if err.IsErr() {
 		return err
 	}
-	s, illegalChar := strfind.EndOfWhitespaceSeq(trailing)
+	var illegalChar bool
+	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
 	if illegalChar {
 		return getError(ErrorCodeIllegalControlChar, s, trailing)
 	}
@@ -352,7 +354,8 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 	if err.IsErr() {
 		return err
 	}
-	s, illegalChar := strfind.EndOfWhitespaceSeq(trailing)
+	var illegalChar bool
+	trailing, illegalChar = strfind.EndOfWhitespaceSeq(trailing)
 	if illegalChar {
 		return getError(ErrorCodeIllegalControlChar, s, trailing)
 	}
