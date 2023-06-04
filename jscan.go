@@ -161,22 +161,6 @@ func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 	}
 }
 
-func (i *Iterator[S]) callFn(fn func(i *Iterator[S]) (err bool)) (err bool) {
-	i.arrayIndex = -1
-	if len(i.stack) != 0 &&
-		i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
-		i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
-		i.stack[len(i.stack)-1].ArrLen++
-	}
-
-	if fn(i) {
-		return true
-	}
-
-	i.keyIndex = -1
-	return false
-}
-
 // Error represents an error encountered during validation or iteration.
 type Error[S ~string | ~[]byte] struct {
 	Src   S
@@ -577,9 +561,20 @@ VALUE_OBJECT:
 		}
 	}
 	ks, ke = i.keyIndex, i.keyIndexEnd
-	if i.callFn(fn) {
-		return s, i.getError(ErrorCodeCallback)
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
+
 	if s[0] == '}' {
 		s = s[1:]
 		goto AFTER_VALUE
@@ -596,9 +591,20 @@ VALUE_ARRAY:
 	i.valueIndex, i.valueIndexEnd = len(i.src)-len(s), -1
 	s = s[1:]
 	ks, ke = i.keyIndex, i.keyIndexEnd
-	if i.callFn(fn) {
-		return s, i.getError(ErrorCodeCallback)
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
+
 	i.stack = append(i.stack, stackNode{
 		Type:        stackNodeTypeArray,
 		KeyIndex:    ks,
@@ -614,8 +620,18 @@ VALUE_NUMBER:
 		}
 		i.valueIndexEnd = len(i.src) - len(s)
 		i.valueType = ValueTypeNumber
-		if i.callFn(fn) {
-			return s, i.getError(ErrorCodeCallback)
+
+		{ // Invoke callback
+			i.arrayIndex = -1
+			if len(i.stack) != 0 &&
+				i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+				i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+				i.stack[len(i.stack)-1].ArrLen++
+			}
+			if fn(i) {
+				return s, i.getError(ErrorCodeCallback)
+			}
+			i.keyIndex = -1
 		}
 	}
 	goto AFTER_VALUE
@@ -632,9 +648,20 @@ VALUE_NULL:
 	i.valueIndex = len(i.src) - len(s)
 	i.valueIndexEnd = len(i.src) - len(s) + len("null")
 	s = s[len("null"):]
-	if i.callFn(fn) {
-		return s, i.getError(ErrorCodeCallback)
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
+
 	goto AFTER_VALUE
 
 VALUE_FALSE:
@@ -645,9 +672,20 @@ VALUE_FALSE:
 	i.valueIndex = len(i.src) - len(s)
 	i.valueIndexEnd = len(i.src) - len(s) + len("false")
 	s = s[len("false"):]
-	if i.callFn(fn) {
-		return s, i.getError(ErrorCodeCallback)
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
+
 	goto AFTER_VALUE
 
 VALUE_TRUE:
@@ -658,9 +696,20 @@ VALUE_TRUE:
 	i.valueIndex = len(i.src) - len(s)
 	i.valueIndexEnd = len(i.src) - len(s) + len("true")
 	s = s[len("true"):]
-	if i.callFn(fn) {
-		return s, i.getError(ErrorCodeCallback)
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
+
 	goto AFTER_VALUE
 
 OBJ_KEY:
@@ -945,9 +994,20 @@ STRING:
 			}
 			i.valueIndexEnd = len(i.src) - len(s)
 			i.valueType = ValueTypeString
-			if i.callFn(fn) {
-				return s, i.getError(ErrorCodeCallback)
+
+			{ // Invoke callback
+				i.arrayIndex = -1
+				if len(i.stack) != 0 &&
+					i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+					i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+					i.stack[len(i.stack)-1].ArrLen++
+				}
+				if fn(i) {
+					return s, i.getError(ErrorCodeCallback)
+				}
+				i.keyIndex = -1
 			}
+
 			goto AFTER_VALUE
 		default:
 			if s[0] < 0x20 {
