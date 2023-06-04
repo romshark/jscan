@@ -11,10 +11,12 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
+const defaultIteratorStackSize = 64
+
 var itrPoolString = sync.Pool{
 	New: func() any {
 		return &Iterator[string]{
-			stack: make([]stackNode, 0, 64),
+			stack: make([]stackNode, 0, defaultIteratorStackSize),
 		}
 	},
 }
@@ -22,7 +24,7 @@ var itrPoolString = sync.Pool{
 var itrPoolBytes = sync.Pool{
 	New: func() any {
 		return &Iterator[[]byte]{
-			stack: make([]stackNode, 0, 64),
+			stack: make([]stackNode, 0, defaultIteratorStackSize),
 		}
 	},
 }
@@ -204,8 +206,8 @@ func reset[S ~string | ~[]byte](i *Iterator[S]) {
 type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
 
 // NewParser creates a new reusable parser instance.
-func NewParser[S ~string | ~[]byte](stackCap int) *Parser[S] {
-	i := &Iterator[S]{stack: make([]stackNode, stackCap)}
+func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
+	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
 	return &Parser[S]{i: i}
 }
@@ -321,6 +323,8 @@ func Scan[S ~string | ~[]byte](
 	return Error[S]{}
 }
 
+const defaultValidatorStackSize = 1024
+
 // Valid returns true if s is a valid JSON value.
 func Valid[S ~string | ~[]byte](s S) bool {
 	return !Validate(s).IsErr()
@@ -329,12 +333,12 @@ func Valid[S ~string | ~[]byte](s S) bool {
 // ValidateOne scans a JSON value from s and returns an error if it's invalid,
 // otherwise returns s with the scanned value cut.
 func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
-	return validate(s)
+	return validate(s, defaultValidatorStackSize)
 }
 
 // Validate returns an error if s is invalid JSON.
 func Validate[S ~string | ~[]byte](s S) Error[S] {
-	t, err := validate(s)
+	t, err := validate(s, defaultValidatorStackSize)
 	if err.IsErr() {
 		return err
 	}
@@ -1019,12 +1023,12 @@ STRING:
 }
 
 // validate returns the remainder of i.src and an error if any is encountered.
-func validate[S ~string | ~[]byte](s S) (S, Error[S]) {
+func validate[S ~string | ~[]byte](s S, preallocStack int) (S, Error[S]) {
 	var (
 		src = s
 		top stackNodeType
 		b   bool
-		st  = make([]stackNodeType, 0, 128)
+		st  = make([]stackNodeType, 0, preallocStack)
 	)
 
 	stPop := func() {
