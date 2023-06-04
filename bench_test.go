@@ -32,7 +32,7 @@ type Stats struct {
 	MaxArrayLen   int
 }
 
-func CalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
+func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
 	if err := p.Scan(
 		str,
 		func(i *jscan.Iterator[[]byte]) (err bool) {
@@ -72,7 +72,7 @@ func CalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
 	return
 }
 
-func CalcStatsJsoniter(p *jsoniter.Iterator, str []byte) (s Stats) {
+func MustCalcStatsJsoniter(p *jsoniter.Iterator, str []byte) (s Stats) {
 	p.ResetBytes(str)
 	var readValue func(lv int, k string, ai int, i *jsoniter.Iterator)
 	readValue = func(
@@ -126,7 +126,7 @@ func CalcStatsJsoniter(p *jsoniter.Iterator, str []byte) (s Stats) {
 	return
 }
 
-func CalcStatsGofasterJx(p *gofasterjx.Decoder, str []byte) (s Stats) {
+func MustCalcStatsGofasterJx(p *gofasterjx.Decoder, str []byte) (s Stats) {
 	p.ResetBytes(str)
 	var jxParseValue func(lv int, k []byte, ai int) error
 	jxParseValue = func(
@@ -196,7 +196,7 @@ func CalcStatsGofasterJx(p *gofasterjx.Decoder, str []byte) (s Stats) {
 	return
 }
 
-func CalcStatsValyalaFastjson(p *valyalafastjson.Parser, str []byte) (s Stats) {
+func MustCalcStatsValyalaFastjson(p *valyalafastjson.Parser, str []byte) (s Stats) {
 	v, err := p.ParseBytes(str)
 	if err != nil {
 		panic(err)
@@ -307,20 +307,20 @@ func TestImplementations(t *testing.T) {
 
 	t.Run("jscan", func(t *testing.T) {
 		p := jscan.NewParser[[]byte](64)
-		require.Equal(t, expect, CalcStatsJscan(p, []byte(input)))
+		require.Equal(t, expect, MustCalcStatsJscan(p, []byte(input)))
 	})
 	t.Run("jsoniter", func(t *testing.T) {
 		p := jsoniter.NewIterator(jsoniter.ConfigFastest)
-		require.Equal(t, expect, CalcStatsJsoniter(p, []byte(input)))
+		require.Equal(t, expect, MustCalcStatsJsoniter(p, []byte(input)))
 	})
 	t.Run("gofaster-jx", func(t *testing.T) {
 		p := new(gofasterjx.Decoder)
-		require.Equal(t, expect, CalcStatsGofasterJx(p, []byte(input)))
+		require.Equal(t, expect, MustCalcStatsGofasterJx(p, []byte(input)))
 	})
 
 	t.Run("valyala-fastjson", func(t *testing.T) {
 		p := new(valyalafastjson.Parser)
-		require.Equal(t, expect, CalcStatsValyalaFastjson(p, []byte(input)))
+		require.Equal(t, expect, MustCalcStatsValyalaFastjson(p, []byte(input)))
 	})
 }
 
@@ -373,7 +373,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				p := jscan.NewParser[[]byte](64)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gs = CalcStatsJscan(p, b2.json)
+					gs = MustCalcStatsJscan(p, src)
 				}
 			})
 
@@ -381,7 +381,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				p := jsoniter.NewIterator(jsoniter.ConfigFastest)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gs = CalcStatsJsoniter(p, b2.json)
+					gs = MustCalcStatsJsoniter(p, src)
 				}
 			})
 
@@ -389,7 +389,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				p := new(gofasterjx.Decoder)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gs = CalcStatsGofasterJx(p, b2.json)
+					gs = MustCalcStatsGofasterJx(p, src)
 				}
 			})
 
@@ -397,7 +397,7 @@ func BenchmarkCalcStats(b *testing.B) {
 				p := new(valyalafastjson.Parser)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gs = CalcStatsValyalaFastjson(p, b2.json)
+					gs = MustCalcStatsValyalaFastjson(p, src)
 				}
 			})
 		})
