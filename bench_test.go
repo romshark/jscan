@@ -352,7 +352,7 @@ func BenchmarkCalcStats(b *testing.B) {
 			require.NoError(b, err)
 
 			b.Run("jscan___________", func(b *testing.B) {
-				p := jscan.NewParser[[]byte](64)
+				p := jscan.NewParser[[]byte](1024)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gs = MustCalcStatsJscan(p, src)
