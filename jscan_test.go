@@ -80,39 +80,75 @@ func readTestFileContents(t *testing.T, name string) []byte {
 
 // testStrictOK runs tests with the "y_" prefix that parsers must accept.
 func testStrictOK(t *testing.T, input []byte) {
-	t.Run("Valid", func(t *testing.T) {
-		require.True(t, jscan.Valid(string(input)))
+	t.Run("Validator", func(t *testing.T) {
+		t.Run("Valid", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				require.True(t, jscan.NewValidator[string](1024).Valid(string(input)))
+			})
+			t.Run("bytes", func(t *testing.T) {
+				require.True(t, jscan.NewValidator[[]byte](1024).Valid(input))
+			})
+		})
+		t.Run("Validate", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				err := jscan.NewValidator[string](1024).Validate(string(input))
+				require.False(t, err.IsErr())
+			})
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.NewValidator[[]byte](1024).Validate(input)
+				require.False(t, err.IsErr())
+			})
+		})
+		t.Run("ValidateOne", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				_, err := jscan.NewValidator[string](1024).ValidateOne(string(input))
+				require.False(t, err.IsErr())
+			})
+			t.Run("bytes", func(t *testing.T) {
+				_, err := jscan.NewValidator[[]byte](1024).ValidateOne(input)
+				require.False(t, err.IsErr())
+			})
+		})
 	})
-	t.Run("Valid_bytes", func(t *testing.T) {
-		require.True(t, jscan.Valid(input))
+	t.Run("Valid", func(t *testing.T) {
+		t.Run("string", func(t *testing.T) {
+			require.True(t, jscan.Valid(input))
+		})
+		t.Run("bytes", func(t *testing.T) {
+			require.True(t, jscan.Valid(string(input)))
+		})
 	})
 	t.Run("Scan", func(t *testing.T) {
-		err := jscan.Scan(
-			string(input),
-			func(i *jscan.Iterator[string]) (err bool) { return false },
-		)
-		require.False(t, err.IsErr())
-	})
-	t.Run("ScanBytes", func(t *testing.T) {
-		err := jscan.Scan(
-			input,
-			func(i *jscan.Iterator[[]byte]) (err bool) { return false },
-		)
-		require.False(t, err.IsErr())
+		t.Run("string", func(t *testing.T) {
+			err := jscan.Scan(
+				string(input),
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("bytes", func(t *testing.T) {
+			err := jscan.Scan(
+				input,
+				func(i *jscan.Iterator[[]byte]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
 	})
 	t.Run("ScanOne", func(t *testing.T) {
-		_, err := jscan.ScanOne(
-			string(input),
-			func(i *jscan.Iterator[string]) (err bool) { return false },
-		)
-		require.False(t, err.IsErr())
-	})
-	t.Run("ScanOneBytes", func(t *testing.T) {
-		_, err := jscan.ScanOne(
-			input,
-			func(i *jscan.Iterator[[]byte]) (err bool) { return false },
-		)
-		require.False(t, err.IsErr())
+		t.Run("string", func(t *testing.T) {
+			_, err := jscan.ScanOne(
+				string(input),
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("bytes", func(t *testing.T) {
+			_, err := jscan.ScanOne(
+				input,
+				func(i *jscan.Iterator[[]byte]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
 	})
 }
 
@@ -120,38 +156,80 @@ func testStrictOK(t *testing.T, input []byte) {
 // parsers are free to accept or reject.
 func testOKOrErr(t *testing.T, input []byte) {
 	t.Run("Valid", func(t *testing.T) {
-		if !jscan.Valid(string(input)) {
-			t.Skip("allowed to fail")
-		}
-	})
-	t.Run("Valid_bytes", func(t *testing.T) {
-		if !jscan.Valid(input) {
-			t.Skip("allowed to fail")
-		}
+		t.Run("string", func(t *testing.T) {
+			if !jscan.Valid(string(input)) {
+				t.Skip("allowed to fail")
+			}
+			v := jscan.NewValidator[string](1024)
+			if !v.Valid(string(input)) {
+				t.Skip("allowed to fail")
+			}
+			err := v.Validate(string(input))
+			if err.IsErr() {
+				t.Skip("allowed to fail")
+			}
+		})
+		t.Run("bytes", func(t *testing.T) {
+			if !jscan.Valid(input) {
+				t.Skip("allowed to fail")
+			}
+			v := jscan.NewValidator[[]byte](1024)
+			if !v.Valid(input) {
+				t.Skip("allowed to fail")
+			}
+			err := v.Validate(input)
+			if err.IsErr() {
+				t.Skip("allowed to fail")
+			}
+		})
 	})
 }
 
 // testStrictErr runs tests with the "n_" prefix that parsers must reject.
 func testStrictErr(t *testing.T, input []byte) {
-	t.Run("Valid", func(t *testing.T) {
-		require.False(t, jscan.Valid(string(input)))
+	t.Run("Validator", func(t *testing.T) {
+		t.Run("Valid", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				require.False(t, jscan.NewValidator[string](1024).Valid(string(input)))
+			})
+			t.Run("bytes", func(t *testing.T) {
+				require.False(t, jscan.NewValidator[[]byte](1024).Valid(input))
+			})
+		})
+		t.Run("Validate", func(t *testing.T) {
+			t.Run("string", func(t *testing.T) {
+				err := jscan.NewValidator[string](1024).Validate(string(input))
+				require.True(t, err.IsErr())
+			})
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.NewValidator[[]byte](1024).Validate(input)
+				require.True(t, err.IsErr())
+			})
+		})
 	})
-	t.Run("Valid_bytes", func(t *testing.T) {
-		require.False(t, jscan.Valid(input))
+	t.Run("Valid", func(t *testing.T) {
+		t.Run("string", func(t *testing.T) {
+			require.False(t, jscan.Valid(string(input)))
+		})
+		t.Run("bytes", func(t *testing.T) {
+			require.False(t, jscan.Valid(input))
+		})
 	})
 	t.Run("Scan", func(t *testing.T) {
-		err := jscan.Scan(
-			string(input),
-			func(i *jscan.Iterator[string]) (err bool) { return false },
-		)
-		require.True(t, err.IsErr())
-	})
-	t.Run("ScanBytes", func(t *testing.T) {
-		err := jscan.Scan(
-			input,
-			func(i *jscan.Iterator[[]byte]) (err bool) { return false },
-		)
-		require.True(t, err.IsErr())
+		t.Run("string", func(t *testing.T) {
+			err := jscan.Scan(
+				string(input),
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
+		t.Run("bytes", func(t *testing.T) {
+			err := jscan.Scan(
+				input,
+				func(i *jscan.Iterator[[]byte]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+		})
 	})
 }
 
@@ -937,7 +1015,6 @@ func TestScanError(t *testing.T) {
 				t.Run("Valid", func(t *testing.T) {
 					require.False(t, jscan.Valid(tt.input))
 				})
-
 				t.Run("Scan", func(t *testing.T) {
 					err := jscan.Scan(tt.input, check(t))
 					require.Equal(t, tt.expect, err.Error())
@@ -955,7 +1032,6 @@ func TestScanError(t *testing.T) {
 				t.Run("Valid", func(t *testing.T) {
 					require.False(t, jscan.Valid([]byte(tt.input)))
 				})
-
 				t.Run("Scan", func(t *testing.T) {
 					err := jscan.Scan([]byte(tt.input), check(t))
 					require.Equal(t, tt.expect, err.Error())
@@ -969,17 +1045,18 @@ func TestScanError(t *testing.T) {
 func TestControlCharacters(t *testing.T) {
 	test := func(t *testing.T, in, expectErr string) {
 		t.Run("Validate", func(t *testing.T) {
-			err := jscan.Validate(in)
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-		})
-
-		t.Run("Validate_bytes", func(t *testing.T) {
-			err := jscan.Validate([]byte(in))
-			require.Equal(t, expectErr, err.Error(), "IN: %q", in)
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			t.Run("string", func(t *testing.T) {
+				err := jscan.Validate(in)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.Validate([]byte(in))
+				require.Equal(t, expectErr, err.Error(), "IN: %q", in)
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
 		})
 
 		t.Run("Validate", func(t *testing.T) {
@@ -1028,51 +1105,55 @@ func TestControlCharacters(t *testing.T) {
 		})
 
 		t.Run("Valid", func(t *testing.T) {
-			require.False(t, jscan.Valid(in))
-		})
+			t.Run("string", func(t *testing.T) {
+				require.False(t, jscan.Valid(in))
+			})
 
-		t.Run("Valid_bytes", func(t *testing.T) {
-			require.False(t, jscan.Valid([]byte(in)))
+			t.Run("bytes", func(t *testing.T) {
+				require.False(t, jscan.Valid([]byte(in)))
+			})
 		})
 
 		t.Run("ScanOne", func(t *testing.T) {
-			_, err := jscan.ScanOne(
-				in,
-				func(i *jscan.Iterator[string]) (err bool) { return false },
-			)
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-		})
-
-		t.Run("ScanOne_bytes", func(t *testing.T) {
-			_, err := jscan.ScanOne(
-				[]byte(in),
-				func(i *jscan.Iterator[[]byte]) (err bool) { return false },
-			)
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			t.Run("string", func(t *testing.T) {
+				_, err := jscan.ScanOne(
+					in,
+					func(i *jscan.Iterator[string]) (err bool) { return false },
+				)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
+			t.Run("bytes", func(t *testing.T) {
+				_, err := jscan.ScanOne(
+					[]byte(in),
+					func(i *jscan.Iterator[[]byte]) (err bool) { return false },
+				)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
 		})
 
 		t.Run("Scan", func(t *testing.T) {
-			err := jscan.Scan(
-				in,
-				func(i *jscan.Iterator[string]) (err bool) { return false },
-			)
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-		})
-
-		t.Run("Scan_bytes", func(t *testing.T) {
-			err := jscan.Scan(
-				[]byte(in),
-				func(i *jscan.Iterator[[]byte]) (err bool) { return false },
-			)
-			require.Equal(t, expectErr, err.Error())
-			require.True(t, err.IsErr())
-			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			t.Run("string", func(t *testing.T) {
+				err := jscan.Scan(
+					in,
+					func(i *jscan.Iterator[string]) (err bool) { return false },
+				)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.Scan(
+					[]byte(in),
+					func(i *jscan.Iterator[[]byte]) (err bool) { return false },
+				)
+				require.Equal(t, expectErr, err.Error())
+				require.True(t, err.IsErr())
+				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+			})
 		})
 	}
 
@@ -1368,61 +1449,82 @@ func TestStrings(t *testing.T) {
 		`"abcdefghiklmnopqrstuvwxyz1234567812345678\""`,
 	} {
 		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[string](64)
-			err := p.Scan(td, func(i *jscan.Iterator[string]) (err bool) {
-				require.Equal(t, jscan.ValueTypeString, i.ValueType())
-				require.Equal(t, 0, i.Level())
-				require.Equal(t, 0, i.ValueIndex())
-				require.Equal(t, len(td), i.ValueIndexEnd())
-				require.Zero(t, i.Pointer())
-				return false
+			t.Run("string", func(t *testing.T) {
+				p := jscan.NewParser[string](64)
+				err := p.Scan(td, func(i *jscan.Iterator[string]) (err bool) {
+					require.Equal(t, jscan.ValueTypeString, i.ValueType())
+					require.Equal(t, 0, i.Level())
+					require.Equal(t, 0, i.ValueIndex())
+					require.Equal(t, len(td), i.ValueIndexEnd())
+					require.Zero(t, i.Pointer())
+					return false
+				})
+				require.False(t, err.IsErr())
 			})
-			require.False(t, err.IsErr())
-		})
-		t.Run("ParserScan_bytes", func(t *testing.T) {
-			p := jscan.NewParser[[]byte](64)
-			err := p.Scan([]byte(td), func(i *jscan.Iterator[[]byte]) (err bool) {
-				require.Equal(t, jscan.ValueTypeString, i.ValueType())
-				require.Equal(t, 0, i.Level())
-				require.Equal(t, 0, i.ValueIndex())
-				require.Equal(t, len(td), i.ValueIndexEnd())
-				require.Equal(t, []byte(""), i.Pointer())
-				return false
+			t.Run("bytes", func(t *testing.T) {
+				p := jscan.NewParser[[]byte](64)
+				err := p.Scan([]byte(td), func(i *jscan.Iterator[[]byte]) (err bool) {
+					require.Equal(t, jscan.ValueTypeString, i.ValueType())
+					require.Equal(t, 0, i.Level())
+					require.Equal(t, 0, i.ValueIndex())
+					require.Equal(t, len(td), i.ValueIndexEnd())
+					require.Equal(t, []byte(""), i.Pointer())
+					return false
+				})
+				require.False(t, err.IsErr())
 			})
-			require.False(t, err.IsErr())
 		})
 		t.Run("Scan", func(t *testing.T) {
-			err := jscan.Scan(td, func(i *jscan.Iterator[string]) (err bool) {
-				require.Equal(t, jscan.ValueTypeString, i.ValueType())
-				require.Equal(t, 0, i.Level())
-				require.Equal(t, 0, i.ValueIndex())
-				require.Equal(t, len(td), i.ValueIndexEnd())
-				require.Zero(t, i.Pointer())
-				return false
+			t.Run("string", func(t *testing.T) {
+				err := jscan.Scan(td, func(i *jscan.Iterator[string]) (err bool) {
+					require.Equal(t, jscan.ValueTypeString, i.ValueType())
+					require.Equal(t, 0, i.Level())
+					require.Equal(t, 0, i.ValueIndex())
+					require.Equal(t, len(td), i.ValueIndexEnd())
+					require.Zero(t, i.Pointer())
+					return false
+				})
+				require.False(t, err.IsErr())
 			})
-			require.False(t, err.IsErr())
-		})
-		t.Run("Scan_bytes", func(t *testing.T) {
-			err := jscan.Scan([]byte(td), func(i *jscan.Iterator[[]byte]) (err bool) {
-				require.Equal(t, jscan.ValueTypeString, i.ValueType())
-				require.Equal(t, 0, i.Level())
-				require.Equal(t, 0, i.ValueIndex())
-				require.Equal(t, len(td), i.ValueIndexEnd())
-				require.Equal(t, []byte(""), i.Pointer())
-				return false
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.Scan([]byte(td), func(i *jscan.Iterator[[]byte]) (err bool) {
+					require.Equal(t, jscan.ValueTypeString, i.ValueType())
+					require.Equal(t, 0, i.Level())
+					require.Equal(t, 0, i.ValueIndex())
+					require.Equal(t, len(td), i.ValueIndexEnd())
+					require.Equal(t, []byte(""), i.Pointer())
+					return false
+				})
+				require.False(t, err.IsErr())
 			})
-			require.False(t, err.IsErr())
 		})
 		t.Run("Valid", func(t *testing.T) {
-			require.True(t, jscan.Valid[string](td))
+			t.Run("string", func(t *testing.T) {
+				require.True(t, jscan.Valid[string](td))
+			})
+			t.Run("bytes", func(t *testing.T) {
+				require.True(t, jscan.Valid[[]byte]([]byte(td)))
+			})
 		})
 		t.Run("Validate", func(t *testing.T) {
-			err := jscan.Validate[string](td)
-			require.False(t, err.IsErr())
+			t.Run("string", func(t *testing.T) {
+				err := jscan.Validate[string](td)
+				require.False(t, err.IsErr())
+			})
+			t.Run("bytes", func(t *testing.T) {
+				err := jscan.Validate[[]byte]([]byte(td))
+				require.False(t, err.IsErr())
+			})
 		})
 		t.Run("ValidateOne", func(t *testing.T) {
-			_, err := jscan.ValidateOne[string](td)
-			require.False(t, err.IsErr())
+			t.Run("string", func(t *testing.T) {
+				_, err := jscan.ValidateOne[string](td)
+				require.False(t, err.IsErr())
+			})
+			t.Run("bytes", func(t *testing.T) {
+				_, err := jscan.ValidateOne[[]byte]([]byte(td))
+				require.False(t, err.IsErr())
+			})
 		})
 	}
 }

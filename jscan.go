@@ -11,9 +11,12 @@ import (
 	"github.com/romshark/jscan/internal/strfind"
 )
 
-const defaultIteratorStackSize = 64
+const (
+	defaultIteratorStackSize  = 64
+	defaultValidatorStackSize = 128
+)
 
-var itrPoolString = sync.Pool{
+var iteratorPoolString = sync.Pool{
 	New: func() any {
 		return &Iterator[string]{
 			stack: make([]stackNode, 0, defaultIteratorStackSize),
@@ -21,10 +24,26 @@ var itrPoolString = sync.Pool{
 	},
 }
 
-var itrPoolBytes = sync.Pool{
+var iteratorPoolBytes = sync.Pool{
 	New: func() any {
 		return &Iterator[[]byte]{
 			stack: make([]stackNode, 0, defaultIteratorStackSize),
+		}
+	},
+}
+
+var validatorPoolString = sync.Pool{
+	New: func() any {
+		return &Validator[string]{
+			stack: make([]stackNodeType, 0, defaultValidatorStackSize),
+		}
+	},
+}
+
+var validatorPoolBytes = sync.Pool{
+	New: func() any {
+		return &Validator[[]byte]{
+			stack: make([]stackNodeType, 0, defaultValidatorStackSize),
 		}
 	},
 }
@@ -271,12 +290,12 @@ func ScanOne[S ~string | ~[]byte](
 	var i *Iterator[S]
 	switch any(s).(type) {
 	case string:
-		x := itrPoolString.Get()
-		defer itrPoolString.Put(x)
+		x := iteratorPoolString.Get()
+		defer iteratorPoolString.Put(x)
 		i = x.(*Iterator[S])
 	case []byte:
-		x := itrPoolBytes.Get()
-		defer itrPoolBytes.Put(x)
+		x := iteratorPoolBytes.Get()
+		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
 	}
 	i.src = s
@@ -298,12 +317,12 @@ func Scan[S ~string | ~[]byte](
 	var i *Iterator[S]
 	switch any(s).(type) {
 	case string:
-		x := itrPoolString.Get()
-		defer itrPoolString.Put(x)
+		x := iteratorPoolString.Get()
+		defer iteratorPoolString.Put(x)
 		i = x.(*Iterator[S])
 	case []byte:
-		x := itrPoolBytes.Get()
-		defer itrPoolBytes.Put(x)
+		x := iteratorPoolBytes.Get()
+		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
 	}
 	i.src = s
@@ -323,22 +342,55 @@ func Scan[S ~string | ~[]byte](
 	return Error[S]{}
 }
 
-const defaultValidatorStackSize = 1024
-
 // Valid returns true if s is a valid JSON value.
+//
+// Consider using a reusable Validator instance instead
+// to improve performance when dealing with many inputs.
 func Valid[S ~string | ~[]byte](s S) bool {
 	return !Validate(s).IsErr()
 }
 
 // ValidateOne scans a JSON value from s and returns an error if it's invalid,
 // otherwise returns s with the scanned value cut.
+//
+// Consider using a reusable Validator instance instead
+// to improve performance when dealing with many inputs.
 func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
-	return validate(s, defaultValidatorStackSize)
+	var v *Validator[S]
+	switch any(s).(type) {
+	case string:
+		x := validatorPoolString.Get()
+		defer validatorPoolString.Put(x)
+		v = x.(*Validator[S])
+	case []byte:
+		x := validatorPoolBytes.Get()
+		defer validatorPoolBytes.Put(x)
+		v = x.(*Validator[S])
+	}
+	v.stack = v.stack[:0]
+
+	return validate(v.stack, s)
 }
 
 // Validate returns an error if s is invalid JSON.
+//
+// Consider using a reusable Validator instance instead
+// to improve performance when dealing with many inputs.
 func Validate[S ~string | ~[]byte](s S) Error[S] {
-	t, err := validate(s, defaultValidatorStackSize)
+	var v *Validator[S]
+	switch any(s).(type) {
+	case string:
+		x := validatorPoolString.Get()
+		defer validatorPoolString.Put(x)
+		v = x.(*Validator[S])
+	case []byte:
+		x := validatorPoolBytes.Get()
+		defer validatorPoolBytes.Put(x)
+		v = x.(*Validator[S])
+	}
+	v.stack = v.stack[:0]
+
+	t, err := validate(v.stack, s)
 	if err.IsErr() {
 		return err
 	}
@@ -1026,14 +1078,54 @@ STRING:
 	}
 }
 
+// NewValidator creates a new reusable validator instance.
+func NewValidator[S ~string | ~[]byte](preallocStack int) *Validator[S] {
+	return &Validator[S]{
+		stack: make([]stackNodeType, 0, preallocStack),
+	}
+}
+
+// Validator is a reusable validator instance.
+// The validator is more efficient than the parser at JSON validation.
+// A validator instance can be more efficient than global Valid, Validate and ValidateOne
+// functions due to potential stack allocation avoidance.
+type Validator[S ~string | ~[]byte] struct{ stack []stackNodeType }
+
+// Valid returns true if s is a valid JSON value.
+func (v *Validator[S]) Valid(s S) bool {
+	return !v.Validate(s).IsErr()
+}
+
+// ValidateOne scans a JSON value from s and returns an error if it's invalid,
+// otherwise returns s with the scanned value cut.
+func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
+	return validate(v.stack, s)
+}
+
+// Validate returns an error if s is invalid JSON.
+func (v *Validator[S]) Validate(s S) Error[S] {
+	t, err := validate(v.stack, s)
+	if err.IsErr() {
+		return err
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return getError(ErrorCodeIllegalControlChar, s, t)
+	}
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
+	}
+	return Error[S]{}
+}
+
 // validate returns the remainder of i.src and an error if any is encountered.
-func validate[S ~string | ~[]byte](s S, preallocStack int) (S, Error[S]) {
+func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 	var (
 		rollback S // Used as fallback for error report
 		src      = s
 		top      stackNodeType
 		b        bool
-		st       = make([]stackNodeType, 0, preallocStack)
 	)
 
 	stPop := func() {

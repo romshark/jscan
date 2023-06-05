@@ -456,9 +456,10 @@ func BenchmarkValid(b *testing.B) {
 			require.NoError(b, err)
 
 			b.Run("jscan___________", func(b *testing.B) {
+				v := jscan.NewValidator[[]byte](1024)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gbool = jscan.Valid(src)
+					gbool = v.Valid(src)
 				}
 			})
 
@@ -478,9 +479,11 @@ func BenchmarkValid(b *testing.B) {
 
 			b.Run("gofaster-jx_____", func(b *testing.B) {
 				jb := []byte(src)
+				d := new(gofasterjx.Decoder)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gbool = gofasterjx.Valid(jb)
+					d.ResetBytes(jb)
+					gbool = d.Validate() != nil
 				}
 			})
 
