@@ -1413,5 +1413,16 @@ func TestStrings(t *testing.T) {
 			})
 			require.False(t, err.IsErr())
 		})
+		t.Run("Valid", func(t *testing.T) {
+			require.True(t, jscan.Valid[string](td))
+		})
+		t.Run("Validate", func(t *testing.T) {
+			err := jscan.Validate[string](td)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ValidateOne", func(t *testing.T) {
+			_, err := jscan.ValidateOne[string](td)
+			require.False(t, err.IsErr())
+		})
 	}
 }
