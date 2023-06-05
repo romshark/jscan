@@ -503,9 +503,10 @@ func scan[S ~string | ~[]byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
 ) (S, Error[S]) {
 	var (
-		s      = i.src
-		b      bool
-		ks, ke int
+		rollback S // Used as fallback for error report
+		s        = i.src
+		b        bool
+		ks, ke   int
 	)
 
 VALUE:
@@ -619,8 +620,11 @@ VALUE_ARRAY:
 VALUE_NUMBER:
 	{
 		i.valueIndex = len(i.src) - len(s)
-		if s, b = jsonnum.ReadNumber(s); b {
-			return s, getError(ErrorCodeMalformedNumber, i.src, s)
+		{
+			rollback = s
+			if s, b = jsonnum.ReadNumber(s); b {
+				return s, getError(ErrorCodeMalformedNumber, i.src, rollback)
+			}
 		}
 		i.valueIndexEnd = len(i.src) - len(s)
 		i.valueType = ValueTypeNumber
@@ -1025,10 +1029,11 @@ STRING:
 // validate returns the remainder of i.src and an error if any is encountered.
 func validate[S ~string | ~[]byte](s S, preallocStack int) (S, Error[S]) {
 	var (
-		src = s
-		top stackNodeType
-		b   bool
-		st  = make([]stackNodeType, 0, preallocStack)
+		rollback S // Used as fallback for error report
+		src      = s
+		top      stackNodeType
+		b        bool
+		st       = make([]stackNodeType, 0, preallocStack)
 	)
 
 	stPop := func() {
@@ -1115,8 +1120,11 @@ VALUE_ARRAY:
 	goto VALUE_OR_ARR_TERM
 
 VALUE_NUMBER:
-	if s, b = jsonnum.ReadNumber(s); b {
-		return s, getError(ErrorCodeMalformedNumber, src, s)
+	{
+		rollback = s
+		if s, b = jsonnum.ReadNumber(s); b {
+			return s, getError(ErrorCodeMalformedNumber, src, rollback)
+		}
 	}
 	goto AFTER_VALUE
 
