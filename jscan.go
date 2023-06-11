@@ -303,21 +303,15 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 	default:
 		return ""
 	}
-	if index >= 0 {
-		if atIndex < 0x20 {
-			return fmt.Sprintf(
-				"error at index %d (0x%x): %s",
-				index, atIndex, errMsg,
-			)
-		}
+	if atIndex < 0x20 {
 		return fmt.Sprintf(
-			"error at index %d ('%s'): %s",
-			index, string(atIndex), errMsg,
+			"error at index %d (0x%x): %s",
+			index, atIndex, errMsg,
 		)
 	}
 	return fmt.Sprintf(
-		"error at index %d: %s",
-		index, errMsg,
+		"error at index %d ('%s'): %s",
+		index, string(atIndex), errMsg,
 	)
 }
 
