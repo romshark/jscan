@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/romshark/jscan/internal/jsonnum"
+	"github.com/romshark/jscan/v2/internal/jsonnum"
 
 	"github.com/stretchr/testify/require"
 )

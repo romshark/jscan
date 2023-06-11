@@ -3,7 +3,7 @@ package jscan_test
 import (
 	"fmt"
 
-	"github.com/romshark/jscan"
+	"github.com/romshark/jscan/v2"
 )
 
 func ExampleScan() {

@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/romshark/jscan/internal/strfind"
+	"github.com/romshark/jscan/v2/internal/strfind"
 
 	"github.com/stretchr/testify/require"
 )

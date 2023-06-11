@@ -1,8 +1,8 @@
 package jscan
 
 import (
-	"github.com/romshark/jscan/internal/jsonnum"
-	"github.com/romshark/jscan/internal/strfind"
+	"github.com/romshark/jscan/v2/internal/jsonnum"
+	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
 // Valid returns true if s is a valid JSON value.

@@ -1,8 +1,8 @@
 package jscan
 
 import (
-	"github.com/romshark/jscan/internal/jsonnum"
-	"github.com/romshark/jscan/internal/strfind"
+	"github.com/romshark/jscan/v2/internal/jsonnum"
+	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
 // ScanOne calls fn for every encountered value including objects and arrays.

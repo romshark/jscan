@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/romshark/jscan"
+	"github.com/romshark/jscan/v2"
 )
 
 func FuzzValid(f *testing.F) {

@@ -1,4 +1,4 @@
-module github.com/romshark/jscan
+module github.com/romshark/jscan/v2
 
 go 1.20
 

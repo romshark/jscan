@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/romshark/jscan"
+	"github.com/romshark/jscan/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1370,4 +1370,26 @@ func testDataType[S ~string | ~[]byte](input S) string {
 		return "bytes"
 	}
 	return "string"
+}
+
+func TestIndexEnd(t *testing.T) {
+	c := 0
+	err := jscan.Scan(`{"x":["y"]}`, func(i *jscan.Iterator[string]) (err bool) {
+		switch c {
+		case 0:
+			require.Equal(t, jscan.ValueTypeObject, i.ValueType())
+			require.Equal(t, -1, i.ValueIndexEnd())
+		case 1:
+			require.Equal(t, jscan.ValueTypeArray, i.ValueType())
+			require.Equal(t, -1, i.ValueIndexEnd())
+		case 2:
+			require.Equal(t, jscan.ValueTypeString, i.ValueType())
+			require.Equal(t, len(`{"x":["y"`), i.ValueIndexEnd())
+		default:
+			t.Fatal("unexpected branch")
+		}
+		c++
+		return false
+	})
+	require.False(t, err.IsErr())
 }

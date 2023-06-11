@@ -6,7 +6,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
-	"github.com/romshark/jscan/internal/keyescape"
+	"github.com/romshark/jscan/v2/internal/keyescape"
 )
 
 const (

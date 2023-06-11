@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/romshark/jscan"
+	"github.com/romshark/jscan/v2"
 
 	encodingjson "encoding/json"
 

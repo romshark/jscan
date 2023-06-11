@@ -3,7 +3,7 @@ package jsonnum_test
 import (
 	"testing"
 
-	"github.com/romshark/jscan/internal/jsonnum"
+	"github.com/romshark/jscan/v2/internal/jsonnum"
 )
 
 func BenchmarkValid(b *testing.B) {
