@@ -927,7 +927,8 @@ func TestControlCharacters(t *testing.T) {
 			for x := 0; x < i; x++ {
 				b.WriteString(`x`)
 			}
-			b.WriteString("\x00\"")
+			b.WriteString("\x00")
+			b.WriteString("1234567812345678\"")
 			testControlCharacters(t, b.String(), fmt.Sprintf(
 				"error at index %d (0x0): illegal control character", i+1,
 			))
@@ -941,7 +942,7 @@ func TestControlCharacters(t *testing.T) {
 			for x := 0; x < i; x++ {
 				b.WriteString(`x`)
 			}
-			b.WriteString("\x00\":null}")
+			b.WriteString("\x00\":\"1234567812345678\"}")
 			testControlCharacters(t, b.String(), fmt.Sprintf(
 				"error at index %d (0x0): illegal control character", i+2,
 			))
@@ -951,6 +952,15 @@ func TestControlCharacters(t *testing.T) {
 	t.Run("array_item_string", func(t *testing.T) {
 		ForASCIIControlChars(t, func(t *testing.T, b byte) {
 			s := `["` + string(b) + `"]`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 2 (0x%x): illegal control character", b,
+			))
+		})
+	})
+
+	t.Run("before_key_after_space", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			s := `{ ` + string(b) + `:null}`
 			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 2 (0x%x): illegal control character", b,
 			))
