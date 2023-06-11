@@ -74,7 +74,7 @@ func Scan[S ~string | ~[]byte](
 	return Error[S]{}
 }
 
-// Parser wraps an iterator instance in a reusable instance.
+// Parser wraps an iterator in a reusable instance.
 // Using a parser instance is more efficient than global functions
 // that rely on a global iterator pool.
 type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
