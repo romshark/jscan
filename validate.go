@@ -211,8 +211,109 @@ VALUE_NUMBER:
 	goto AFTER_VALUE
 
 VALUE_STRING:
-	s, b = s[1:], false
-	goto STRING
+	s = s[1:]
+	for {
+		for ; len(s) > 15; s = s[16:] {
+			if lutStr[s[0]] != 0 {
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[1]] != 0 {
+				s = s[1:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[2]] != 0 {
+				s = s[2:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[3]] != 0 {
+				s = s[3:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[4]] != 0 {
+				s = s[4:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[5]] != 0 {
+				s = s[5:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[6]] != 0 {
+				s = s[6:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[7]] != 0 {
+				s = s[7:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[8]] != 0 {
+				s = s[8:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[9]] != 0 {
+				s = s[9:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[10]] != 0 {
+				s = s[10:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[11]] != 0 {
+				s = s[11:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[12]] != 0 {
+				s = s[12:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[13]] != 0 {
+				s = s[13:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[14]] != 0 {
+				s = s[14:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[15]] != 0 {
+				s = s[15:]
+				goto CHECK_STRING_CHARACTER
+			}
+			continue
+		}
+
+	CHECK_STRING_CHARACTER:
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
+		}
+		switch s[0] {
+		case '\\':
+			if len(s) < 2 {
+				return s, getError(ErrorCodeUnexpectedEOF, src, s)
+			}
+			if lutEscape[s[1]] == 1 {
+				s = s[2:]
+				continue
+			}
+			if s[1] != 'u' {
+				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+			}
+			if len(s) < 6 ||
+				lutSX[s[5]] != 2 ||
+				lutSX[s[4]] != 2 ||
+				lutSX[s[3]] != 2 ||
+				lutSX[s[2]] != 2 {
+				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+			}
+			s = s[5:]
+		case '"':
+			s = s[1:]
+			goto AFTER_VALUE
+		default:
+			if s[0] < 0x20 {
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
+			}
+			s = s[1:]
+		}
+	}
 
 VALUE_NULL:
 	if len(s) < 4 || string(s[:4]) != "null" {
@@ -259,9 +360,108 @@ OBJ_KEY:
 	}
 
 	s = s[1:]
+	for {
+		for ; len(s) > 15; s = s[16:] {
+			if lutStr[s[0]] != 0 {
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[1]] != 0 {
+				s = s[1:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[2]] != 0 {
+				s = s[2:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[3]] != 0 {
+				s = s[3:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[4]] != 0 {
+				s = s[4:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[5]] != 0 {
+				s = s[5:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[6]] != 0 {
+				s = s[6:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[7]] != 0 {
+				s = s[7:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[8]] != 0 {
+				s = s[8:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[9]] != 0 {
+				s = s[9:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[10]] != 0 {
+				s = s[10:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[11]] != 0 {
+				s = s[11:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[12]] != 0 {
+				s = s[12:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[13]] != 0 {
+				s = s[13:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[14]] != 0 {
+				s = s[14:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			if lutStr[s[15]] != 0 {
+				s = s[15:]
+				goto CHECK_FIELDNAME_STRING_CHARACTER
+			}
+			continue
+		}
 
-	b = true
-	goto STRING
+	CHECK_FIELDNAME_STRING_CHARACTER:
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
+		}
+		switch s[0] {
+		case '\\':
+			if len(s) < 2 {
+				return s, getError(ErrorCodeUnexpectedEOF, src, s)
+			}
+			if lutEscape[s[1]] == 1 {
+				s = s[2:]
+				continue
+			}
+			if s[1] != 'u' {
+				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+			}
+			if len(s) < 6 ||
+				lutSX[s[5]] != 2 ||
+				lutSX[s[4]] != 2 ||
+				lutSX[s[3]] != 2 ||
+				lutSX[s[2]] != 2 {
+				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+			}
+			s = s[5:]
+		case '"':
+			s = s[1:]
+			goto AFTER_OBJ_KEY_STRING
+		default:
+			if s[0] < 0x20 {
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
+			}
+			s = s[1:]
+		}
+	}
 AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, src, s)
@@ -413,111 +613,4 @@ AFTER_VALUE:
 		goto AFTER_VALUE
 	}
 	return s, getError(ErrorCodeUnexpectedToken, src, s)
-
-STRING:
-	for {
-		for ; len(s) > 15; s = s[16:] {
-			if lutStr[s[0]] != 0 {
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[1]] != 0 {
-				s = s[1:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[2]] != 0 {
-				s = s[2:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[3]] != 0 {
-				s = s[3:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[4]] != 0 {
-				s = s[4:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[5]] != 0 {
-				s = s[5:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[6]] != 0 {
-				s = s[6:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[7]] != 0 {
-				s = s[7:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[8]] != 0 {
-				s = s[8:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[9]] != 0 {
-				s = s[9:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[10]] != 0 {
-				s = s[10:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[11]] != 0 {
-				s = s[11:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[12]] != 0 {
-				s = s[12:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[13]] != 0 {
-				s = s[13:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[14]] != 0 {
-				s = s[14:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[15]] != 0 {
-				s = s[15:]
-				goto CHECK_STRING_CHARACTER
-			}
-			continue
-		}
-
-	CHECK_STRING_CHARACTER:
-		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, src, s)
-		}
-		switch s[0] {
-		case '\\':
-			if len(s) < 2 {
-				return s, getError(ErrorCodeUnexpectedEOF, src, s)
-			}
-			if lutEscape[s[1]] == 1 {
-				s = s[2:]
-				continue
-			}
-			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
-			}
-			if len(s) < 6 ||
-				lutSX[s[5]] != 2 ||
-				lutSX[s[4]] != 2 ||
-				lutSX[s[3]] != 2 ||
-				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
-			}
-			s = s[5:]
-		case '"':
-			s = s[1:]
-			if b {
-				goto AFTER_OBJ_KEY_STRING
-			}
-			goto AFTER_VALUE
-		default:
-			if s[0] < 0x20 {
-				return s, getError(ErrorCodeIllegalControlChar, src, s)
-			}
-			s = s[1:]
-		}
-	}
 }
