@@ -707,5 +707,8 @@ AFTER_VALUE:
 		i.keyIndex, i.keyIndexEnd = -1, -1
 		goto AFTER_VALUE
 	}
+	if s[0] < 0x20 {
+		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+	}
 	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
 }

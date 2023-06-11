@@ -563,5 +563,8 @@ AFTER_VALUE:
 		stPop()
 		goto AFTER_VALUE
 	}
+	if s[0] < 0x20 {
+		return s, getError(ErrorCodeIllegalControlChar, src, s)
+	}
 	return s, getError(ErrorCodeUnexpectedToken, src, s)
 }
