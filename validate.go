@@ -118,12 +118,7 @@ func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 		b        bool
 	)
 
-	stPop := func() {
-		if len(st) < 1 {
-			return
-		}
-		st = st[:len(st)-1]
-	}
+	stPop := func() { st = st[:len(st)-1] }
 	stTop := func() {
 		if len(st) < 1 {
 			top = 0
@@ -131,9 +126,7 @@ func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 		}
 		top = st[len(st)-1]
 	}
-	stPush := func(t stackNodeType) {
-		st = append(st, t)
-	}
+	stPush := func(t stackNodeType) { st = append(st, t) }
 
 VALUE:
 	if len(s) < 1 {
