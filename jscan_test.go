@@ -1,7 +1,6 @@
 package jscan_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -921,106 +920,111 @@ func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 }
 
 func TestControlCharacters(t *testing.T) {
-	// Control characters in a string value
-	t.Run("value_string", func(t *testing.T) {
+	for i := 0; i <= 24; i++ {
+		t.Run(fmt.Sprintf("value_string_%d", i), func(t *testing.T) {
+			var b strings.Builder
+			b.WriteString(`"`)
+			for x := 0; x < i; x++ {
+				b.WriteString(`x`)
+			}
+			b.WriteString("\x00\"")
+			testControlCharacters(t, b.String(), fmt.Sprintf(
+				"error at index %d (0x0): illegal control character", i+1,
+			))
+		})
+	}
+
+	for i := 0; i <= 24; i++ {
+		t.Run(fmt.Sprintf("fieldname_string_%d", i), func(t *testing.T) {
+			var b strings.Builder
+			b.WriteString(`{"`)
+			for x := 0; x < i; x++ {
+				b.WriteString(`x`)
+			}
+			b.WriteString("\x00\":null}")
+			testControlCharacters(t, b.String(), fmt.Sprintf(
+				"error at index %d (0x0): illegal control character", i+2,
+			))
+		})
+	}
+
+	t.Run("array_item_string", func(t *testing.T) {
 		ForASCIIControlChars(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteByte('"')
-			buf.WriteByte(b)
-			buf.WriteByte('"')
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
-				"error at index 1 (0x%x): illegal control character", b,
+			s := `["` + string(b) + `"]`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 2 (0x%x): illegal control character", b,
 			))
 		})
 	})
 
-	// Control characters in a string field value
-	t.Run("field_string", func(t *testing.T) {
-		ForASCIIControlChars(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString(`{"x":"`)
-			buf.WriteByte(b)
-			buf.WriteString(`"}`)
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
+	t.Run("before_colon", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			s := `{"key"` + string(b) + `:null}`
+			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 6 (0x%x): illegal control character", b,
 			))
 		})
 	})
 
-	// Control characters in an array item string
-	t.Run("array_item_string", func(t *testing.T) {
-		ForASCIIControlChars(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString(`["`)
-			buf.WriteByte(b)
-			buf.WriteString(`"]`)
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
-				"error at index 2 (0x%x): illegal control character", b,
+	t.Run("before_colon_after_space", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			s := `{"key" ` + string(b) + `:null}`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 7 (0x%x): illegal control character", b,
 			))
 		})
 	})
 
-	// Control characters in head
 	t.Run("head", func(t *testing.T) {
 		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteByte('\t')
-			buf.WriteByte(b)
-			buf.WriteString(`[]`)
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
+			s := "\t" + string(b) + `[]`
+			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 1 (0x%x): illegal control character", b,
 			))
 		})
 	})
 
-	// Control characters outside of strings
-	t.Run("nonstring", func(t *testing.T) {
+	t.Run("before_key", func(t *testing.T) {
 		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteByte(b)
-			buf.WriteString("null")
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
-				"error at index 0 (0x%x): illegal control character", b,
-			))
-		})
-
-		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString("[")
-			buf.WriteByte(b)
-			buf.WriteString("]")
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
+			s := "{" + string(b) + "}"
+			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 1 (0x%x): illegal control character", b,
 			))
 		})
+	})
 
+	t.Run("before_array_item_after_br", func(t *testing.T) {
 		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString("[\n")
-			buf.WriteByte(b)
-			buf.WriteString("]")
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
+			s := "[\n" + string(b) + "]"
+			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 2 (0x%x): illegal control character", b,
 			))
 		})
+	})
 
+	t.Run("after_colon", func(t *testing.T) {
 		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString("{")
-			buf.WriteByte(b)
-			buf.WriteString("}")
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
-				"error at index 1 (0x%x): illegal control character", b,
+			s := `{"foo":` + string(b) + `false}`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 7 (0x%x): illegal control character", b,
 			))
 		})
+	})
 
+	t.Run("after_value", func(t *testing.T) {
 		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
-			var buf bytes.Buffer
-			buf.WriteString(`{"foo":`)
-			buf.WriteByte(b)
-			buf.WriteString(`false}`)
-			testControlCharacters(t, buf.String(), fmt.Sprintf(
-				"error at index 7 (0x%x): illegal control character", b,
+			s := `[null` + string(b) + `,null]`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 5 (0x%x): illegal control character", b,
+			))
+		})
+	})
+
+	t.Run("after_value_after_space", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			s := `[null ` + string(b) + `,null]`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 6 (0x%x): illegal control character", b,
 			))
 		})
 	})
