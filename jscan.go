@@ -9,15 +9,16 @@ import (
 	"github.com/romshark/jscan/v2/internal/keyescape"
 )
 
+// Default stack sizes
 const (
-	defaultIteratorStackSize  = 64
-	defaultValidatorStackSize = 128
+	DefaultIteratorStackSize  = 64
+	DefaultValidatorStackSize = 128
 )
 
 var iteratorPoolString = sync.Pool{
 	New: func() any {
 		return &Iterator[string]{
-			stack: make([]stackNode, 0, defaultIteratorStackSize),
+			stack: make([]stackNode, 0, DefaultIteratorStackSize),
 		}
 	},
 }
@@ -25,7 +26,7 @@ var iteratorPoolString = sync.Pool{
 var iteratorPoolBytes = sync.Pool{
 	New: func() any {
 		return &Iterator[[]byte]{
-			stack: make([]stackNode, 0, defaultIteratorStackSize),
+			stack: make([]stackNode, 0, DefaultIteratorStackSize),
 		}
 	},
 }
@@ -33,7 +34,7 @@ var iteratorPoolBytes = sync.Pool{
 var validatorPoolString = sync.Pool{
 	New: func() any {
 		return &Validator[string]{
-			stack: make([]stackNodeType, 0, defaultValidatorStackSize),
+			stack: make([]stackNodeType, 0, DefaultValidatorStackSize),
 		}
 	},
 }
@@ -41,7 +42,7 @@ var validatorPoolString = sync.Pool{
 var validatorPoolBytes = sync.Pool{
 	New: func() any {
 		return &Validator[[]byte]{
-			stack: make([]stackNodeType, 0, defaultValidatorStackSize),
+			stack: make([]stackNodeType, 0, DefaultValidatorStackSize),
 		}
 	},
 }
