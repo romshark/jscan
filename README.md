@@ -534,6 +534,8 @@ ok  	github.com/romshark/jscan/v2	263.004s
 
 ### Intel Xeon E5-2667 v2 - Linux
 
+provided by [github.com/ykpon](https://github.com/ykpon)
+
 <details>
 
 ```
