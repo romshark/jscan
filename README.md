@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-j := `{
+	j := `{
 		"s": "value",
 		"t": true,
 		"f": false,
