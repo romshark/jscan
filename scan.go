@@ -7,15 +7,15 @@ import (
 
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// field values and array items respectively.
+// member and element values.
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns s with the scanned value cut.
 // Unlike (*Parser).ScanOne this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing parser instances instead.
+// Consider reusing Parser instances instead.
 //
-// WARNING: Don't use or alias *Iterator after fn returns!
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
@@ -37,12 +37,12 @@ func ScanOne[S ~string | ~[]byte](
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// field values and array items respectively.
+// member and element values.
 // Unlike (*Parser).Scan this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing parser instances instead.
+// Consider reusing Parser instances instead.
 //
-// WARNING: Don't use or alias *Iterator after fn returns!
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (err Error[S]) {
@@ -75,11 +75,16 @@ func Scan[S ~string | ~[]byte](
 }
 
 // Parser wraps an iterator in a reusable instance.
-// Using a parser instance is more efficient than global functions
+// Reusing a parser instance is more efficient than global functions
 // that rely on a global iterator pool.
 type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
 
 // NewParser creates a new reusable parser instance.
+// A higher preallocStackFrames value implies greater memory usage but also reduces
+// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
+// preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
+// (1 frame = ~32 bytes).
+// Use DefaultStackSizeIterator when not sure.
 func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
@@ -88,12 +93,12 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// field values and array items respectively.
+// member and element values.
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns s with the scanned value cut.
 //
-// WARNING: Don't use or alias *Iterator after fn returns!
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
@@ -104,9 +109,9 @@ func (p *Parser[S]) ScanOne(
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// field values and array items respectively.
+// member and element values.
 //
-// WARNING: Don't use or alias *Iterator after fn returns!
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
 ) Error[S] {

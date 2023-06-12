@@ -14,7 +14,7 @@
 # jscan
 jscan provides high-performance zero-allocation JSON iterator and validator for Go. This module doesn't provide `Marshal`/`Unmarshal` capabilities, instead it focuses on highly efficient iteration over JSON data with on-the-fly validation.
 
-jscan is tested against https://github.com/nst/JSONTestSuite, a comprehensive test suite for RFC 8259 compliant JSON parsers.
+jscan is tested against https://github.com/nst/JSONTestSuite, a comprehensive test suite for [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259) compliant JSON parsers.
 
 ## Example
 https://go.dev/play/p/v-VeiMO2fsJ
@@ -25,11 +25,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/romshark/jscan"
+	"github.com/romshark/jscan/v2"
 )
 
 func main() {
-	j := `{
+j := `{
 		"s": "value",
 		"t": true,
 		"f": false,
@@ -55,29 +55,26 @@ func main() {
 		]
 	}`
 
-	err := jscan.Scan(jscan.Options{
-		CachePath:  true,
-		EscapePath: true,
-	}, j, func(i *jscan.Iterator) (err bool) {
-		fmt.Printf("| value:\n")
-		fmt.Printf("|  level:      %d\n", i.Level)
+	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+		fmt.Printf("%q:\n", i.Pointer())
+		fmt.Printf("├─ valueType:  %s\n", i.ValueType().String())
 		if k := i.Key(); k != "" {
-			fmt.Printf("|  key:        %q\n", i.Key())
+			fmt.Printf("├─ key:        %q\n", k[1:len(k)-1])
 		}
-		fmt.Printf("|  valueType:  %s\n", i.ValueType)
+		if ai := i.ArrayIndex(); ai != -1 {
+			fmt.Printf("├─ arrayIndex: %d\n", ai)
+		}
 		if v := i.Value(); v != "" {
-			fmt.Printf("|  value:      %q\n", i.Value())
+			fmt.Printf("├─ value:      %q\n", v)
 		}
-		fmt.Printf("|  arrayIndex: %d\n", i.ArrayIndex)
-		fmt.Printf("|  path:       '%s'\n", i.Path())
-		return false // No Error, resume scanning
+		fmt.Printf("└─ level:      %d\n", i.Level())
+		return false // Resume scanning
 	})
 
 	if err.IsErr() {
 		fmt.Printf("ERR: %s\n", err)
 		return
 	}
-
 }
 ```
 

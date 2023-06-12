@@ -122,7 +122,7 @@ func (i *Iterator[S]) Value() (value S) {
 }
 
 // ScanStack calls fn for every element in the stack.
-// If keyIndex is != -1 then the element is a field value, otherwise
+// If keyIndex is != -1 then the element is a member value, otherwise
 // arrayIndex indicates the index of the element in the underlying array.
 func (i *Iterator[S]) ScanStack(fn func(keyIndex, keyEnd, arrayIndex int)) {
 	for j := range i.stack {
@@ -152,7 +152,7 @@ func (i *Iterator[S]) Pointer() (s S) {
 
 // ViewPointer calls fn and provides the buffer holding the
 // JSON pointer in RFC-6901 format.
-// Consider using (*Iter[S]).Pointer() instead for safety and convenience.
+// Consider using (*Iterator[S]).Pointer() instead for safety and convenience.
 //
 // WARNING: do not use or alias p after fn returns,
 // only reading and copying p are considered safe!
@@ -176,7 +176,6 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	i.pointer = i.pointer[:0]
 }
 
-// getError returns the stringified error, if any.
 func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 	return Error[S]{
 		Code:  c,
@@ -185,19 +184,29 @@ func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 	}
 }
 
-// Error represents an error encountered during validation or iteration.
+// Error is a syntax error encountered during validation or iteration.
+// The only exception is ErrorCodeCallback which indicates a callback
+// explicitly breaking by returning true instead of a syntax error.
+// (Error).IsErr() returning false is equivalent to err == nil.
 type Error[S ~string | ~[]byte] struct {
-	Src   S
+	// Src refers to the original source.
+	Src S
+
+	// Index points to the error start index in the source.
 	Index int
-	Code  ErrorCode
+
+	// Code indicates the type of the error.
+	Code ErrorCode
 }
+
+var _ error = Error[string]{}
 
 // IsErr returns true if there is an error, otherwise returns false.
 func (e Error[S]) IsErr() bool { return e.Code != 0 }
 
-// Error stringifies the error.
-// Calling Error should be avoided in performance-critical code
-// as it relies on dynamic memory allocation.
+// Error stringifies the error implementing the built-in error interface.
+// Calling Error should be avoided in performance-critical code as it
+// relies on dynamic memory allocation.
 func (e Error[S]) Error() string {
 	if e.Index < len(e.Src) {
 		var r rune
@@ -231,8 +240,8 @@ const (
 	// ErrorCodeInvalidEscape indicates the encounter of an invalid escape sequence.
 	ErrorCodeInvalidEscape
 
-	// ErrorCodeIllegalControlChar indicates the presence of
-	// a control character in the source.
+	// ErrorCodeIllegalControlChar indicates the encounter of
+	// an illegal control character in the source.
 	ErrorCodeIllegalControlChar
 
 	// ErrorCodeUnexpectedEOF indicates the encounter an unexpected end of file.

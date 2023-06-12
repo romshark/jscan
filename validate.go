@@ -69,9 +69,13 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 }
 
 // NewValidator creates a new reusable validator instance.
-func NewValidator[S ~string | ~[]byte](preallocStack int) *Validator[S] {
+// A higher preallocStackFrames value implies greater memory usage but also reduces
+// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
+// preallocStackFrames of 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
+// Use DefaultStackSizeValidator when not sure.
+func NewValidator[S ~string | ~[]byte](preallocStackFrames int) *Validator[S] {
 	return &Validator[S]{
-		stack: make([]stackNodeType, 0, preallocStack),
+		stack: make([]stackNodeType, 0, preallocStackFrames),
 	}
 }
 
