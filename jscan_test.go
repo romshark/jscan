@@ -249,7 +249,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "escaped unicode string",
+			name:  "escaped_unicode_string",
 			input: `"жш\"ц\\\\\""`,
 			expect: []Record{
 				{
@@ -260,7 +260,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "empty array",
+			name:  "empty_array",
 			input: "[]",
 			expect: []Record{
 				{
@@ -270,7 +270,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "empty object",
+			name:  "empty_object",
 			input: "{}",
 			expect: []Record{
 				{
@@ -280,7 +280,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "nested array",
+			name:  "nested_array",
 			input: `[[null,[{"key":true}]],[]]`,
 			expect: []Record{
 				{
@@ -329,7 +329,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "escaped pointer",
+			name:  "escaped_pointer",
 			input: `{"/":[{"~":null},0]}`,
 			expect: []Record{
 				{
@@ -367,7 +367,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name: "nested object",
+			name: "nested_object",
 			input: `{
 				"s": "value",
 				"t": true,
@@ -549,7 +549,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "trailing space",
+			name:  "trailing_space",
 			input: "null ",
 			expect: []Record{
 				{
@@ -560,7 +560,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "trailing carriage return",
+			name:  "trailing_carriage_return",
 			input: "null\r",
 			expect: []Record{
 				{
@@ -571,7 +571,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "trailing tab",
+			name:  "trailing_tab",
 			input: "null\t",
 			expect: []Record{
 				{
@@ -582,7 +582,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:  "trailing line-break",
+			name:  "trailing_line_break",
 			input: "null\n",
 			expect: []Record{
 				{
@@ -663,38 +663,329 @@ type ErrorTest struct {
 	expect string
 }
 
-func TestError(t *testing.T) {
+func TestErrorUnexpectedEOF(t *testing.T) {
 	for _, td := range []ErrorTest{
 		{
-			name:   "empty input",
+			name:   "before_value",
 			input:  "",
 			expect: `error at index 0: unexpected EOF`,
 		},
 		{
-			name:   "empty input",
+			name:   "before_value_after_space",
 			input:  " ",
 			expect: `error at index 1: unexpected EOF`,
 		},
 		{
-			name:   "empty input",
+			name:   "before_value_after_trn",
 			input:  "\t\r\n ",
 			expect: `error at index 4: unexpected EOF`,
 		},
 		{
-			name:   "invalid literal",
+			name:   "after_opening_curlbrack",
+			input:  `{`,
+			expect: `error at index 1: unexpected EOF`,
+		},
+		{
+			name:   "after_opening_curlbrack_after_space",
+			input:  `{ `,
+			expect: `error at index 2: unexpected EOF`,
+		},
+		{
+			name:   "after_key",
+			input:  `{"x"`,
+			expect: `error at index 4: unexpected EOF`,
+		},
+		{
+			name:   "after_key_space",
+			input:  `{"x" `,
+			expect: `error at index 5: unexpected EOF`,
+		},
+		{
+			name:   "after_value_after_key",
+			input:  `{"x":null`,
+			expect: `error at index 9: unexpected EOF`,
+		},
+		{
+			name:   "after_key_after_value_after_space",
+			input:  `{"x":null `,
+			expect: `error at index 10: unexpected EOF`,
+		},
+		{
+			name:   "after_field_after_comma",
+			input:  `{"x":null,`,
+			expect: `error at index 10: unexpected EOF`,
+		},
+		{
+			name:   "after_field_after_comma_after_space",
+			input:  `{"x":null, `,
+			expect: `error at index 11: unexpected EOF`,
+		},
+		{
+			name:   "after_opening_squarebrack",
+			input:  `[`,
+			expect: `error at index 1: unexpected EOF`,
+		},
+		{
+			name:   "after_opening_squarebrack_after_space",
+			input:  `[ `,
+			expect: `error at index 2: unexpected EOF`,
+		},
+		{
+			name:   "before_comma_in_array",
+			input:  `[null`,
+			expect: `error at index 5: unexpected EOF`,
+		},
+		{
+			name:   "before_comma_in_array_after_space",
+			input:  `[null `,
+			expect: `error at index 6: unexpected EOF`,
+		},
+		{
+			name:   "after_arrayitem_after_comma",
+			input:  `[null,`,
+			expect: `error at index 6: unexpected EOF`,
+		},
+		{
+			name:   "after_arrayitem_after_comma_after_space",
+			input:  `[null, `,
+			expect: `error at index 7: unexpected EOF`,
+		},
+		{
+			name:   "before_closing_squarebrack",
+			input:  `[[null`,
+			expect: `error at index 6: unexpected EOF`,
+		},
+		{
+			name:   `before_closing_quotes`,
+			input:  `"string`,
+			expect: `error at index 7: unexpected EOF`,
+		},
+		{
+			name:   `before_closing_quotes_after_escaped_quotes`,
+			input:  `"string\"`,
+			expect: `error at index 9: unexpected EOF`,
+		},
+		{
+			name:   `before_closing_quotes_after_escaped_sequences`,
+			input:  `"string\\\"`,
+			expect: `error at index 11: unexpected EOF`,
+		},
+		{
+			name:   `after_revsolidus_in_string`,
+			input:  `{"key\`,
+			expect: `error at index 6: unexpected EOF`,
+		},
+		{
+			name:   `before_closing_quotes_in_key`,
+			input:  `{"key`,
+			expect: `error at index 5: unexpected EOF`,
+		},
+		{
+			name:   `after_revsolidus_in_key`,
+			input:  `{"key\`,
+			expect: `error at index 6: unexpected EOF`,
+		},
+	} {
+		require.False(t, json.Valid([]byte(td.input)))
+
+		t.Run(td.name, func(t *testing.T) {
+			testError[string](t, td)
+			testError[[]byte](t, td)
+		})
+	}
+}
+
+func TestErrorInvalidEscapeSequence(t *testing.T) {
+	for _, td := range []ErrorTest{
+		{
+			name:   "invalid_escape_sequence_in_string",
+			input:  `"\0"`,
+			expect: `error at index 1 ('\'): invalid escape sequence`,
+		},
+		{
+			name:   "invalid_escape_sequence_in_string",
+			input:  `"\u000m"`,
+			expect: `error at index 1 ('\'): invalid escape sequence`,
+		},
+		{
+			name:   "invalid_escape_sequence_in_fieldname",
+			input:  `{"\0":true}`,
+			expect: `error at index 2 ('\'): invalid escape sequence`,
+		},
+		{
+			name:   "invalid_escape_sequence_in_string",
+			input:  `{"\u000m":true}`,
+			expect: `error at index 2 ('\'): invalid escape sequence`,
+		},
+	} {
+		require.False(t, json.Valid([]byte(td.input)))
+
+		t.Run(td.name, func(t *testing.T) {
+			testError[string](t, td)
+			testError[[]byte](t, td)
+		})
+	}
+}
+
+func TestErrorUnexpectedToken(t *testing.T) {
+	for _, td := range []ErrorTest{
+		{
+			name:   "before_value_invalid_literal_null",
 			input:  "nul",
 			expect: `error at index 0 ('n'): unexpected token`,
 		},
 		{
-			name:   "invalid literal",
+			name:   "before_value_invalid_literal_false",
 			input:  "fals",
 			expect: `error at index 0 ('f'): unexpected token`,
 		},
 		{
-			name:   "invalid literal",
+			name:   "before_value_invalid_literal_true",
 			input:  "tru",
 			expect: `error at index 0 ('t'): unexpected token`,
 		},
+		{
+			name:   "before_value_invalid_literal_number",
+			input:  "e1",
+			expect: `error at index 0 ('e'): unexpected token`,
+		},
+		{
+			name:   `after_key_closing_curlybrack`,
+			input:  `{"key"}`,
+			expect: `error at index 6 ('}'): unexpected token`,
+		},
+		{
+			name:   `after_key_number`,
+			input:  `{"key"1 :}`,
+			expect: `error at index 6 ('1'): unexpected token`,
+		},
+		{
+			name:   `after_key_semicolon`,
+			input:  `{"key";1}`,
+			expect: `error at index 6 (';'): unexpected token`,
+		},
+		{
+			name:   `after_key_closing_curlybrack`,
+			input:  `{"okay":}`,
+			expect: `error at index 8 ('}'): unexpected token`,
+		},
+		{
+			name:   "after_field_comma_empty_object",
+			input:  `{"key":12,{}}`,
+			expect: `error at index 10 ('{'): unexpected token`,
+		},
+		{
+			name:   `after_fieldvalue_squarebrack`,
+			input:  `{"f":""]`,
+			expect: `error at index 7 (']'): unexpected token`,
+		},
+		{
+			name:   `after_element_curlybrack`,
+			input:  `[null}`,
+			expect: `error at index 5 ('}'): unexpected token`,
+		},
+		{
+			name:   `after_element_comma`,
+			input:  `["okay",]`,
+			expect: `error at index 8 (']'): unexpected token`,
+		},
+		{
+			name:   `after_element_squarebrack`,
+			input:  `["okay"[`,
+			expect: `error at index 7 ('['): unexpected token`,
+		},
+		{
+			name:   `after_element_number`,
+			input:  `["okay"-12`,
+			expect: `error at index 7 ('-'): unexpected token`,
+		},
+		{
+			name:   `after_element_number_zero`,
+			input:  `["okay"0`,
+			expect: `error at index 7 ('0'): unexpected token`,
+		},
+		{
+			name:   `after_element_string`,
+			input:  `["okay""not okay"]`,
+			expect: `error at index 7 ('"'): unexpected token`,
+		},
+		{
+			name:   `after_field_string`,
+			input:  `{"foo":"bar" "baz":"fuz"}`,
+			expect: `error at index 13 ('"'): unexpected token`,
+		},
+		{
+			name:   `after_element_false`,
+			input:  `[null false]`,
+			expect: `error at index 6 ('f'): unexpected token`,
+		},
+		{
+			name:   `after_element_true`,
+			input:  `[null true]`,
+			expect: `error at index 6 ('t'): unexpected token`,
+		},
+		{
+			name:   "after_number_zero_number",
+			input:  "01",
+			expect: `error at index 1 ('1'): unexpected token`,
+		},
+		{
+			name:   `after_number_negzero_number`,
+			input:  `-00`,
+			expect: `error at index 2 ('0'): unexpected token`,
+		},
+		{
+			name:   `after_string_comma`,
+			input:  `"okay",null`,
+			expect: `error at index 6 (','): unexpected token`,
+		},
+		{
+			name:   `after_string_space_string`,
+			input:  `"str" "str"`,
+			expect: `error at index 6 ('"'): unexpected token`,
+		},
+		{
+			name:   `after_zero_space_zero`,
+			input:  `0 0`,
+			expect: `error at index 2 ('0'): unexpected token`,
+		},
+		{
+			name:   `after_false_space_false`,
+			input:  `false false`,
+			expect: `error at index 6 ('f'): unexpected token`,
+		},
+		{
+			name:   `after_true_space_true`,
+			input:  `true true`,
+			expect: `error at index 5 ('t'): unexpected token`,
+		},
+		{
+			name:   `after_null_space_null`,
+			input:  `null null`,
+			expect: `error at index 5 ('n'): unexpected token`,
+		},
+		{
+			name:   `after_array_space_array`,
+			input:  `[] []`,
+			expect: `error at index 3 ('['): unexpected token`,
+		},
+		{
+			name:   `after_object_space_object`,
+			input:  `{"k":0} {"k":0}`,
+			expect: `error at index 8 ('{'): unexpected token`,
+		},
+	} {
+		require.False(t, json.Valid([]byte(td.input)))
+
+		t.Run(td.name, func(t *testing.T) {
+			testError[string](t, td)
+			testError[[]byte](t, td)
+		})
+	}
+}
+
+func TestErrorMalformedNumber(t *testing.T) {
+	for _, td := range []ErrorTest{
 		{
 			name:   "invalid negative number",
 			input:  "-",
@@ -714,171 +1005,6 @@ func TestError(t *testing.T) {
 			name:   "invalid number exponent",
 			input:  "1e-",
 			expect: `error at index 0 ('1'): malformed number`,
-		},
-		{
-			name:   "invalid number integer",
-			input:  "e1",
-			expect: `error at index 0 ('e'): unexpected token`,
-		},
-		{
-			name:   "invalid escape sequence in string",
-			input:  `"\0"`,
-			expect: `error at index 1 ('\'): invalid escape sequence`,
-		},
-		{
-			name:   "missing closing }",
-			input:  `{"x":null`,
-			expect: `error at index 9: unexpected EOF`,
-		},
-		{
-			name:   "missing closing }",
-			input:  `{"x":{`,
-			expect: `error at index 6: unexpected EOF`,
-		},
-		{
-			name:   "missing closing ] after space",
-			input:  `[ `,
-			expect: `error at index 2: unexpected EOF`,
-		},
-		{
-			name:   "missing closing ] after null",
-			input:  `[null`,
-			expect: `error at index 5: unexpected EOF`,
-		},
-		{
-			name:   "missing closing ] after null in array",
-			input:  `[[null`,
-			expect: `error at index 6: unexpected EOF`,
-		},
-		{
-			name:   `missing closing quotes`,
-			input:  `"string`,
-			expect: `error at index 7: unexpected EOF`,
-		},
-		{
-			name:   `missing closing quotes after escaped quotes`,
-			input:  `"string\"`,
-			expect: `error at index 9: unexpected EOF`,
-		},
-		{
-			name:   `missing closing quotes after escaped sequences`,
-			input:  `"string\\\"`,
-			expect: `error at index 11: unexpected EOF`,
-		},
-		{
-			name:   `unfinished key`,
-			input:  `{"key`,
-			expect: `error at index 5: unexpected EOF`,
-		},
-		{
-			name:   `missing column`,
-			input:  `{"key"}`,
-			expect: `error at index 6 ('}'): unexpected token`,
-		},
-		{
-			name:   `invalid content before column`,
-			input:  `{"key"1 :}`,
-			expect: `error at index 6 ('1'): unexpected token`,
-		},
-		{
-			name:   `invalid column`,
-			input:  `{"key";1}`,
-			expect: `error at index 6 (';'): unexpected token`,
-		},
-		{
-			name:   `missing field value`,
-			input:  `{"okay":}`,
-			expect: `error at index 8 ('}'): unexpected token`,
-		},
-		{
-			name:   "unexpected object",
-			input:  `{"key":12,{}}`,
-			expect: `error at index 10 ('{'): unexpected token`,
-		},
-		{
-			name:   `missing array item`,
-			input:  `["okay",]`,
-			expect: `error at index 8 (']'): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `["okay"[`,
-			expect: `error at index 7 ('['): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `["okay"-12`,
-			expect: `error at index 7 ('-'): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `["okay"0`,
-			expect: `error at index 7 ('0'): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `["okay""not okay"]`,
-			expect: `error at index 7 ('"'): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `{"foo":"bar" "baz":"fuz"}`,
-			expect: `error at index 13 ('"'): unexpected token`,
-		},
-		{
-			name:   `missing comma`,
-			input:  `[null false]`,
-			expect: `error at index 6 ('f'): unexpected token`,
-		},
-		{
-			name:   "expect EOF after number zero",
-			input:  "01",
-			expect: `error at index 1 ('1'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after negative number zero`,
-			input:  `-00`,
-			expect: `error at index 2 ('0'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after string get comma`,
-			input:  `"okay",null`,
-			expect: `error at index 6 (','): unexpected token`,
-		},
-		{
-			name:   `expect EOF after string`,
-			input:  `"str" "str"`,
-			expect: `error at index 6 ('"'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after number`,
-			input:  `0 0`,
-			expect: `error at index 2 ('0'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after false`,
-			input:  `false false`,
-			expect: `error at index 6 ('f'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after true`,
-			input:  `true true`,
-			expect: `error at index 5 ('t'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after null`,
-			input:  `null null`,
-			expect: `error at index 5 ('n'): unexpected token`,
-		},
-		{
-			name:   `expect EOF after array`,
-			input:  `[] []`,
-			expect: `error at index 3 ('['): unexpected token`,
-		},
-		{
-			name:   `expect EOF after object`,
-			input:  `{"k":0} {"k":0}`,
-			expect: `error at index 8 ('{'): unexpected token`,
 		},
 	} {
 		require.False(t, json.Valid([]byte(td.input)))
@@ -963,6 +1089,15 @@ func TestControlCharacters(t *testing.T) {
 			s := `{ ` + string(b) + `:null}`
 			testControlCharacters(t, s, fmt.Sprintf(
 				"error at index 2 (0x%x): illegal control character", b,
+			))
+		})
+	})
+
+	t.Run("before_key_after_space_after_comma", func(t *testing.T) {
+		ForASCIIControlCharsExceptTRN(t, func(t *testing.T, b byte) {
+			s := `{"k1":null, ` + string(b) + ` "k2":null}`
+			testControlCharacters(t, s, fmt.Sprintf(
+				"error at index 12 (0x%x): illegal control character", b,
 			))
 		})
 	})
