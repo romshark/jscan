@@ -5,19 +5,23 @@ import (
 	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
-// Valid returns true if s is a valid JSON value.
+// Valid returns true if s is a valid JSON value, otherwise returns false.
 //
-// Consider using a reusable Validator instance instead
-// to improve performance when dealing with many inputs.
+// Unlike (*Validator).Valid this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
 func Valid[S ~string | ~[]byte](s S) bool {
 	return !Validate(s).IsErr()
 }
 
-// ValidateOne scans a JSON value from s and returns an error if it's invalid,
-// otherwise returns s with the scanned value cut.
+// ValidateOne scans one JSON value from s and returns an error if it's invalid
+// and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
 //
-// Consider using a reusable Validator instance instead
-// to improve performance when dealing with many inputs.
+// Unlike (*Validator).ValidateOne this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
 func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 	var v *Validator[S]
 	switch any(s).(type) {
@@ -37,8 +41,9 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 
 // Validate returns an error if s is invalid JSON.
 //
-// Consider using a reusable Validator instance instead
-// to improve performance when dealing with many inputs.
+// Unlike (*Validator).Validate this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
 func Validate[S ~string | ~[]byte](s S) Error[S] {
 	var v *Validator[S]
 	switch any(s).(type) {
@@ -82,21 +87,24 @@ func NewValidator[S ~string | ~[]byte](preallocStackFrames int) *Validator[S] {
 // Validator is a reusable validator instance.
 // The validator is more efficient than the parser at JSON validation.
 // A validator instance can be more efficient than global Valid, Validate and ValidateOne
-// functions due to potential stack allocation avoidance.
+// function calls due to potential stack frame allocation avoidance.
 type Validator[S ~string | ~[]byte] struct{ stack []stackNodeType }
 
-// Valid returns true if s is a valid JSON value.
+// Valid returns true if s is a valid JSON value, otherwise returns false.
 func (v *Validator[S]) Valid(s S) bool {
 	return !v.Validate(s).IsErr()
 }
 
-// ValidateOne scans a JSON value from s and returns an error if it's invalid,
-// otherwise returns s with the scanned value cut.
+// ValidateOne scans one JSON value from s and returns an error if it's invalid
+// and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
 func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
 	return validate(v.stack, s)
 }
 
-// Validate returns an error if s is invalid JSON.
+// Validate returns an error if s is invalid JSON,
+// otherwise returns a zero value of Error[S].
 func (v *Validator[S]) Validate(s S) Error[S] {
 	t, err := validate(v.stack, s)
 	if err.IsErr() {

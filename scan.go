@@ -8,12 +8,16 @@ import (
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
+//
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
-// Returns s with the scanned value cut.
+// Returns an error if any and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
+//
 // Unlike (*Parser).ScanOne this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing Parser instances instead.
+// Consider reusing a Parser instance instead.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
@@ -38,9 +42,10 @@ func ScanOne[S ~string | ~[]byte](
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
+//
 // Unlike (*Parser).Scan this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing Parser instances instead.
+// Consider reusing a Parser instance instead.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
@@ -94,9 +99,12 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
+//
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
-// Returns s with the scanned value cut.
+// Returns an error if any and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
