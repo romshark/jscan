@@ -353,6 +353,7 @@ VALUE_STRING:
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
+				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
 			if lutEscape[s[1]] == 1 {
@@ -570,6 +571,7 @@ OBJ_KEY:
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
+				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
 			if lutEscape[s[1]] == 1 {
