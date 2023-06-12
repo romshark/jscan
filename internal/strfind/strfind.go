@@ -1,7 +1,5 @@
 package strfind
 
-import "bytes"
-
 type ErrCode int
 
 const (
@@ -11,127 +9,8 @@ const (
 	ErrCodeUnexpectedEOF
 )
 
-// safeCharSet maps 0 to all inherently safe ASCII characters.
-// 1 is mapped to control, quotation mark (") and reverse solidus ("\").
-var safeCharSet = [256]byte{
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	'"': 1, '\\': 1,
-}
-
-// escapableChars maps escapable characters to 1,
-// all other ASCII characters are mapped to 0.
-var escapableChars = [256]byte{
-	'"':  1,
-	'\\': 1,
-	'/':  1,
-	'b':  1,
-	'f':  1,
-	'n':  1,
-	'r':  1,
-	't':  1,
-}
-
-// IndexTerm returns either -1 or the index of the string value terminator.
-func IndexTerm[S []byte | string](s S, i int) (indexEnd int, errCode ErrCode) {
-	for j := 0; i < len(s); i++ {
-		if i+8 < len(s) {
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-			if safeCharSet[s[i]] != 0 {
-				goto CHECK
-			}
-			i++
-		}
-
-	CHECK:
-		switch s[i] {
-		case '\\':
-			i++
-			if i >= len(s) {
-				return i, ErrCodeUnexpectedEOF
-			}
-			if escapableChars[s[i]] == 1 {
-				j = 0
-			} else if s[i] == 'u' {
-				if i+4 >= len(s) ||
-					charMap[s[i+4]] != 2 ||
-					charMap[s[i+3]] != 2 ||
-					charMap[s[i+2]] != 2 ||
-					charMap[s[i+1]] != 2 {
-					return i, ErrCodeInvalidEscapeSeq
-				}
-				i, j = i+4, 0
-			} else {
-				return i, ErrCodeInvalidEscapeSeq
-			}
-		case '"':
-			if j%2 == 0 {
-				return i, ErrCodeOK
-			}
-		default:
-			if s[i] < 0x20 {
-				return i, ErrCodeIllegalControlChar
-			}
-		}
-	}
-	return i, ErrCodeUnexpectedEOF
-}
-
-func LastIndexUnescaped(path []byte, b byte) (i int) {
-MAIN:
-	for i = len(path); i >= 0; {
-		path = path[:i]
-		i = bytes.LastIndexByte(path, b)
-		if i < 0 || i == 0 {
-			return
-		} else if path[i-1] != '\\' {
-			return
-		}
-		for x := i - 1; ; x-- {
-			if x == -1 || path[x] != '\\' {
-				if z := x + 1; (i-(z))%2 > 0 {
-					// Escaped, continue search
-					i = z
-					break
-				}
-				break MAIN
-			}
-		}
-	}
-	return
-}
-
-// charMap maps space characters such as whitespace, tab
-// line-break and carriage return to 1,
-// valid hex digits to 2 and
-// all other ASCII characters to 0
+// charMap maps space characters such as whitespace, tab, line-break and
+// carriage-return to 1, valid hex digits to 2 and all other ASCII characters to 0.
 var charMap = [256]byte{
 	' ': 1, '\n': 1, '\t': 1, '\r': 1,
 
@@ -142,81 +21,81 @@ var charMap = [256]byte{
 
 // EndOfWhitespaceSeq returns the index of the end of
 // the whitespace sequence.
-// If the returned stoppedAtIllegalChar == true then index points at an
+// If the returned ctrlChar == true then index points at an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq[S []byte | string](s S) (index int, stoppedAtIllegalChar bool) {
-	if len(s) == 0 || s[0] > 0x20 {
-		// Fast path
-		return 0, false
-	}
-	i := 0
-	for i < len(s) {
-		if i+7 < len(s) {
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			if charMap[s[i]] != 1 {
-				if s[i] < 0x20 {
-					return i, true
-				}
-				break
-			}
-			i++
-			continue
+func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
+	for ; len(s) > 15; s = s[16:] {
+		if charMap[s[0]] != 1 {
+			goto NONSPACE
 		}
-		if charMap[s[i]] != 1 {
-			if s[i] < 0x20 {
-				return i, true
-			}
-			break
+		if charMap[s[1]] != 1 {
+			s = s[1:]
+			goto NONSPACE
 		}
-		i++
+		if charMap[s[2]] != 1 {
+			s = s[2:]
+			goto NONSPACE
+		}
+		if charMap[s[3]] != 1 {
+			s = s[3:]
+			goto NONSPACE
+		}
+		if charMap[s[4]] != 1 {
+			s = s[4:]
+			goto NONSPACE
+		}
+		if charMap[s[5]] != 1 {
+			s = s[5:]
+			goto NONSPACE
+		}
+		if charMap[s[6]] != 1 {
+			s = s[6:]
+			goto NONSPACE
+		}
+		if charMap[s[7]] != 1 {
+			s = s[7:]
+			goto NONSPACE
+		}
+		if charMap[s[8]] != 1 {
+			s = s[8:]
+			goto NONSPACE
+		}
+		if charMap[s[9]] != 1 {
+			s = s[9:]
+			goto NONSPACE
+		}
+		if charMap[s[10]] != 1 {
+			s = s[10:]
+			goto NONSPACE
+		}
+		if charMap[s[11]] != 1 {
+			s = s[11:]
+			goto NONSPACE
+		}
+		if charMap[s[12]] != 1 {
+			s = s[12:]
+			goto NONSPACE
+		}
+		if charMap[s[13]] != 1 {
+			s = s[13:]
+			goto NONSPACE
+		}
+		if charMap[s[14]] != 1 {
+			s = s[14:]
+			goto NONSPACE
+		}
+		if charMap[s[15]] != 1 {
+			s = s[15:]
+			goto NONSPACE
+		}
 	}
-	return i, false
+	for ; len(s) > 0; s = s[1:] {
+		if charMap[s[0]] != 1 {
+			goto NONSPACE
+		}
+	}
+	return s, false
+
+NONSPACE:
+	return s, s[0] < 0x20
 }

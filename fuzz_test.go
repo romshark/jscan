@@ -1,8 +1,10 @@
-package jscan
+package jscan_test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/romshark/jscan/v2"
 )
 
 func FuzzValid(f *testing.F) {
@@ -29,8 +31,8 @@ func FuzzValid(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data string) {
 		var (
 			std        = json.Valid([]byte(data))
-			jscanBytes = ValidBytes([]byte(data))
-			jscanStr   = Valid(data)
+			jscanBytes = jscan.Valid([]byte(data))
+			jscanStr   = jscan.Valid(data)
 		)
 		if std != jscanStr {
 			t.Fatalf(

@@ -3,10 +3,8 @@ package jsonnum_test
 import (
 	"testing"
 
-	"github.com/romshark/jscan/internal/jsonnum"
+	"github.com/romshark/jscan/v2/internal/jsonnum"
 )
-
-var gend int
 
 func BenchmarkValid(b *testing.B) {
 	var err bool
@@ -22,8 +20,7 @@ func BenchmarkValid(b *testing.B) {
 		b.Run("", func(b *testing.B) {
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.Parse(bb)
-					if err {
+					if _, err = jsonnum.ReadNumber(bb); err {
 						b.Fatal("unexpected error")
 					}
 				}
@@ -33,8 +30,7 @@ func BenchmarkValid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.ParseBytes(bb)
-					if err {
+					if _, err = jsonnum.ReadNumber(bb); err {
 						b.Fatal("unexpected error")
 					}
 				}
@@ -61,8 +57,7 @@ func BenchmarkInvalid(b *testing.B) {
 		b.Run("", func(b *testing.B) {
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.Parse(bb)
-					if !err {
+					if _, err = jsonnum.ReadNumber(bb); !err {
 						b.Fatal("error expected")
 					}
 				}
@@ -72,8 +67,7 @@ func BenchmarkInvalid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					gend, err = jsonnum.ParseBytes(bb)
-					if !err {
+					if _, err = jsonnum.ReadNumber(bb); !err {
 						b.Fatal("error expected")
 					}
 				}
