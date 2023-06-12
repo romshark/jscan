@@ -11,14 +11,14 @@ import (
 
 // Default stack sizes
 const (
-	DefaultIteratorStackSize  = 64
-	DefaultValidatorStackSize = 128
+	DefaultStackSizeIterator  = 64
+	DefaultStackSizeValidator = 128
 )
 
 var iteratorPoolString = sync.Pool{
 	New: func() any {
 		return &Iterator[string]{
-			stack: make([]stackNode, 0, DefaultIteratorStackSize),
+			stack: make([]stackNode, 0, DefaultStackSizeIterator),
 		}
 	},
 }
@@ -26,7 +26,7 @@ var iteratorPoolString = sync.Pool{
 var iteratorPoolBytes = sync.Pool{
 	New: func() any {
 		return &Iterator[[]byte]{
-			stack: make([]stackNode, 0, DefaultIteratorStackSize),
+			stack: make([]stackNode, 0, DefaultStackSizeIterator),
 		}
 	},
 }
@@ -34,7 +34,7 @@ var iteratorPoolBytes = sync.Pool{
 var validatorPoolString = sync.Pool{
 	New: func() any {
 		return &Validator[string]{
-			stack: make([]stackNodeType, 0, DefaultValidatorStackSize),
+			stack: make([]stackNodeType, 0, DefaultStackSizeValidator),
 		}
 	},
 }
@@ -42,7 +42,7 @@ var validatorPoolString = sync.Pool{
 var validatorPoolBytes = sync.Pool{
 	New: func() any {
 		return &Validator[[]byte]{
-			stack: make([]stackNodeType, 0, DefaultValidatorStackSize),
+			stack: make([]stackNodeType, 0, DefaultStackSizeValidator),
 		}
 	},
 }
