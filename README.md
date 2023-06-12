@@ -17,7 +17,7 @@ jscan provides high-performance zero-allocation JSON iterator and validator for 
 jscan is tested against https://github.com/nst/JSONTestSuite, a comprehensive test suite for [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259) compliant JSON parsers.
 
 ## Example
-https://go.dev/play/p/v-VeiMO2fsJ
+https://go.dev/play/p/moP3l9EkebF
 
 ```go
 package main
