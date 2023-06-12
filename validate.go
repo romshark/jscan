@@ -288,14 +288,14 @@ VALUE_STRING:
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			s = s[5:]
 		case '"':
@@ -437,14 +437,14 @@ OBJ_KEY:
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscapeSeq, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			s = s[5:]
 		case '"':

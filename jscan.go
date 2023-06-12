@@ -227,9 +227,8 @@ type ErrorCode int8
 const (
 	_ ErrorCode = iota
 
-	// ErrorCodeInvalidEscapeSeq indicates the encounter of
-	// an invalid escape sequence.
-	ErrorCodeInvalidEscapeSeq
+	// ErrorCodeInvalidEscape indicates the encounter of an invalid escape sequence.
+	ErrorCodeInvalidEscape
 
 	// ErrorCodeIllegalControlChar indicates the presence of
 	// a control character in the source.
@@ -292,8 +291,8 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 		errMsg = "malformed number"
 	case ErrorCodeUnexpectedEOF:
 		return fmt.Sprintf("error at index %d: unexpected EOF", index)
-	case ErrorCodeInvalidEscapeSeq:
-		errMsg = "invalid escape sequence"
+	case ErrorCodeInvalidEscape:
+		errMsg = "invalid escape"
 	case ErrorCodeIllegalControlChar:
 		errMsg = "illegal control character"
 	case ErrorCodeCallback:

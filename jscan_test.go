@@ -800,22 +800,22 @@ func TestErrorInvalidEscapeSequence(t *testing.T) {
 		{
 			name:   "invalid_escape_sequence_in_string",
 			input:  `"\0"`,
-			expect: `error at index 1 ('\'): invalid escape sequence`,
+			expect: `error at index 1 ('\'): invalid escape`,
 		},
 		{
 			name:   "invalid_escape_sequence_in_string",
 			input:  `"\u000m"`,
-			expect: `error at index 1 ('\'): invalid escape sequence`,
+			expect: `error at index 1 ('\'): invalid escape`,
 		},
 		{
 			name:   "invalid_escape_sequence_in_fieldname",
 			input:  `{"\0":true}`,
-			expect: `error at index 2 ('\'): invalid escape sequence`,
+			expect: `error at index 2 ('\'): invalid escape`,
 		},
 		{
 			name:   "invalid_escape_sequence_in_string",
 			input:  `{"\u000m":true}`,
-			expect: `error at index 2 ('\'): invalid escape sequence`,
+			expect: `error at index 2 ('\'): invalid escape`,
 		},
 	} {
 		require.False(t, json.Valid([]byte(td.input)))
