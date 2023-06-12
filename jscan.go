@@ -287,13 +287,7 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 	case ErrorCodeMalformedNumber:
 		errMsg = "malformed number"
 	case ErrorCodeUnexpectedEOF:
-		if atIndex == 0 {
-			return fmt.Sprintf(
-				"error at index %d: unexpected EOF",
-				index,
-			)
-		}
-		errMsg = "unexpected EOF"
+		return fmt.Sprintf("error at index %d: unexpected EOF", index)
 	case ErrorCodeInvalidEscapeSeq:
 		errMsg = "invalid escape sequence"
 	case ErrorCodeIllegalControlChar:
