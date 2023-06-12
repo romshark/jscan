@@ -74,17 +74,20 @@ type Iterator[S ~string | ~[]byte] struct {
 	arrayIndex            int
 }
 
-// Level returns the depth level of the current value
+// Level returns the depth level of the current value.
+//
+// For example in the following JSON: `[1,2,3]` the array is situated at level 0
+// while the integers inside are situated at level 1.
 func (i *Iterator[S]) Level() int { return len(i.stack) }
 
-// ArrayIndex returns either the index of the value item in the array
-// or -1 if the value item isn't inside an array.
+// ArrayIndex returns either the index of the element value in the array
+// or -1 if the value isn't inside an array.
 func (i *Iterator[S]) ArrayIndex() int { return i.arrayIndex }
 
 // ValueType returns the value type identifier.
 func (i *Iterator[S]) ValueType() ValueType { return i.valueType }
 
-// ValueIndex returns the index of the value in the source.
+// ValueIndex returns the start index of the value in the source.
 func (i *Iterator[S]) ValueIndex() int { return i.valueIndex }
 
 // ValueIndexEnd returns the end index of the value in the source if any.
@@ -92,15 +95,16 @@ func (i *Iterator[S]) ValueIndex() int { return i.valueIndex }
 // during traversal.
 func (i *Iterator[S]) ValueIndexEnd() int { return i.valueIndexEnd }
 
-// KeyIndex returns either the index of the key of the value in the source
-// or -1 when the value isn't inside an object and hence doesn't have a key.
+// KeyIndex returns either the start index of the member key string in the source
+// or -1 when the value isn't a member of an object and hence doesn't have a key.
 func (i *Iterator[S]) KeyIndex() int { return i.keyIndex }
 
-// KeyIndexEnd returns either the end index of the key of the value in the source
-// or -1 when the value isn't inside an object and hence doesn't have a key.
+// KeyIndexEnd returns either the end index of the member key string in the source
+// or -1 when the value isn't a member of an object and hence doesn't have a key.
 func (i *Iterator[S]) KeyIndexEnd() int { return i.keyIndexEnd }
 
-// Key returns the object field key if any.
+// Key returns either the object member key or "" when the value
+// isn't a member of an object and hence doesn't have a key.
 func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
@@ -118,7 +122,7 @@ func (i *Iterator[S]) Value() (value S) {
 
 // ScanStack calls fn for every element in the stack.
 // If keyIndex is != -1 then the element is a field value, otherwise
-// arrayIndex indicates the index of the item in the underlying array.
+// arrayIndex indicates the index of the element in the underlying array.
 func (i *Iterator[S]) ScanStack(fn func(keyIndex, keyEnd, arrayIndex int)) {
 	for j := range i.stack {
 		if i.stack[j].KeyIndex > -1 {
