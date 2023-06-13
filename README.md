@@ -381,6 +381,153 @@ ok  	github.com/romshark/jscan/v2	257.283s
 
 </details>
 
+### AMD Ryzen 5 5600G - Linux
+
+```
+goos: linux
+goarch: amd64
+pkg: github.com/romshark/jscan/v2
+cpu: AMD Ryzen 5 5600G with Radeon Graphics
+BenchmarkCalcStats/miniscule_1b__________/jscan___________-12         	36319609	        31.90 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/miniscule_1b__________/jsoniter________-12         	24162423	        89.76 ns/op	      16 B/op	       1 allocs/op
+BenchmarkCalcStats/miniscule_1b__________/gofaster-jx_____-12         	58762545	        18.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/miniscule_1b__________/valyala-fastjson-12         	61846000	        19.98 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/tiny_8b_______________/jscan___________-12         	28521910	        39.73 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/tiny_8b_______________/jsoniter________-12         	 9893722	       152.4 ns/op	      16 B/op	       1 allocs/op
+BenchmarkCalcStats/tiny_8b_______________/gofaster-jx_____-12         	25250994	        43.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/tiny_8b_______________/valyala-fastjson-12         	25108508	        50.27 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/small_336b____________/jscan___________-12         	 3263814	       346.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/small_336b____________/jsoniter________-12         	 1000000	      1218 ns/op	      80 B/op	      11 allocs/op
+BenchmarkCalcStats/small_336b____________/gofaster-jx_____-12         	 2084720	       562.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/small_336b____________/valyala-fastjson-12         	 2126247	       563.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/large_26m_____________/jscan___________-12         	      76	  16489544 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/large_26m_____________/jsoniter________-12         	      13	  92936774 ns/op	32851286 B/op	 1108518 allocs/op
+BenchmarkCalcStats/large_26m_____________/gofaster-jx_____-12         	      44	  27820760 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/large_26m_____________/valyala-fastjson-12         	      32	  34501269 ns/op	10527169 B/op	   10342 allocs/op
+BenchmarkCalcStats/nasa_SxSW_2016_125k___/jscan___________-12         	    9390	    120605 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/nasa_SxSW_2016_125k___/jsoniter________-12         	    1575	   1217657 ns/op	  144473 B/op	    7357 allocs/op
+BenchmarkCalcStats/nasa_SxSW_2016_125k___/gofaster-jx_____-12         	    4872	    224699 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/nasa_SxSW_2016_125k___/valyala-fastjson-12         	    4755	    235193 ns/op	     498 B/op	       0 allocs/op
+BenchmarkCalcStats/escaped_3k____________/jscan___________-12         	  802250	      1565 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/escaped_3k____________/jsoniter________-12         	   70245	     20709 ns/op	    2064 B/op	      15 allocs/op
+BenchmarkCalcStats/escaped_3k____________/gofaster-jx_____-12         	  112660	     11425 ns/op	     504 B/op	       6 allocs/op
+BenchmarkCalcStats/escaped_3k____________/valyala-fastjson-12         	  115630	     10199 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_int_1024_12k____/jscan___________-12         	   85641	     14575 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_int_1024_12k____/jsoniter________-12         	   10000	    132954 ns/op	   16384 B/op	    1024 allocs/op
+BenchmarkCalcStats/array_int_1024_12k____/gofaster-jx_____-12         	   39404	     26669 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_int_1024_12k____/valyala-fastjson-12         	   48582	     21867 ns/op	       7 B/op	       0 allocs/op
+BenchmarkCalcStats/array_dec_1024_10k____/jscan___________-12         	  100322	     12080 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_dec_1024_10k____/jsoniter________-12         	   10000	    102140 ns/op	   16384 B/op	    1024 allocs/op
+BenchmarkCalcStats/array_dec_1024_10k____/gofaster-jx_____-12         	   48435	     25014 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_dec_1024_10k____/valyala-fastjson-12         	   52065	     20147 ns/op	       6 B/op	       0 allocs/op
+BenchmarkCalcStats/array_nullbool_1024_5k/jscan___________-12         	  185419	      6517 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_nullbool_1024_5k/jsoniter________-12         	   52198	     20376 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_nullbool_1024_5k/gofaster-jx_____-12         	   49770	     25173 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_nullbool_1024_5k/valyala-fastjson-12         	  110599	     11176 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_str_1024_639k___/jscan___________-12         	    7333	    158422 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_str_1024_639k___/jsoniter________-12         	     835	   1826817 ns/op	  670173 B/op	    1018 allocs/op
+BenchmarkCalcStats/array_str_1024_639k___/gofaster-jx_____-12         	    6566	    159653 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCalcStats/array_str_1024_639k___/valyala-fastjson-12         	   19768	     60648 ns/op	      49 B/op	       0 allocs/op
+BenchmarkValid/deeparray_____________/jscan___________-12             	36038276	        31.06 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/deeparray_____________/encoding-json___-12             	 3055974	       487.9 ns/op	     104 B/op	       5 allocs/op
+BenchmarkValid/deeparray_____________/jsoniter________-12             	  768966	      1368 ns/op	     352 B/op	       9 allocs/op
+BenchmarkValid/deeparray_____________/gofaster-jx_____-12             	 1429694	       839.4 ns/op	      80 B/op	       2 allocs/op
+BenchmarkValid/deeparray_____________/tidwallgjson____-12             	217686393	         5.089 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/deeparray_____________/valyala-fastjson-12             	  614010	      2091 ns/op	    1184 B/op	      11 allocs/op
+BenchmarkValid/deeparray_____________/goccy-go-json___-12             	   10000	    203414 ns/op	   49344 B/op	    2062 allocs/op
+BenchmarkValid/deeparray_____________/bytedance-sonic_-12             	59083594	        18.91 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/unwind_stack__________/jscan___________-12             	  705985	      1682 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/unwind_stack__________/encoding-json___-12             	  209520	      6317 ns/op	      24 B/op	       1 allocs/op
+BenchmarkValid/unwind_stack__________/jsoniter________-12             	   10000	    139719 ns/op	   33161 B/op	    1033 allocs/op
+BenchmarkValid/unwind_stack__________/gofaster-jx_____-12             	    1989	    682515 ns/op	   65664 B/op	    1026 allocs/op
+BenchmarkValid/unwind_stack__________/tidwallgjson____-12             	  258386	      4525 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/unwind_stack__________/valyala-fastjson-12             	      97	  10893163 ns/op	52481101 B/op	    4146 allocs/op
+BenchmarkValid/unwind_stack__________/goccy-go-json___-12             	    2605	    588857 ns/op	  102336 B/op	    4105 allocs/op
+BenchmarkValid/unwind_stack__________/bytedance-sonic_-12             	  332553	      3445 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/jscan___________-12             	50586982	        24.49 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/encoding-json___-12             	43763121	        26.26 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/jsoniter________-12             	 7684641	       203.7 ns/op	      16 B/op	       1 allocs/op
+BenchmarkValid/miniscule_1b__________/gofaster-jx_____-12             	67909453	        16.08 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/tidwallgjson____-12             	163439055	         7.345 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/valyala-fastjson-12             	131886050	         8.679 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/miniscule_1b__________/goccy-go-json___-12             	 1592962	       782.6 ns/op	     704 B/op	       5 allocs/op
+BenchmarkValid/miniscule_1b__________/bytedance-sonic_-12             	50710066	        20.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/jscan___________-12             	40577342	        28.43 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/encoding-json___-12             	24873457	        46.99 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/jsoniter________-12             	24920900	        46.21 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/gofaster-jx_____-12             	37470792	        31.49 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/tidwallgjson____-12             	65886996	        17.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/valyala-fastjson-12             	53065147	        22.99 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/tiny_8b_______________/goccy-go-json___-12             	 1000000	      1401 ns/op	    1072 B/op	       9 allocs/op
+BenchmarkValid/tiny_8b_______________/bytedance-sonic_-12             	29691267	        38.63 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/jscan___________-12             	 5248227	       233.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/encoding-json___-12             	 1177555	       969.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/jsoniter________-12             	  988814	      1394 ns/op	      56 B/op	       7 allocs/op
+BenchmarkValid/small_336b____________/gofaster-jx_____-12             	 2880396	       397.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/tidwallgjson____-12             	 3585774	       303.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/valyala-fastjson-12             	 3275547	       323.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/small_336b____________/goccy-go-json___-12             	  231126	      5774 ns/op	    2867 B/op	      61 allocs/op
+BenchmarkValid/small_336b____________/bytedance-sonic_-12             	 2661592	       430.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/jscan___________-12             	      88	  13139266 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/encoding-json___-12             	      14	  78943349 ns/op	     110 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/jsoniter________-12             	      20	  59407922 ns/op	13582817 B/op	  644360 allocs/op
+BenchmarkValid/large_26m_____________/gofaster-jx_____-12             	      54	  21570041 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/tidwallgjson____-12             	      48	  25489538 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/valyala-fastjson-12             	      42	  27563383 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/large_26m_____________/goccy-go-json___-12             	       1	24462019948 ns/op	144674848 B/op	 2338273 allocs/op
+BenchmarkValid/large_26m_____________/bytedance-sonic_-12             	      69	  16327507 ns/op	      22 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/jscan___________-12             	   13309	     92484 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/encoding-json___-12             	    3271	    349706 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/jsoniter________-12             	    2448	    600086 ns/op	   69245 B/op	    2121 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/gofaster-jx_____-12             	    7578	    142767 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/tidwallgjson____-12             	    9430	    119343 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/valyala-fastjson-12             	    5640	    202238 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/goccy-go-json___-12             	     193	   7340316 ns/op	  780952 B/op	   20800 allocs/op
+BenchmarkValid/nasa_SxSW_2016_125k___/bytedance-sonic_-12             	   10101	    107033 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/jscan___________-12             	  779607	      1496 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/encoding-json___-12             	  131691	      8721 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/jsoniter________-12             	   81086	     22955 ns/op	    2065 B/op	      15 allocs/op
+BenchmarkValid/escaped_3k____________/gofaster-jx_____-12             	  196747	      5917 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/tidwallgjson____-12             	  476397	      2566 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/valyala-fastjson-12             	  184434	      6722 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/escaped_3k____________/goccy-go-json___-12             	   30442	     44159 ns/op	    4480 B/op	      13 allocs/op
+BenchmarkValid/escaped_3k____________/bytedance-sonic_-12             	 4983936	       213.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/jscan___________-12             	  114622	     11172 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/encoding-json___-12             	   37873	     32604 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/jsoniter________-12             	   47666	     22215 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/gofaster-jx_____-12             	   76866	     15600 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/tidwallgjson____-12             	   87206	     12638 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/valyala-fastjson-12             	   82585	     14660 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_int_1024_12k____/goccy-go-json___-12             	    5511	    372880 ns/op	   73511 B/op	    2057 allocs/op
+BenchmarkValid/array_int_1024_12k____/bytedance-sonic_-12             	   70771	     18109 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/jscan___________-12             	  125745	     10074 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/encoding-json___-12             	   38306	     34068 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/jsoniter________-12             	   10000	    115783 ns/op	    8756 B/op	     547 allocs/op
+BenchmarkValid/array_dec_1024_10k____/gofaster-jx_____-12             	   61308	     16872 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/tidwallgjson____-12             	  103719	     11456 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/valyala-fastjson-12             	   85754	     14826 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_dec_1024_10k____/goccy-go-json___-12             	    5280	    368882 ns/op	   73507 B/op	    2057 allocs/op
+BenchmarkValid/array_dec_1024_10k____/bytedance-sonic_-12             	   62926	     19598 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/jscan___________-12             	  369246	      3004 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/encoding-json___-12             	   56427	     17972 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/jsoniter________-12             	   90067	     14961 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/gofaster-jx_____-12             	   62872	     16886 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/tidwallgjson____-12             	  268161	      4567 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/valyala-fastjson-12             	  226810	      6256 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/goccy-go-json___-12             	   10000	    161544 ns/op	   48961 B/op	    1036 allocs/op
+BenchmarkValid/array_nullbool_1024_5k/bytedance-sonic_-12             	  104773	     12093 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/jscan___________-12             	    8253	    151297 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/encoding-json___-12             	     624	   1742851 ns/op	       2 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/jsoniter________-12             	    3003	    388807 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/gofaster-jx_____-12             	    7981	    156246 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/tidwallgjson____-12             	    2546	    461602 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/valyala-fastjson-12             	    3288	    329113 ns/op	       0 B/op	       0 allocs/op
+BenchmarkValid/array_str_1024_639k___/goccy-go-json___-12             	     483	   2736762 ns/op	 2817141 B/op	    3080 allocs/op
+BenchmarkValid/array_str_1024_639k___/bytedance-sonic_-12             	   31102	     37889 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/romshark/jscan/v2	262.263s
+```
+
 ### Intel i7-3930K - Linux
 
 <details>
