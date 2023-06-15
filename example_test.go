@@ -2,6 +2,7 @@ package jscan_test
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/romshark/jscan/v2"
 )
@@ -195,4 +196,43 @@ func ExampleValidateOne() {
 	// true
 	// false
 	// null
+}
+
+func ExampleScan_decode2DIntArray() {
+	j := `[[1,2,34,567],[8901,2147483647,-1,42]]`
+
+	s := [][]int{}
+	currentIndex := 0
+	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+		switch i.Level() {
+		case 0: // Root array
+			return i.ValueType() != jscan.ValueTypeArray
+		case 1: // Sub-array
+			if i.ValueType() != jscan.ValueTypeArray {
+				return true
+			}
+			currentIndex = len(s)
+			s = append(s, []int{})
+			return false
+		}
+		if i.ValueType() != jscan.ValueTypeNumber {
+			// Unexpected array element type
+			return true
+		}
+		vi, errp := strconv.ParseInt(i.Value(), 10, 32)
+		if errp != nil {
+			// Not a valid 32-bit signed integer
+			return true
+		}
+		s[currentIndex] = append(s[currentIndex], int(vi))
+		return false
+	})
+	if err.IsErr() {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(s)
+
+	// Output:
+	// [[1 2 34 567] [8901 2147483647 -1 42]]
 }
