@@ -1,15 +1,12 @@
-package strfind_test
+package jscan
 
 import (
-	_ "embed"
 	"testing"
-
-	"github.com/romshark/jscan/v2/internal/strfind"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestEndOfWhitespaceSeq(t *testing.T) {
+func TestSkipSpace(t *testing.T) {
 	for _, tt := range []struct {
 		input  string
 		expect int
@@ -91,7 +88,7 @@ func TestEndOfWhitespaceSeq(t *testing.T) {
 		{"   \x00a0123456789", 3},
 	} {
 		t.Run("", func(t *testing.T) {
-			trailing := strfind.EndOfWhitespaceSeq(tt.input)
+			trailing := skipSpace(tt.input)
 			require.Equal(t, tt.expect, len(tt.input)-len(trailing))
 		})
 	}

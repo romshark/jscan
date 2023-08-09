@@ -2,7 +2,6 @@ package jscan
 
 import (
 	"github.com/romshark/jscan/v2/internal/jsonnum"
-	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
 // ScanOne calls fn for every encountered value including objects and arrays.
@@ -68,7 +67,7 @@ func Scan[S ~string | ~[]byte](
 	if err.IsErr() {
 		return err
 	}
-	if t := strfind.EndOfWhitespaceSeq(t); len(t) > 0 {
+	if t := skipSpace(t); len(t) > 0 {
 		if t[0] < 0x20 {
 			return getError(ErrorCodeIllegalControlChar, s, t)
 		}
@@ -128,7 +127,7 @@ func (p *Parser[S]) Scan(
 	if err.IsErr() {
 		return err
 	}
-	if t := strfind.EndOfWhitespaceSeq(t); len(t) > 0 {
+	if t := skipSpace(t); len(t) > 0 {
 		if t[0] < 0x20 {
 			return getError(ErrorCodeIllegalControlChar, s, t)
 		}
@@ -154,7 +153,7 @@ VALUE:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -188,7 +187,7 @@ VALUE_OBJECT:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -472,7 +471,7 @@ OBJ_KEY:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -596,7 +595,7 @@ AFTER_OBJ_KEY_STRING:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -615,7 +614,7 @@ VALUE_OR_ARR_TERM:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -653,7 +652,7 @@ AFTER_VALUE:
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if lutSX[s[0]] == 1 {
-		s = strfind.EndOfWhitespaceSeq(s)
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}

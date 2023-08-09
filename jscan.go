@@ -361,3 +361,79 @@ func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
 		Index: len(src) - len(s),
 	}
 }
+
+// skipSpace returns the subslice of s without the leading spaces such as
+// line-feed, carriage-return, whitespace and tab.
+func skipSpace[S ~string | ~[]byte](s S) (trailing S) {
+	for ; len(s) > 15; s = s[16:] {
+		if lutSX[s[0]] != 1 {
+			return s
+		}
+		if lutSX[s[1]] != 1 {
+			s = s[1:]
+			return s
+		}
+		if lutSX[s[2]] != 1 {
+			s = s[2:]
+			return s
+		}
+		if lutSX[s[3]] != 1 {
+			s = s[3:]
+			return s
+		}
+		if lutSX[s[4]] != 1 {
+			s = s[4:]
+			return s
+		}
+		if lutSX[s[5]] != 1 {
+			s = s[5:]
+			return s
+		}
+		if lutSX[s[6]] != 1 {
+			s = s[6:]
+			return s
+		}
+		if lutSX[s[7]] != 1 {
+			s = s[7:]
+			return s
+		}
+		if lutSX[s[8]] != 1 {
+			s = s[8:]
+			return s
+		}
+		if lutSX[s[9]] != 1 {
+			s = s[9:]
+			return s
+		}
+		if lutSX[s[10]] != 1 {
+			s = s[10:]
+			return s
+		}
+		if lutSX[s[11]] != 1 {
+			s = s[11:]
+			return s
+		}
+		if lutSX[s[12]] != 1 {
+			s = s[12:]
+			return s
+		}
+		if lutSX[s[13]] != 1 {
+			s = s[13:]
+			return s
+		}
+		if lutSX[s[14]] != 1 {
+			s = s[14:]
+			return s
+		}
+		if lutSX[s[15]] != 1 {
+			s = s[15:]
+			return s
+		}
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if lutSX[s[0]] != 1 {
+			return s
+		}
+	}
+	return s
+}
