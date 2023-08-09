@@ -68,12 +68,10 @@ func Scan[S ~string | ~[]byte](
 	if err.IsErr() {
 		return err
 	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
+	if t := strfind.EndOfWhitespaceSeq(t); len(t) > 0 {
+		if t[0] < 0x20 {
+			return getError(ErrorCodeIllegalControlChar, s, t)
+		}
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
@@ -130,12 +128,10 @@ func (p *Parser[S]) Scan(
 	if err.IsErr() {
 		return err
 	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
+	if t := strfind.EndOfWhitespaceSeq(t); len(t) > 0 {
+		if t[0] < 0x20 {
+			return getError(ErrorCodeIllegalControlChar, s, t)
+		}
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
@@ -157,14 +153,8 @@ VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -197,14 +187,8 @@ VALUE_OBJECT:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -487,14 +471,8 @@ OBJ_KEY:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -617,14 +595,8 @@ AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -642,14 +614,8 @@ VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -686,14 +652,8 @@ AFTER_VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = strfind.EndOfWhitespaceSeq(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
