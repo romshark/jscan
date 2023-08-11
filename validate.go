@@ -146,19 +146,19 @@ VALUE:
 		}
 	}
 	switch s[0] {
-	case '{': // Object
+	case '{':
 		goto VALUE_OBJECT
-	case '[': // Array
+	case '[':
 		goto VALUE_ARRAY
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		goto VALUE_NUMBER
-	case '"': // String
+	case '"':
 		goto VALUE_STRING
-	case 'n': // Null
+	case 'n':
 		goto VALUE_NULL
-	case 'f': // False
+	case 'f':
 		goto VALUE_FALSE
-	case 't': // True
+	case 't':
 		goto VALUE_TRUE
 	}
 	if s[0] < 0x20 {
