@@ -140,7 +140,6 @@ func scan[S ~string | ~[]byte](
 	s := i.src
 	var ks, ke int
 
-VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
@@ -150,6 +149,8 @@ VALUE:
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
+
+VALUE:
 	switch s[0] {
 	case '{':
 		goto VALUE_OBJECT
@@ -234,7 +235,21 @@ VALUE_ARRAY:
 		KeyIndex:    ks,
 		KeyIndexEnd: ke,
 	})
-	goto VALUE_OR_ARR_TERM
+	if len(s) < 1 {
+		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+	}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		}
+	}
+	if s[0] == ']' {
+		s = s[1:]
+		i.stack = i.stack[:len(i.stack)-1]
+		goto AFTER_VALUE
+	}
+	goto VALUE
 
 VALUE_NUMBER:
 	i.valueIndex = len(i.src) - len(s)
@@ -824,9 +839,6 @@ AFTER_OBJ_KEY_STRING:
 		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	s = s[1:]
-	goto VALUE
-
-VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
@@ -836,30 +848,7 @@ VALUE_OR_ARR_TERM:
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
-	switch s[0] {
-	case ']':
-		s = s[1:]
-		i.stack = i.stack[:len(i.stack)-1]
-		goto AFTER_VALUE
-	case '{':
-		goto VALUE_OBJECT
-	case '[':
-		goto VALUE_ARRAY
-	case '"':
-		goto VALUE_STRING
-	case 't':
-		goto VALUE_TRUE
-	case 'f':
-		goto VALUE_FALSE
-	case 'n':
-		goto VALUE_NULL
-	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		goto VALUE_NUMBER
-	}
-	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-	}
-	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+	goto VALUE
 
 AFTER_VALUE:
 	if len(i.stack) == 0 {
@@ -878,6 +867,15 @@ AFTER_VALUE:
 	case ',':
 		s = s[1:]
 		if i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			if len(s) < 1 {
+				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			}
+			if lutSX[s[0]] == 1 {
+				s = skipSpace(s)
+				if len(s) < 1 {
+					return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				}
+			}
 			goto VALUE
 		}
 		goto OBJ_KEY

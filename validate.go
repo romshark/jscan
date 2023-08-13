@@ -112,7 +112,7 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 	return Error[S]{}
 }
 
-// validate returns the remainder of i.src and an error if any is encountered.
+// validate returns the remainder of s and an error if any is encountered.
 func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 	src := s
 	var top stackNodeType
@@ -127,7 +127,6 @@ func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 	}
 	stPush := func(t stackNodeType) { st = append(st, t) }
 
-VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
@@ -137,6 +136,8 @@ VALUE:
 			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
+
+VALUE:
 	switch s[0] {
 	case '{':
 		goto VALUE_OBJECT
@@ -179,7 +180,21 @@ VALUE_OBJECT:
 VALUE_ARRAY:
 	stPush(stackNodeTypeArray)
 	s = s[1:]
-	goto VALUE_OR_ARR_TERM
+	if len(s) < 1 {
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
+	}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
+		}
+	}
+	if s[0] == ']' {
+		s = s[1:]
+		stPop()
+		goto AFTER_VALUE
+	}
+	goto VALUE
 
 VALUE_NUMBER:
 	if s[0] == '-' {
@@ -680,9 +695,6 @@ AFTER_OBJ_KEY_STRING:
 		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	s = s[1:]
-	goto VALUE
-
-VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
@@ -692,30 +704,7 @@ VALUE_OR_ARR_TERM:
 			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
-	switch s[0] {
-	case ']':
-		s = s[1:]
-		stPop()
-		goto AFTER_VALUE
-	case '{':
-		goto VALUE_OBJECT
-	case '[':
-		goto VALUE_ARRAY
-	case '"':
-		goto VALUE_STRING
-	case 't':
-		goto VALUE_TRUE
-	case 'f':
-		goto VALUE_FALSE
-	case 'n':
-		goto VALUE_NULL
-	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		goto VALUE_NUMBER
-	}
-	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, src, s)
-	}
-	return s, getError(ErrorCodeUnexpectedToken, src, s)
+	goto VALUE
 
 AFTER_VALUE:
 	stTop()
@@ -735,6 +724,15 @@ AFTER_VALUE:
 	case ',':
 		s = s[1:]
 		if top == stackNodeTypeArray {
+			if len(s) < 1 {
+				return s, getError(ErrorCodeUnexpectedEOF, src, s)
+			}
+			if lutSX[s[0]] == 1 {
+				s = skipSpace(s)
+				if len(s) < 1 {
+					return s, getError(ErrorCodeUnexpectedEOF, src, s)
+				}
+			}
 			goto VALUE
 		}
 		goto OBJ_KEY
