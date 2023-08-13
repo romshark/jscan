@@ -1,9 +1,5 @@
 package jscan
 
-import (
-	"github.com/romshark/jscan/v2/internal/jsonnum"
-)
-
 // Valid returns true if s is a valid JSON value, otherwise returns false.
 //
 // Unlike (*Validator).Valid this function will take a validator instance
@@ -118,12 +114,8 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 
 // validate returns the remainder of i.src and an error if any is encountered.
 func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
-	var (
-		rollback S // Used as fallback for error report
-		src      = s
-		top      stackNodeType
-		b        bool
-	)
+	src := s
+	var top stackNodeType
 
 	stPop := func() { st = st[:len(st)-1] }
 	stTop := func() {
@@ -190,10 +182,235 @@ VALUE_ARRAY:
 	goto VALUE_OR_ARR_TERM
 
 VALUE_NUMBER:
-	{
-		rollback = s
-		if s, b = jsonnum.ReadNumber(s); b {
-			return s, getError(ErrorCodeMalformedNumber, src, rollback)
+	if s[0] == '-' {
+		// Signed
+		s = s[1:]
+		if len(s) < 1 {
+			// Expected at least one digit
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
+		}
+	}
+
+	if s[0] == '0' {
+		s = s[1:]
+		if len(s) < 1 {
+			// Number zero
+			goto AFTER_VALUE
+		}
+		// Leading zero
+		switch s[0] {
+		case '.':
+			s = s[1:]
+			goto FRACTION
+		case 'e', 'E':
+			s = s[1:]
+			goto EXPONENT_SIGN
+		default:
+			// Zero
+			goto AFTER_VALUE
+		}
+	}
+
+	// Integer
+	if s[0] < '1' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			goto CHECK_INT
+		}
+		if lutED[s[1]] != 2 {
+			s = s[1:]
+			goto CHECK_INT
+		}
+		if lutED[s[2]] != 2 {
+			s = s[2:]
+			goto CHECK_INT
+		}
+		if lutED[s[3]] != 2 {
+			s = s[3:]
+			goto CHECK_INT
+		}
+		if lutED[s[4]] != 2 {
+			s = s[4:]
+			goto CHECK_INT
+		}
+		if lutED[s[5]] != 2 {
+			s = s[5:]
+			goto CHECK_INT
+		}
+		if lutED[s[6]] != 2 {
+			s = s[6:]
+			goto CHECK_INT
+		}
+		if lutED[s[7]] != 2 {
+			s = s[7:]
+			goto CHECK_INT
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			} else if s[0] == '.' {
+				s = s[1:]
+				goto FRACTION
+			}
+			// Integer
+			goto AFTER_VALUE
+		}
+	}
+
+	if len(s) < 1 {
+		// Integer without exponent
+		goto AFTER_VALUE
+	}
+
+CHECK_INT:
+	_ = 0 // Fix test coverage misreport
+	switch s[0] {
+	case 'e', 'E':
+		s = s[1:]
+		goto EXPONENT_SIGN
+	case '.':
+		s = s[1:]
+		goto FRACTION
+	default:
+		// Integer
+		goto AFTER_VALUE
+	}
+
+FRACTION:
+	if len(s) < 1 {
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
+	}
+	if s[0] < '0' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			goto CHECK_FRAC
+		}
+		if lutED[s[1]] != 2 {
+			s = s[1:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[2]] != 2 {
+			s = s[2:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[3]] != 2 {
+			s = s[3:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[4]] != 2 {
+			s = s[4:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[5]] != 2 {
+			s = s[5:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[6]] != 2 {
+			s = s[6:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[7]] != 2 {
+			s = s[7:]
+			goto CHECK_FRAC
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			}
+			goto AFTER_VALUE
+		}
+	}
+
+	if len(s) < 1 {
+		// Number (with fraction but) without exponent
+		goto AFTER_VALUE
+	}
+
+CHECK_FRAC:
+	if s[0] == 'e' || s[0] == 'E' {
+		s = s[1:]
+		goto EXPONENT_SIGN
+	}
+	goto AFTER_VALUE
+
+EXPONENT_SIGN:
+	if len(s) < 1 {
+		// Missing exponent value
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
+	}
+	if s[0] == '-' || s[0] == '+' {
+		s = s[1:]
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
+		}
+	}
+	if s[0] < '0' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			// Number with (fraction and) exponent
+			goto AFTER_VALUE
+		}
+		if lutED[s[1]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[1:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[2]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[2:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[3]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[3:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[4]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[4:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[5]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[5:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[6]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[6:]
+			goto AFTER_VALUE
+		}
+		if lutED[s[7]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[7:]
+			goto AFTER_VALUE
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			// Number with (fraction and) exponent
+			goto AFTER_VALUE
 		}
 	}
 	goto AFTER_VALUE
@@ -278,7 +495,7 @@ VALUE_STRING:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
@@ -421,7 +638,7 @@ OBJ_KEY:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}

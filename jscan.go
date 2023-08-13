@@ -340,17 +340,14 @@ var lutStr = [256]byte{
 	'"': 1, '\\': 1,
 }
 
-// lutEscape maps escapable characters to 1,
-// all other ASCII characters are mapped to 0.
-var lutEscape = [256]byte{
-	'"':  1,
-	'\\': 1,
-	'/':  1,
-	'b':  1,
-	'f':  1,
-	'n':  1,
-	'r':  1,
-	't':  1,
+// lutED maps escapable characters to 1, digits 0-9 to 2,
+// and all other ASCII characters to 0.
+var lutED = [256]byte{
+	'"': 1, '\\': 1, '/': 1,
+	'b': 1, 'f': 1, 'n': 1, 'r': 1, 't': 1,
+
+	'0': 2, '1': 2, '2': 2, '3': 2, '4': 2,
+	'5': 2, '6': 2, '7': 2, '8': 2, '9': 2,
 }
 
 // getError returns the stringified error, if any.

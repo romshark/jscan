@@ -194,6 +194,17 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
+			name:  "number_zero",
+			input: "0",
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeNumber,
+					Value:      "0",
+					ArrayIndex: -1,
+				},
+			},
+		},
+		{
 			name:  "number_int",
 			input: "42",
 			expect: []Record{
@@ -785,6 +796,31 @@ func TestErrorUnexpectedEOF(t *testing.T) {
 			input:  `{"key\`,
 			expect: `error at index 6: unexpected EOF`,
 		},
+		{
+			name:   `after_minus_in_number`,
+			input:  `-`,
+			expect: `error at index 1: unexpected EOF`,
+		},
+		{
+			name:   `after_exponent_e_in_number`,
+			input:  `1e`,
+			expect: `error at index 2: unexpected EOF`,
+		},
+		{
+			name:   `after_exponent_E_in_number`,
+			input:  `1E`,
+			expect: `error at index 2: unexpected EOF`,
+		},
+		{
+			name:   `after_dot_in_number`,
+			input:  `1.`,
+			expect: `error at index 2: unexpected EOF`,
+		},
+		{
+			name:   `after_exponent_minus_in_number`,
+			input:  `1e-`,
+			expect: `error at index 3: unexpected EOF`,
+		},
 	} {
 		require.False(t, json.Valid([]byte(td.input)))
 
@@ -984,36 +1020,124 @@ func TestErrorUnexpectedToken(t *testing.T) {
 	}
 }
 
-func TestErrorMalformedNumber(t *testing.T) {
-	for _, td := range []ErrorTest{
-		{
-			name:   "invalid negative number",
-			input:  "-",
-			expect: `error at index 0 ('-'): malformed number`,
-		},
-		{
-			name:   "invalid number fraction",
-			input:  "0.",
-			expect: `error at index 0 ('0'): malformed number`,
-		},
-		{
-			name:   "invalid number exponent",
-			input:  "0e",
-			expect: `error at index 0 ('0'): malformed number`,
-		},
-		{
-			name:   "invalid number exponent",
-			input:  "1e-",
-			expect: `error at index 0 ('1'): malformed number`,
-		},
-	} {
-		require.False(t, json.Valid([]byte(td.input)))
+func TestNumbers(t *testing.T) {
+	numbers := `[
+		0,
+		1,
+		12,
+		123,
+		1234,
+		12345,
+		123456,
+		1234567,
+		12345678,
+		123456789,
+		1234567890,
+		1e0,
+		1e1,
+		1e12,
+		1e123,
+		1e1234,
+		1e12345,
+		1e123456,
+		1e1234567,
+		1e12345678,
+		1e123456789,
+		1e1234567890,
+		-0,
+		-1,
+		-12,
+		-123,
+		-1234,
+		-12345,
+		-123456,
+		-1234567,
+		-12345678,
+		-123456789,
+		-1234567890,
+		-1e0,
+		-1e1,
+		-1e12,
+		-1e123,
+		-1e1234,
+		-1e12345,
+		-1e123456,
+		-1e1234567,
+		-1e12345678,
+		-1e123456789,
+		-1e1234567890,
+		0.0,
+		1.1,
+		12.12,
+		123.123,
+		1234.1234,
+		12345.12345,
+		123456.123456,
+		1234567.1234567,
+		12345678.12345678,
+		123456789.123456789,
+		1234567890.1234567890,
+		-1.0,
+		-1.1,
+		-1.12,
+		-1.123,
+		-1.1234,
+		-1.12345,
+		-1.123456,
+		-1.1234567,
+		-1.12345678,
+		-1.123456789,
+		-1.1234567890,
+		-1.1e0,
+		-1.1e1,
+		-1.1e12,
+		-1.1e123,
+		-1.1e1234,
+		-1.1e12345,
+		-1.1e123456,
+		-1.1e1234567,
+		-1.1e12345678,
+		-1.1e123456789,
+		-1.1e1234567890
+	]`
 
-		t.Run(td.name, func(t *testing.T) {
-			testError[string](t, td)
-			testError[[]byte](t, td)
+	var expect []json.RawMessage
+	err := json.Unmarshal([]byte(numbers), &expect)
+	require.NoError(t, err)
+
+	t.Run("Valid", func(t *testing.T) {
+		require.True(t, jscan.Valid(numbers))
+	})
+
+	t.Run("ValidatorValid", func(t *testing.T) {
+		v := jscan.NewValidator[string](16)
+		require.True(t, v.Valid(numbers))
+	})
+
+	t.Run("Scan", func(t *testing.T) {
+		var actual []json.RawMessage
+		perr := jscan.Scan(numbers, func(i *jscan.Iterator[string]) (err bool) {
+			if i.ValueType() == jscan.ValueTypeNumber {
+				actual = append(actual, []byte(i.Value()))
+			}
+			return false
 		})
-	}
+		require.False(t, perr.IsErr(), "unexpected error: %v", perr.Error())
+		require.Equal(t, expect, actual)
+	})
+
+	t.Run("ParserScan", func(t *testing.T) {
+		p := jscan.NewParser[string](0)
+		var actual []json.RawMessage
+		perr := p.Scan(numbers, func(i *jscan.Iterator[string]) (err bool) {
+			if i.ValueType() == jscan.ValueTypeNumber {
+				actual = append(actual, []byte(i.Value()))
+			}
+			return false
+		})
+		require.False(t, perr.IsErr(), "unexpected error: %v", perr.Error())
+		require.Equal(t, expect, actual)
+	})
 }
 
 func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
