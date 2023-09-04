@@ -1,10 +1,5 @@
 package jscan
 
-import (
-	"github.com/romshark/jscan/v2/internal/jsonnum"
-	"github.com/romshark/jscan/v2/internal/strfind"
-)
-
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
@@ -68,12 +63,10 @@ func Scan[S ~string | ~[]byte](
 	if err.IsErr() {
 		return err
 	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
+	if t := skipSpace(t); len(t) > 0 {
+		if t[0] < 0x20 {
+			return getError(ErrorCodeIllegalControlChar, s, t)
+		}
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
@@ -130,12 +123,10 @@ func (p *Parser[S]) Scan(
 	if err.IsErr() {
 		return err
 	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
+	if t := skipSpace(t); len(t) > 0 {
+		if t[0] < 0x20 {
+			return getError(ErrorCodeIllegalControlChar, s, t)
+		}
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
 	return Error[S]{}
@@ -146,29 +137,20 @@ func (p *Parser[S]) Scan(
 func scan[S ~string | ~[]byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
 ) (S, Error[S]) {
-	var (
-		rollback S // Used as fallback for error report
-		s        = i.src
-		b        bool
-		ks, ke   int
-	)
+	s := i.src
+	var ks, ke int
 
-VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
+
+VALUE:
 	switch s[0] {
 	case '{':
 		goto VALUE_OBJECT
@@ -197,14 +179,8 @@ VALUE_OBJECT:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -259,32 +235,271 @@ VALUE_ARRAY:
 		KeyIndex:    ks,
 		KeyIndexEnd: ke,
 	})
-	goto VALUE_OR_ARR_TERM
+	if len(s) < 1 {
+		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+	}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		}
+	}
+	if s[0] == ']' {
+		s = s[1:]
+		i.stack = i.stack[:len(i.stack)-1]
+		goto AFTER_VALUE
+	}
+	goto VALUE
 
 VALUE_NUMBER:
-	{
-		i.valueIndex = len(i.src) - len(s)
-		{
-			rollback = s
-			if s, b = jsonnum.ReadNumber(s); b {
-				return s, getError(ErrorCodeMalformedNumber, i.src, rollback)
-			}
+	i.valueIndex = len(i.src) - len(s)
+	if s[0] == '-' {
+		// Signed
+		s = s[1:]
+		if len(s) < 1 {
+			// Expected at least one digit
+			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
-		i.valueIndexEnd = len(i.src) - len(s)
-		i.valueType = ValueTypeNumber
+	}
 
-		{ // Invoke callback
-			i.arrayIndex = -1
-			if len(i.stack) != 0 &&
-				i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
-				i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
-				i.stack[len(i.stack)-1].ArrLen++
-			}
-			if fn(i) {
-				return s, i.getError(ErrorCodeCallback)
-			}
-			i.keyIndex = -1
+	if s[0] == '0' {
+		s = s[1:]
+		if len(s) < 1 {
+			// Number zero
+			goto AFTER_NUMBER
 		}
+		// Leading zero
+		switch s[0] {
+		case '.':
+			s = s[1:]
+			goto FRACTION
+		case 'e', 'E':
+			s = s[1:]
+			goto EXPONENT_SIGN
+		default:
+			// Zero
+			goto AFTER_NUMBER
+		}
+	}
+
+	// Integer
+	if s[0] < '1' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, i.src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			goto CHECK_INT
+		}
+		if lutED[s[1]] != 2 {
+			s = s[1:]
+			goto CHECK_INT
+		}
+		if lutED[s[2]] != 2 {
+			s = s[2:]
+			goto CHECK_INT
+		}
+		if lutED[s[3]] != 2 {
+			s = s[3:]
+			goto CHECK_INT
+		}
+		if lutED[s[4]] != 2 {
+			s = s[4:]
+			goto CHECK_INT
+		}
+		if lutED[s[5]] != 2 {
+			s = s[5:]
+			goto CHECK_INT
+		}
+		if lutED[s[6]] != 2 {
+			s = s[6:]
+			goto CHECK_INT
+		}
+		if lutED[s[7]] != 2 {
+			s = s[7:]
+			goto CHECK_INT
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			} else if s[0] == '.' {
+				s = s[1:]
+				goto FRACTION
+			}
+			// Integer
+			goto AFTER_NUMBER
+		}
+	}
+
+	if len(s) < 1 {
+		// Integer without exponent
+		goto AFTER_NUMBER
+	}
+
+CHECK_INT:
+	_ = 0 // Fix test coverage misreport
+	switch s[0] {
+	case 'e', 'E':
+		s = s[1:]
+		goto EXPONENT_SIGN
+	case '.':
+		s = s[1:]
+		goto FRACTION
+	default:
+		// Integer
+		goto AFTER_NUMBER
+	}
+
+FRACTION:
+	if len(s) < 1 {
+		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+	}
+	if s[0] < '0' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, i.src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			goto CHECK_FRAC
+		}
+		if lutED[s[1]] != 2 {
+			s = s[1:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[2]] != 2 {
+			s = s[2:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[3]] != 2 {
+			s = s[3:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[4]] != 2 {
+			s = s[4:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[5]] != 2 {
+			s = s[5:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[6]] != 2 {
+			s = s[6:]
+			goto CHECK_FRAC
+		}
+		if lutED[s[7]] != 2 {
+			s = s[7:]
+			goto CHECK_FRAC
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			if s[0] == 'e' || s[0] == 'E' {
+				s = s[1:]
+				goto EXPONENT_SIGN
+			}
+			goto AFTER_NUMBER
+		}
+	}
+
+	if len(s) < 1 {
+		// Number (with fraction but) without exponent
+		goto AFTER_NUMBER
+	}
+
+CHECK_FRAC:
+	if s[0] == 'e' || s[0] == 'E' {
+		s = s[1:]
+		goto EXPONENT_SIGN
+	}
+	goto AFTER_NUMBER
+
+EXPONENT_SIGN:
+	if len(s) < 1 {
+		// Missing exponent value
+		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+	}
+	if s[0] == '-' || s[0] == '+' {
+		s = s[1:]
+		if len(s) < 1 {
+			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		}
+	}
+	if s[0] < '0' || s[0] > '9' {
+		// Expected at least one digit
+		return s, getError(ErrorCodeMalformedNumber, i.src, s)
+	}
+	s = s[1:]
+	for len(s) > 7 {
+		if lutED[s[0]] != 2 {
+			// Number with (fraction and) exponent
+			goto AFTER_NUMBER
+		}
+		if lutED[s[1]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[1:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[2]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[2:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[3]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[3:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[4]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[4:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[5]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[5:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[6]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[6:]
+			goto AFTER_NUMBER
+		}
+		if lutED[s[7]] != 2 {
+			// Number with (fraction and) exponent
+			s = s[7:]
+			goto AFTER_NUMBER
+		}
+		s = s[8:]
+	}
+	for ; len(s) > 0; s = s[1:] {
+		if s[0] < '0' || s[0] > '9' {
+			// Number with (fraction and) exponent
+			goto AFTER_NUMBER
+		}
+	}
+
+AFTER_NUMBER:
+	i.valueIndexEnd = len(i.src) - len(s)
+	i.valueType = ValueTypeNumber
+
+	{ // Invoke callback
+		i.arrayIndex = -1
+		if len(i.stack) != 0 &&
+			i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+			i.stack[len(i.stack)-1].ArrLen++
+		}
+		if fn(i) {
+			return s, i.getError(ErrorCodeCallback)
+		}
+		i.keyIndex = -1
 	}
 	goto AFTER_VALUE
 
@@ -369,7 +584,7 @@ VALUE_STRING:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
@@ -487,14 +702,8 @@ OBJ_KEY:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -587,7 +796,7 @@ OBJ_KEY:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
@@ -617,14 +826,8 @@ AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -636,48 +839,16 @@ AFTER_OBJ_KEY_STRING:
 		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	s = s[1:]
-	goto VALUE
-
-VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
-	switch s[0] {
-	case ']':
-		s = s[1:]
-		i.stack = i.stack[:len(i.stack)-1]
-		goto AFTER_VALUE
-	case '{':
-		goto VALUE_OBJECT
-	case '[':
-		goto VALUE_ARRAY
-	case '"':
-		goto VALUE_STRING
-	case 't':
-		goto VALUE_TRUE
-	case 'f':
-		goto VALUE_FALSE
-	case 'n':
-		goto VALUE_NULL
-	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		goto VALUE_NUMBER
-	}
-	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-	}
-	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+	goto VALUE
 
 AFTER_VALUE:
 	if len(i.stack) == 0 {
@@ -686,14 +857,8 @@ AFTER_VALUE:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	if lutSX[s[0]] == 1 {
+		s = skipSpace(s)
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
@@ -702,6 +867,15 @@ AFTER_VALUE:
 	case ',':
 		s = s[1:]
 		if i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+			if len(s) < 1 {
+				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			}
+			if lutSX[s[0]] == 1 {
+				s = skipSpace(s)
+				if len(s) < 1 {
+					return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				}
+			}
 			goto VALUE
 		}
 		goto OBJ_KEY
