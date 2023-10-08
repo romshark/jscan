@@ -45,7 +45,7 @@ func ScanOne[S ~string | ~[]byte](
 	}
 	i.src = s
 	reset(i)
-	return scan(i, fn)
+	return scan(i, fn, false)
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -82,7 +82,7 @@ func Scan[S ~string | ~[]byte](
 	}
 	i.src = s
 	reset(i)
-	t, err := scan(i, fn)
+	t, err := scan(i, fn, false)
 	if err.IsErr() {
 		return err
 	}
@@ -100,7 +100,20 @@ func Scan[S ~string | ~[]byte](
 // Parser wraps an iterator in a reusable instance.
 // Reusing a parser instance is more efficient than global functions
 // that rely on a global iterator pool.
-type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
+type Parser[S ~string | ~[]byte] struct {
+	i                     *Iterator[S]
+	disableUTF8Validation bool
+}
+
+// ParserOptions configures a parser instance.
+type ParserOptions struct {
+	PreallocStackFrames int
+
+	// DisableUTF8Validation disables UTF-8 validation which significantly
+	// improves performance at the cost of RFC8259 compliance which states that
+	// JSON strings must not contain illegal UTF-8 sequences.
+	DisableUTF8Validation bool
+}
 
 // NewParser creates a new reusable parser instance.
 // A higher preallocStackFrames value implies greater memory usage but also reduces
@@ -108,10 +121,16 @@ type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
 // preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
 // (1 frame = ~32 bytes).
 // Use DefaultStackSizeIterator when not sure.
-func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
-	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
+func NewParser[S ~string | ~[]byte](o ParserOptions) *Parser[S] {
+	if o.PreallocStackFrames == 0 {
+		o.PreallocStackFrames = DefaultStackSizeValidator
+	}
+	i := &Iterator[S]{stack: make([]stackNode, o.PreallocStackFrames)}
 	reset(i)
-	return &Parser[S]{i: i}
+	return &Parser[S]{
+		i:                     i,
+		disableUTF8Validation: o.DisableUTF8Validation,
+	}
 }
 
 // ScanOne calls fn for every encountered value including objects and arrays.
@@ -130,7 +149,7 @@ func (p *Parser[S]) ScanOne(
 ) (trailing S, err Error[S]) {
 	reset(p.i)
 	p.i.src = s
-	return scan(p.i, fn)
+	return scan(p.i, fn, false)
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -144,7 +163,7 @@ func (p *Parser[S]) Scan(
 	reset(p.i)
 	p.i.src = s
 
-	t, err := scan(p.i, fn)
+	t, err := scan(p.i, fn, false)
 	if err.IsErr() {
 		return err
 	}
@@ -162,7 +181,7 @@ func (p *Parser[S]) Scan(
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
 func scan[S ~string | ~[]byte](
-	i *Iterator[S], fn func(*Iterator[S]) (err bool),
+	i *Iterator[S], fn func(*Iterator[S]) (err bool), noUTF8Validation bool,
 ) (S, Error[S]) {
 	var (
 		rollback S // Used as fallback for error report
@@ -308,124 +327,187 @@ VALUE_NUMBER:
 
 VALUE_STRING:
 	s = s[1:]
-	i.valueIndex = len(i.src) - len(s) - 1
-	for {
-		for ; len(s) > 15; s = s[16:] {
-			if lutStr[s[0]] != 0 {
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[1]] != 0 {
-				s = s[1:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[2]] != 0 {
-				s = s[2:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[3]] != 0 {
-				s = s[3:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[4]] != 0 {
-				s = s[4:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[5]] != 0 {
-				s = s[5:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[6]] != 0 {
-				s = s[6:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[7]] != 0 {
-				s = s[7:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[8]] != 0 {
-				s = s[8:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[9]] != 0 {
-				s = s[9:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[10]] != 0 {
-				s = s[10:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[11]] != 0 {
-				s = s[11:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[12]] != 0 {
-				s = s[12:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[13]] != 0 {
-				s = s[13:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[14]] != 0 {
-				s = s[14:]
-				goto CHECK_STRING_CHARACTER
-			}
-			if lutStr[s[15]] != 0 {
-				s = s[15:]
-				goto CHECK_STRING_CHARACTER
-			}
-			continue
-		}
-
-	CHECK_STRING_CHARACTER:
-		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
-		}
-		switch s[0] {
-		case '\\':
-			if len(s) < 2 {
-				s = s[1:]
-				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
-			}
-			if lutEscape[s[1]] == 1 {
-				s = s[2:]
+	{
+		ss := s
+		i.valueIndex = len(i.src) - len(s) - 1
+		for {
+			for ; len(s) > 15; s = s[16:] {
+				if lutStr[s[0]] != 0 {
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[1]] != 0 {
+					s = s[1:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[2]] != 0 {
+					s = s[2:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[3]] != 0 {
+					s = s[3:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[4]] != 0 {
+					s = s[4:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[5]] != 0 {
+					s = s[5:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[6]] != 0 {
+					s = s[6:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[7]] != 0 {
+					s = s[7:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[8]] != 0 {
+					s = s[8:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[9]] != 0 {
+					s = s[9:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[10]] != 0 {
+					s = s[10:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[11]] != 0 {
+					s = s[11:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[12]] != 0 {
+					s = s[12:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[13]] != 0 {
+					s = s[13:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[14]] != 0 {
+					s = s[14:]
+					goto CHECK_STRING_CHARACTER
+				}
+				if lutStr[s[15]] != 0 {
+					s = s[15:]
+					goto CHECK_STRING_CHARACTER
+				}
 				continue
 			}
-			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
-			}
-			if len(s) < 6 ||
-				lutSX[s[5]] != 2 ||
-				lutSX[s[4]] != 2 ||
-				lutSX[s[3]] != 2 ||
-				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
-			}
-			s = s[5:]
-		case '"':
-			s = s[1:]
-			i.valueIndexEnd = len(i.src) - len(s)
-			i.valueType = ValueTypeString
 
-			{ // Invoke callback
-				i.arrayIndex = -1
-				if len(i.stack) != 0 &&
-					i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
-					i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
-					i.stack[len(i.stack)-1].ArrLen++
-				}
-				if fn(i) {
-					return s, i.getError(ErrorCodeCallback)
-				}
-				i.keyIndex = -1
+		CHECK_STRING_CHARACTER:
+			if len(s) < 1 {
+				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
+			switch s[0] {
+			case '\\':
+				if len(s) < 2 {
+					s = s[1:]
+					return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				}
+				if lutEscape[s[1]] == 1 {
+					s = s[2:]
+					continue
+				}
+				if s[1] != 'u' {
+					return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				}
+				if len(s) < 6 ||
+					lutSX[s[5]] != 2 ||
+					lutSX[s[4]] != 2 ||
+					lutSX[s[3]] != 2 ||
+					lutSX[s[2]] != 2 {
+					return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				}
+				s = s[5:]
+			case '"':
+				s = s[1:]
 
-			goto AFTER_VALUE
-		default:
-			if s[0] < 0x20 {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				if noUTF8Validation {
+					goto AFTER_VALUE
+				}
+
+				// The UTF-8 verification code was borrowed from utf8.ValidString
+				// https://cs.opensource.google/go/go/+/refs/tags/go1.21.2:src/unicode/utf8/utf8.go;l=528
+				{
+					sv := ss[:len(ss)-len(s)]
+					// Fast path. Check for and skip 8 bytes of
+					// ASCII characters per iteration.
+					for len(sv) >= 8 {
+						// Combining two 32 bit loads allows the same code to be used for 32 and 64 bit platforms.
+						// The compiler can generate a 32bit load for first32 and second32 on many platforms.
+						// See test/codegen/memcombine.go.
+						first32 := uint32(sv[0]) |
+							uint32(sv[1])<<8 |
+							uint32(sv[2])<<16 |
+							uint32(sv[3])<<24
+						second32 := uint32(sv[4]) |
+							uint32(sv[5])<<8 |
+							uint32(sv[6])<<16 |
+							uint32(sv[7])<<24
+						if (first32|second32)&0x80808080 != 0 {
+							// Found a non ASCII byte (>= RuneSelf).
+							break
+						}
+						sv = sv[8:]
+					}
+					n := len(sv)
+					for j := 0; j < n; {
+						si := sv[j]
+						if si < utf8RuneSelf {
+							j++
+							continue
+						}
+						x := utf8First[si]
+						if x == utf8xx {
+							// Illegal starter byte.
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						size := int(x & 7)
+						if j+size > n {
+							// Short or invalid.
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						accept := utf8AcceptRanges[x>>4]
+						if c := sv[j+1]; c < accept.lo || accept.hi < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						} else if size == 2 {
+						} else if c := sv[j+2]; c < utf8locb || utf8hicb < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						} else if size == 3 {
+						} else if c := sv[j+3]; c < utf8locb || utf8hicb < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						j += size
+					}
+				}
+
+				i.valueIndexEnd = len(i.src) - len(s)
+				i.valueType = ValueTypeString
+
+				{ // Invoke callback
+					i.arrayIndex = -1
+					if len(i.stack) != 0 &&
+						i.stack[len(i.stack)-1].Type == stackNodeTypeArray {
+						i.arrayIndex = i.stack[len(i.stack)-1].ArrLen
+						i.stack[len(i.stack)-1].ArrLen++
+					}
+					if fn(i) {
+						return s, i.getError(ErrorCodeCallback)
+					}
+					i.keyIndex = -1
+				}
+
+				goto AFTER_VALUE
+			default:
+				if s[0] < 0x20 {
+					return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				}
+				s = s[1:]
 			}
-			s = s[1:]
 		}
 	}
 
@@ -502,135 +584,199 @@ VALUE_TRUE:
 	goto AFTER_VALUE
 
 OBJ_KEY:
-	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
-	}
-	if s[0] <= ' ' {
-		switch s[0] {
-		case ' ', '\t', '\r', '\n':
-			s, b = strfind.EndOfWhitespaceSeq(s)
-			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-			}
-		}
+	{
+		ss := s
 		if len(s) < 1 {
 			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 		}
-	}
-	if s[0] != '"' {
-		if s[0] < 0x20 {
-			return s, getError(ErrorCodeIllegalControlChar, i.src, s)
-		}
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
-	}
-
-	s = s[1:]
-
-	i.valueIndex = len(i.src) - len(s) - 1
-	for {
-		for ; len(s) > 15; s = s[16:] {
-			if lutStr[s[0]] != 0 {
-				goto CHECK_FIELDNAME_STRING_CHARACTER
+		if s[0] <= ' ' {
+			switch s[0] {
+			case ' ', '\t', '\r', '\n':
+				s, b = strfind.EndOfWhitespaceSeq(s)
+				if b {
+					return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				}
 			}
-			if lutStr[s[1]] != 0 {
-				s = s[1:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[2]] != 0 {
-				s = s[2:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[3]] != 0 {
-				s = s[3:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[4]] != 0 {
-				s = s[4:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[5]] != 0 {
-				s = s[5:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[6]] != 0 {
-				s = s[6:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[7]] != 0 {
-				s = s[7:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[8]] != 0 {
-				s = s[8:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[9]] != 0 {
-				s = s[9:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[10]] != 0 {
-				s = s[10:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[11]] != 0 {
-				s = s[11:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[12]] != 0 {
-				s = s[12:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[13]] != 0 {
-				s = s[13:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[14]] != 0 {
-				s = s[14:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			if lutStr[s[15]] != 0 {
-				s = s[15:]
-				goto CHECK_FIELDNAME_STRING_CHARACTER
-			}
-			continue
-		}
-
-	CHECK_FIELDNAME_STRING_CHARACTER:
-		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
-		}
-		switch s[0] {
-		case '\\':
-			if len(s) < 2 {
-				s = s[1:]
+			if len(s) < 1 {
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
-			if lutEscape[s[1]] == 1 {
-				s = s[2:]
-				continue
-			}
-			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
-			}
-			if len(s) < 6 ||
-				lutSX[s[5]] != 2 ||
-				lutSX[s[4]] != 2 ||
-				lutSX[s[3]] != 2 ||
-				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
-			}
-			s = s[5:]
-		case '"':
-			s = s[1:]
-			i.keyIndex, i.keyIndexEnd = i.valueIndex, len(i.src)-len(s)
-			goto AFTER_OBJ_KEY_STRING
-		default:
+		}
+		if s[0] != '"' {
 			if s[0] < 0x20 {
 				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
 			}
-			s = s[1:]
+			return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		}
+
+		s = s[1:]
+
+		i.valueIndex = len(i.src) - len(s) - 1
+		for {
+			for ; len(s) > 15; s = s[16:] {
+				if lutStr[s[0]] != 0 {
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[1]] != 0 {
+					s = s[1:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[2]] != 0 {
+					s = s[2:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[3]] != 0 {
+					s = s[3:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[4]] != 0 {
+					s = s[4:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[5]] != 0 {
+					s = s[5:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[6]] != 0 {
+					s = s[6:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[7]] != 0 {
+					s = s[7:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[8]] != 0 {
+					s = s[8:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[9]] != 0 {
+					s = s[9:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[10]] != 0 {
+					s = s[10:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[11]] != 0 {
+					s = s[11:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[12]] != 0 {
+					s = s[12:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[13]] != 0 {
+					s = s[13:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[14]] != 0 {
+					s = s[14:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				if lutStr[s[15]] != 0 {
+					s = s[15:]
+					goto CHECK_FIELDNAME_STRING_CHARACTER
+				}
+				continue
+			}
+
+		CHECK_FIELDNAME_STRING_CHARACTER:
+			if len(s) < 1 {
+				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			}
+			switch s[0] {
+			case '\\':
+				if len(s) < 2 {
+					s = s[1:]
+					return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				}
+				if lutEscape[s[1]] == 1 {
+					s = s[2:]
+					continue
+				}
+				if s[1] != 'u' {
+					return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				}
+				if len(s) < 6 ||
+					lutSX[s[5]] != 2 ||
+					lutSX[s[4]] != 2 ||
+					lutSX[s[3]] != 2 ||
+					lutSX[s[2]] != 2 {
+					return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				}
+				s = s[5:]
+			case '"':
+				s = s[1:]
+
+				if noUTF8Validation {
+					goto AFTER_OBJ_KEY_STRING
+				}
+
+				// The UTF-8 verification code was borrowed from utf8.ValidString
+				// https://cs.opensource.google/go/go/+/refs/tags/go1.21.2:src/unicode/utf8/utf8.go;l=528
+				{ // Verify UTF-8 in string value
+					sv := ss[:len(ss)-len(s)]
+					// Fast path. Check for and skip 8 bytes of
+					// ASCII characters per iteration.
+					for len(sv) >= 8 {
+						// Combining two 32 bit loads allows the same code to be used for 32 and 64 bit platforms.
+						// The compiler can generate a 32bit load for first32 and second32 on many platforms.
+						// See test/codegen/memcombine.go.
+						first32 := uint32(sv[0]) |
+							uint32(sv[1])<<8 |
+							uint32(sv[2])<<16 |
+							uint32(sv[3])<<24
+						second32 := uint32(sv[4]) |
+							uint32(sv[5])<<8 |
+							uint32(sv[6])<<16 |
+							uint32(sv[7])<<24
+						if (first32|second32)&0x80808080 != 0 {
+							// Found a non ASCII byte (>= RuneSelf).
+							break
+						}
+						sv = sv[8:]
+					}
+					n := len(sv)
+					for j := 0; j < n; {
+						si := sv[j]
+						if si < utf8RuneSelf {
+							j++
+							continue
+						}
+						x := utf8First[si]
+						if x == utf8xx {
+							// Illegal starter byte.
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						size := int(x & 7)
+						if j+size > n {
+							// Short or invalid.
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						accept := utf8AcceptRanges[x>>4]
+						if c := sv[j+1]; c < accept.lo || accept.hi < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						} else if size == 2 {
+						} else if c := sv[j+2]; c < utf8locb || utf8hicb < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						} else if size == 3 {
+						} else if c := sv[j+3]; c < utf8locb || utf8hicb < c {
+							return s, getError(ErrorCodeInvalidUTF8, i.src, s)
+						}
+						j += size
+					}
+				}
+
+				i.keyIndex, i.keyIndexEnd = i.valueIndex, len(i.src)-len(s)
+				goto AFTER_OBJ_KEY_STRING
+			default:
+				if s[0] < 0x20 {
+					return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				}
+				s = s[1:]
+			}
 		}
 	}
+
 AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)

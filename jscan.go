@@ -236,6 +236,9 @@ const (
 
 	// ErrorCodeCallback indicates return of true from the callback function.
 	ErrorCodeCallback
+
+	// ErrorCodeInvalidUTF8 indicates invalid UTF-8.
+	ErrorCodeInvalidUTF8
 )
 
 // ValueType defines a JSON value type
@@ -288,6 +291,8 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 		errMsg = "illegal control character"
 	case ErrorCodeCallback:
 		errMsg = "callback error"
+	case ErrorCodeInvalidUTF8:
+		errMsg = "invalid UTF-8"
 	default:
 		return ""
 	}
