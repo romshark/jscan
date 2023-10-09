@@ -100,15 +100,32 @@ func testOKOrErr[S ~string | ~[]byte](t *testing.T, input S) {
 			t.Skip("allowed to fail")
 		}
 	})
-	t.Run("ValidatorValid", func(t *testing.T) {
+	t.Run("Validate_DisableUTF8Validation", func(t *testing.T) {
+		err := jscan.Validate(string(input), jscan.Options{
+			DisableUTF8Validation: true,
+		})
+		if err.IsErr() {
+			t.Skip("allowed to fail")
+		}
+	})
+	t.Run("Validator_Valid", func(t *testing.T) {
 		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
 		if !v.Valid(string(input), jscan.Options{}) {
 			t.Skip("allowed to fail")
 		}
 	})
-	t.Run("ValidatorValidate", func(t *testing.T) {
+	t.Run("Validator_Validate", func(t *testing.T) {
 		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
 		err := v.Validate(string(input), jscan.Options{})
+		if err.IsErr() {
+			t.Skip("allowed to fail")
+		}
+	})
+	t.Run("Validator_Validate_DisableUTF8Validation", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		err := v.Validate(string(input), jscan.Options{
+			DisableUTF8Validation: true,
+		})
 		if err.IsErr() {
 			t.Skip("allowed to fail")
 		}
@@ -813,80 +830,90 @@ func TestErrorUnexpectedEOF(t *testing.T) {
 
 func TestErrorInvalidUTF8(t *testing.T) {
 	for _, td := range []struct {
-		Name  string
-		Input string
+		name   string
+		input  string
+		expect string
 	}{
 		{
-			Name:  "in_string_value",
-			Input: `{"message": "Hello, world!` + string([]byte{0xc3, 0x28}) + `"}`,
+			name:   "in_string_value",
+			input:  `{"message": "Hello, world!` + string([]byte{0xc3, 0x28}) + `"}`,
+			expect: `error at index 29 ('}'): invalid UTF-8`,
 		},
 		{
-			Name:  "in_object_field_name",
-			Input: `{"key_` + string([]byte{0xc3, 0x28}) + `":0}`,
+			name:   "in_object_field_name",
+			input:  `{"key_` + string([]byte{0xc3, 0x28}) + `":0}`,
+			expect: `error at index 9 (':'): invalid UTF-8`,
 		},
 	} {
-		t.Run(td.Name, func(t *testing.T) {
-			require.False(t, utf8.ValidString(td.Input))
+		t.Run(td.name, func(t *testing.T) {
+			require.False(t, utf8.ValidString(td.input))
 
 			t.Run("Valid", func(t *testing.T) {
-				a := jscan.Valid(td.Input, jscan.Options{})
+				a := jscan.Valid(td.input, jscan.Options{})
 				require.False(t, a)
 			})
 
 			t.Run("Validate", func(t *testing.T) {
-				err := jscan.Validate(td.Input, jscan.Options{})
+				err := jscan.Validate(td.input, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 
 			t.Run("Validator_Valid", func(t *testing.T) {
 				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
-				require.False(t, v.Valid(td.Input, jscan.Options{}))
+				a := v.Valid(td.input, jscan.Options{})
+				require.False(t, a)
 			})
 
 			t.Run("Validator_Validate", func(t *testing.T) {
 				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
-				err := v.Validate(td.Input, jscan.Options{})
+				err := v.Validate(td.input, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 
 			t.Run("Scan", func(t *testing.T) {
 				err := jscan.Scan(
-					td.Input, jscan.Options{},
+					td.input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 
 			t.Run("ScanOne", func(t *testing.T) {
 				_, err := jscan.ScanOne(
-					td.Input, jscan.Options{},
+					td.input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 
 			t.Run("Parser_Scan", func(t *testing.T) {
 				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
 				err := p.Scan(
-					td.Input, jscan.Options{},
+					td.input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 
 			t.Run("Parser_ScanOne", func(t *testing.T) {
 				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
 				_, err := p.ScanOne(
-					td.Input, jscan.Options{},
+					td.input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+				require.Equal(t, td.expect, err.Error())
 			})
 		})
 	}
