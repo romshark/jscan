@@ -32,11 +32,20 @@ func FuzzValid(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data string) {
 		var (
 			std        = json.Valid([]byte(data))
-			utf8Valid  = utf8.ValidString(data)
 			jscanBytes = jscan.Valid([]byte(data), jscan.Options{})
 			jscanStr   = jscan.Valid(data, jscan.Options{})
 		)
-		if std && utf8Valid != jscanStr {
+		if !utf8.ValidString(data) {
+			if jscanBytes || jscanStr {
+				t.Fatalf(
+					`Invalid UTF8: jscanBytes: %t; jscanStr: %t`,
+					jscanBytes, jscanStr,
+				)
+			}
+			// no need to check against encoding/json as it doesn't validate UTF-8.
+			return
+		}
+		if std != jscanStr {
 			t.Fatalf(
 				`Valid(%q): %t (std) != %t (jscanStr)`,
 				data, std, jscanStr,
