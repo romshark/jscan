@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
+	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
 // Default stack sizes
@@ -42,6 +43,322 @@ type stackNode struct {
 	ArrLen                int
 	KeyIndex, KeyIndexEnd int
 	Type                  stackNodeType
+}
+
+// Valid returns true if s is a valid JSON value, otherwise returns false.
+//
+// Unlike (*Validator).Valid this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
+func Valid[S ~string | ~[]byte](s S) bool {
+	return !Validate(s).IsErr()
+}
+
+// ValidateOne scans one JSON value from s and returns an error if it's invalid
+// and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
+//
+// Unlike (*Validator).ValidateOne this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global validator pools
+// and avoid an unecessary validator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
+func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
+	var v *Validator[S]
+	switch any(s).(type) {
+	case string:
+		x := validatorPoolString.Get()
+		defer validatorPoolString.Put(x)
+		v = x.(*Validator[S])
+	case []byte:
+		x := validatorPoolBytes.Get()
+		defer validatorPoolBytes.Put(x)
+		v = x.(*Validator[S])
+	}
+	v.stack = v.stack[:0]
+
+	return validate(v.stack, s, false)
+}
+
+// Validate returns an error if s is invalid JSON.
+//
+// Unlike (*Validator).Validate this function will take a validator instance
+// from a global pool and can therefore be less efficient.
+// Consider reusing a Validator instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global validator pools
+// and avoid an unecessary validator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
+func Validate[S ~string | ~[]byte](s S) Error[S] {
+	var v *Validator[S]
+	switch any(s).(type) {
+	case string:
+		x := validatorPoolString.Get()
+		defer validatorPoolString.Put(x)
+		v = x.(*Validator[S])
+	case []byte:
+		x := validatorPoolBytes.Get()
+		defer validatorPoolBytes.Put(x)
+		v = x.(*Validator[S])
+	}
+	v.stack = v.stack[:0]
+
+	t, err := validate(v.stack, s, false)
+	if err.IsErr() {
+		return err
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return getError(ErrorCodeIllegalControlChar, s, t)
+	}
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
+	}
+	return Error[S]{}
+}
+
+// Validator is a reusable validator instance.
+// The validator is more efficient than the parser at JSON validation.
+// A validator instance can be more efficient than global Valid, Validate and ValidateOne
+// function calls due to potential stack frame allocation avoidance.
+type Validator[S ~string | ~[]byte] struct {
+	stack                 []stackNodeType
+	disableUTF8Validation bool
+}
+
+// ValidatorOptions configures a validator instance.
+type ValidatorOptions struct {
+	PreallocStackFrames int
+
+	// DisableUTF8Validation disables UTF-8 validation which significantly
+	// improves performance at the cost of RFC8259 compliance which states that
+	// JSON strings must not contain illegal UTF-8 sequences.
+	DisableUTF8Validation bool
+}
+
+// NewValidator creates a new reusable validator instance.
+// A higher preallocStackFrames value implies greater memory usage but also reduces
+// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
+// preallocStackFrames of 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
+// Use DefaultStackSizeValidator when not sure.
+func NewValidator[S ~string | ~[]byte](o ValidatorOptions) *Validator[S] {
+	if o.PreallocStackFrames == 0 {
+		o.PreallocStackFrames = DefaultStackSizeValidator
+	}
+	return &Validator[S]{
+		stack:                 make([]stackNodeType, 0, o.PreallocStackFrames),
+		disableUTF8Validation: o.DisableUTF8Validation,
+	}
+}
+
+// Valid returns true if s is a valid JSON value, otherwise returns false.
+func (v *Validator[S]) Valid(s S) bool {
+	return !v.Validate(s).IsErr()
+}
+
+// ValidateOne scans one JSON value from s and returns an error if it's invalid
+// and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
+func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
+	return validate(v.stack, s, v.disableUTF8Validation)
+}
+
+// Validate returns an error if s is invalid JSON,
+// otherwise returns a zero value of Error[S].
+func (v *Validator[S]) Validate(s S) Error[S] {
+	t, err := validate(v.stack, s, v.disableUTF8Validation)
+	if err.IsErr() {
+		return err
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return getError(ErrorCodeIllegalControlChar, s, t)
+	}
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
+	}
+	return Error[S]{}
+}
+
+// ScanOne calls fn for every encountered value including objects and arrays.
+// When an object or array is encountered fn will also be called for each of its
+// member and element values.
+//
+// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// it encounters anything other than EOF after reading a valid JSON value.
+// Returns an error if any and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
+//
+// Unlike (*Parser).ScanOne this function will take an iterator instance
+// from a global iterator pool and can therefore be less efficient.
+// Consider reusing a Parser instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global iterator pools
+// and avoid an unecessary iterator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.ScanOne([]byte(m), // Cast m to []byte to avoid allocation!
+//
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
+func ScanOne[S ~string | ~[]byte](
+	s S, fn func(*Iterator[S]) (err bool),
+) (trailing S, err Error[S]) {
+	var i *Iterator[S]
+	switch any(s).(type) {
+	case string:
+		x := iteratorPoolString.Get()
+		defer iteratorPoolString.Put(x)
+		i = x.(*Iterator[S])
+	case []byte:
+		x := iteratorPoolBytes.Get()
+		defer iteratorPoolBytes.Put(x)
+		i = x.(*Iterator[S])
+	}
+	i.src = s
+	reset(i)
+	return scan(i, fn, false)
+}
+
+// Scan calls fn for every encountered value including objects and arrays.
+// When an object or array is encountered fn will also be called for each of its
+// member and element values.
+//
+// Unlike (*Parser).Scan this function will take an iterator instance
+// from a global iterator pool and can therefore be less efficient.
+// Consider reusing a Parser instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global iterator pools
+// and avoid an unecessary iterator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.Scan([]byte(m), // Cast m to []byte to avoid allocation!
+//
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
+func Scan[S ~string | ~[]byte](
+	s S, fn func(*Iterator[S]) (err bool),
+) (err Error[S]) {
+	var i *Iterator[S]
+	switch any(s).(type) {
+	case string:
+		x := iteratorPoolString.Get()
+		defer iteratorPoolString.Put(x)
+		i = x.(*Iterator[S])
+	case []byte:
+		x := iteratorPoolBytes.Get()
+		defer iteratorPoolBytes.Put(x)
+		i = x.(*Iterator[S])
+	}
+	i.src = s
+	reset(i)
+	t, err := scan(i, fn, false)
+	if err.IsErr() {
+		return err
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return getError(ErrorCodeIllegalControlChar, s, t)
+	}
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
+	}
+	return Error[S]{}
+}
+
+// Parser wraps an iterator in a reusable instance.
+// Reusing a parser instance is more efficient than global functions
+// that rely on a global iterator pool.
+type Parser[S ~string | ~[]byte] struct {
+	i                     *Iterator[S]
+	disableUTF8Validation bool
+}
+
+// ParserOptions configures a parser instance.
+type ParserOptions struct {
+	PreallocStackFrames int
+
+	// DisableUTF8Validation disables UTF-8 validation which significantly
+	// improves performance at the cost of RFC8259 compliance which states that
+	// JSON strings must not contain illegal UTF-8 sequences.
+	DisableUTF8Validation bool
+}
+
+// NewParser creates a new reusable parser instance.
+// A higher preallocStackFrames value implies greater memory usage but also reduces
+// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
+// preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
+// (1 frame = ~32 bytes).
+// Use DefaultStackSizeIterator when not sure.
+func NewParser[S ~string | ~[]byte](o ParserOptions) *Parser[S] {
+	if o.PreallocStackFrames == 0 {
+		o.PreallocStackFrames = DefaultStackSizeValidator
+	}
+	i := &Iterator[S]{stack: make([]stackNode, o.PreallocStackFrames)}
+	reset(i)
+	return &Parser[S]{
+		i:                     i,
+		disableUTF8Validation: o.DisableUTF8Validation,
+	}
+}
+
+// ScanOne calls fn for every encountered value including objects and arrays.
+// When an object or array is encountered fn will also be called for each of its
+// member and element values.
+//
+// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// it encounters anything other than EOF after reading a valid JSON value.
+// Returns an error if any and trailing as substring of s with the scanned value cut.
+// In case of an error trailing will be a substring of s cut up until the index
+// where the error was encountered.
+//
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
+func (p *Parser[S]) ScanOne(
+	s S, fn func(*Iterator[S]) (err bool),
+) (trailing S, err Error[S]) {
+	reset(p.i)
+	p.i.src = s
+	return scan(p.i, fn, false)
+}
+
+// Scan calls fn for every encountered value including objects and arrays.
+// When an object or array is encountered fn will also be called for each of its
+// member and element values.
+//
+// WARNING: Don't use or alias *Iterator[S] after fn returns!
+func (p *Parser[S]) Scan(
+	s S, fn func(*Iterator[S]) (err bool),
+) Error[S] {
+	reset(p.i)
+	p.i.src = s
+
+	t, err := scan(p.i, fn, false)
+	if err.IsErr() {
+		return err
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return getError(ErrorCodeIllegalControlChar, s, t)
+	}
+	if len(t) > 0 {
+		return getError(ErrorCodeUnexpectedToken, s, t)
+	}
+	return Error[S]{}
 }
 
 // Iterator provides access to the recently encountered value.
