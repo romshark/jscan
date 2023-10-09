@@ -34,7 +34,7 @@ func ExampleScan() {
 		]
 	}`
 
-	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+	err := jscan.Scan(j, jscan.Options{}, func(i *jscan.Iterator[string]) (err bool) {
 		fmt.Printf("%q:\n", i.Pointer())
 		fmt.Printf("├─ valueType:  %s\n", i.ValueType().String())
 		if k := i.Key(); k != "" {
@@ -157,7 +157,7 @@ func ExampleScan() {
 func ExampleScan_error_handling() {
 	j := `"something...`
 
-	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+	err := jscan.Scan(j, jscan.Options{}, func(i *jscan.Iterator[string]) (err bool) {
 		fmt.Println("This shall never be executed")
 		return false // No Error, resume scanning
 	})
@@ -182,7 +182,7 @@ func ExampleValidateOne() {
 
 	for offset, x := 0, s; x != ""; offset = len(s) - len(x) {
 		var err jscan.Error[string]
-		if x, err = jscan.ValidateOne(x); err.IsErr() {
+		if x, err = jscan.ValidateOne(x, jscan.Options{}); err.IsErr() {
 			panic(fmt.Errorf("unexpected error: %w", err))
 		}
 		fmt.Println(s[offset : len(s)-len(x)])
@@ -203,7 +203,7 @@ func ExampleScan_decode2DIntArray() {
 
 	s := [][]int{}
 	currentIndex := 0
-	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+	err := jscan.Scan(j, jscan.Options{}, func(i *jscan.Iterator[string]) (err bool) {
 		switch i.Level() {
 		case 0: // Root array
 			return i.ValueType() != jscan.ValueTypeArray

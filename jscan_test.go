@@ -50,33 +50,35 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		t.Run("Validator", func(t *testing.T) {
 			t.Run("Valid", func(t *testing.T) {
-				v := jscan.NewValidator[S](jscan.OptionsValidator{})
-				require.True(t, v.Valid(input))
+				v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+				a := v.Valid(input, jscan.Options{})
+				require.True(t, a)
 			})
 			t.Run("Validate", func(t *testing.T) {
-				v := jscan.NewValidator[S](jscan.OptionsValidator{})
-				err := v.Validate(input)
+				v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+				err := v.Validate(input, jscan.Options{})
 				require.False(t, err.IsErr())
 			})
 			t.Run("ValidateOne", func(t *testing.T) {
-				v := jscan.NewValidator[S](jscan.OptionsValidator{})
-				_, err := v.ValidateOne(input)
+				v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+				_, err := v.ValidateOne(input, jscan.Options{})
 				require.False(t, err.IsErr())
 			})
 		})
 		t.Run("Valid", func(t *testing.T) {
-			require.True(t, jscan.Valid[S](input))
+			a := jscan.Valid[S](input, jscan.Options{})
+			require.True(t, a)
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
-				string(input),
+				string(input), jscan.Options{},
 				func(i *jscan.Iterator[string]) (err bool) { return false },
 			)
 			require.False(t, err.IsErr())
 		})
 		t.Run("ScanOne", func(t *testing.T) {
 			_, err := jscan.ScanOne(
-				string(input),
+				string(input), jscan.Options{},
 				func(i *jscan.Iterator[string]) (err bool) { return false },
 			)
 			require.False(t, err.IsErr())
@@ -88,25 +90,25 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 // parsers are free to accept or reject.
 func testOKOrErr[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run("Valid", func(t *testing.T) {
-		if !jscan.Valid(string(input)) {
+		if !jscan.Valid(string(input), jscan.Options{}) {
 			t.Skip("allowed to fail")
 		}
 	})
 	t.Run("Validate", func(t *testing.T) {
-		err := jscan.Validate(string(input))
+		err := jscan.Validate(string(input), jscan.Options{})
 		if err.IsErr() {
 			t.Skip("allowed to fail")
 		}
 	})
 	t.Run("ValidatorValid", func(t *testing.T) {
-		v := jscan.NewValidator[string](jscan.OptionsValidator{})
-		if !v.Valid(string(input)) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		if !v.Valid(string(input), jscan.Options{}) {
 			t.Skip("allowed to fail")
 		}
 	})
 	t.Run("ValidatorValidate", func(t *testing.T) {
-		v := jscan.NewValidator[string](jscan.OptionsValidator{})
-		err := v.Validate(string(input))
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		err := v.Validate(string(input), jscan.Options{})
 		if err.IsErr() {
 			t.Skip("allowed to fail")
 		}
@@ -120,32 +122,37 @@ func testOKOrErr[S ~string | ~[]byte](t *testing.T, input S) {
 func testStrictErr[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			err := p.Scan(
-				input, func(i *jscan.Iterator[S]) (err bool) { return false },
+				input, jscan.Options{},
+				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
-				input, func(i *jscan.Iterator[S]) (err bool) { return false },
+				input, jscan.Options{},
+				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			require.False(t, v.Valid(input))
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			a := v.Valid(input, jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("ValidatorValidate", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			err := v.Validate(input)
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			err := v.Validate(input, jscan.Options{})
 			require.True(t, err.IsErr())
 		})
 		t.Run("Valid", func(t *testing.T) {
-			require.False(t, jscan.Valid[S](input))
+			a := jscan.Valid[S](input, jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("Validate", func(t *testing.T) {
-			require.True(t, jscan.Validate[S](input).IsErr())
+			err := jscan.Validate[S](input, jscan.Options{})
+			require.True(t, err.IsErr())
 		})
 	})
 }
@@ -644,21 +651,23 @@ func testScan[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 		}
 
 		t.Run("Valid", func(t *testing.T) {
-			require.True(t, jscan.Valid[S](S(td.input)))
+			a := jscan.Valid[S](S(td.input), jscan.Options{})
+			require.True(t, a)
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			require.True(t, v.Valid(S(td.input)))
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			a := v.Valid(S(td.input), jscan.Options{})
+			require.True(t, a)
 		})
 		t.Run("Scan", func(t *testing.T) {
 			j = 0
-			err := jscan.Scan[S](S(td.input), check(t))
+			err := jscan.Scan[S](S(td.input), jscan.Options{}, check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
 		t.Run("ParserScan", func(t *testing.T) {
 			j = 0
-			p := jscan.NewParser[S](jscan.OptionsParser{})
-			err := p.Scan(S(td.input), check(t))
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
+			err := p.Scan(S(td.input), jscan.Options{}, check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
 	})
@@ -820,38 +829,40 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			require.False(t, utf8.ValidString(td.Input))
 
 			t.Run("Valid", func(t *testing.T) {
-				require.False(t, jscan.Valid(td.Input))
+				a := jscan.Valid(td.Input, jscan.Options{})
+				require.False(t, a)
 			})
 
 			t.Run("Validate", func(t *testing.T) {
-				err := jscan.Validate(td.Input)
+				err := jscan.Validate(td.Input, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			})
 
 			t.Run("Validator_Valid", func(t *testing.T) {
-				v := jscan.NewValidator[string](jscan.OptionsValidator{})
-				require.False(t, v.Valid(td.Input))
+				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+				require.False(t, v.Valid(td.Input, jscan.Options{}))
 			})
 
 			t.Run("Validator_Validate", func(t *testing.T) {
-				v := jscan.NewValidator[string](jscan.OptionsValidator{})
-				err := v.Validate(td.Input)
+				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+				err := v.Validate(td.Input, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			})
 
 			t.Run("Scan", func(t *testing.T) {
-				err := jscan.Scan(td.Input, func(i *jscan.Iterator[string]) (err bool) {
-					return false
-				})
+				err := jscan.Scan(
+					td.Input, jscan.Options{},
+					func(i *jscan.Iterator[string]) (err bool) { return false },
+				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			})
 
 			t.Run("ScanOne", func(t *testing.T) {
 				_, err := jscan.ScanOne(
-					td.Input,
+					td.Input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
@@ -859,18 +870,19 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			})
 
 			t.Run("Parser_Scan", func(t *testing.T) {
-				p := jscan.NewParser[string](jscan.OptionsParser{})
-				err := p.Scan(td.Input, func(i *jscan.Iterator[string]) (err bool) {
-					return false
-				})
+				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+				err := p.Scan(
+					td.Input, jscan.Options{},
+					func(i *jscan.Iterator[string]) (err bool) { return false },
+				)
 				require.True(t, err.IsErr())
 				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			})
 
 			t.Run("Parser_ScanOne", func(t *testing.T) {
-				p := jscan.NewParser[string](jscan.OptionsParser{})
+				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
 				_, err := p.ScanOne(
-					td.Input,
+					td.Input, jscan.Options{},
 					func(i *jscan.Iterator[string]) (err bool) { return false },
 				)
 				require.True(t, err.IsErr())
@@ -1104,24 +1116,26 @@ func TestErrorMalformedNumber(t *testing.T) {
 func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 	t.Run(testDataType(td.input), func(t *testing.T) {
 		t.Run("Valid", func(t *testing.T) {
-			require.False(t, jscan.Valid[S](S(td.input)))
+			a := jscan.Valid[S](S(td.input), jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			require.False(t, v.Valid(S(td.input)))
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			a := v.Valid(S(td.input), jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan[S](
-				S(td.input),
+				S(td.input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
 		})
 		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			err := p.Scan(
-				S(td.input),
+				S(td.input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, td.expect, err.Error())
@@ -1263,16 +1277,16 @@ func TestControlCharacters(t *testing.T) {
 func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr string) {
 	t.Run(testDataType(expectErr), func(t *testing.T) {
 		t.Run("ValidatorValidate", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			err := v.Validate(S(input))
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			err := v.Validate(S(input), jscan.Options{})
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 		t.Run("ValidateValidateOne", func(t *testing.T) {
 			for s := S(input); len(s) > 0; {
-				v := jscan.NewValidator[S](jscan.OptionsValidator{})
-				trailing, err := v.ValidateOne(s)
+				v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+				trailing, err := v.ValidateOne(s, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, expectErr, err.Error())
 				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
@@ -1284,18 +1298,19 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			}
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.OptionsValidator{})
-			require.False(t, v.Valid(S(input)))
+			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			a := v.Valid(S(input), jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("Validate", func(t *testing.T) {
-			err := jscan.Validate[S](S(input))
+			err := jscan.Validate[S](S(input), jscan.Options{})
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 		t.Run("ValidateOne", func(t *testing.T) {
 			for s := S(input); len(s) > 0; {
-				trailing, err := jscan.ValidateOne[S](s)
+				trailing, err := jscan.ValidateOne[S](s, jscan.Options{})
 				require.True(t, err.IsErr())
 				require.Equal(t, expectErr, err.Error())
 				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
@@ -1307,12 +1322,13 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			}
 		})
 		t.Run("Valid", func(t *testing.T) {
-			require.False(t, jscan.Valid[S](S(input)))
+			a := jscan.Valid[S](S(input), jscan.Options{})
+			require.False(t, a)
 		})
 		t.Run("ParserScanOne", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			_, err := p.ScanOne(
-				S(input),
+				S(input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
@@ -1320,9 +1336,9 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
 		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			err := p.Scan(
-				S(input),
+				S(input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
@@ -1331,7 +1347,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 		})
 		t.Run("ScanOne", func(t *testing.T) {
 			_, err := jscan.ScanOne[S](
-				S(input),
+				S(input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
@@ -1340,7 +1356,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan[S](
-				S(input),
+				S(input), jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
@@ -1360,7 +1376,7 @@ func testReturnErrorTrue[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		j := 0
 		err := jscan.Scan(
-			input,
+			input, jscan.Options{},
 			func(i *jscan.Iterator[S]) (err bool) {
 				require.Equal(t, jscan.ValueTypeObject, i.ValueType())
 				j++
@@ -1414,7 +1430,7 @@ func testScanOne[S ~string | ~[]byte](
 	t.Run(testDataType(s), func(t *testing.T) {
 		for i, c, s := 0, 1, s; len(s) > 0; c++ {
 			trailing, err := jscan.ScanOne(
-				s,
+				s, jscan.Options{},
 				func(itr *jscan.Iterator[S]) (err bool) {
 					require.Equal(t, expect[i], TypeValuePair{
 						Type:  itr.ValueType(),
@@ -1517,25 +1533,28 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		inputObject := S(fmt.Sprintf(`{%s:%s}`, input, input))
 		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			c := 0
-			err := p.Scan(inputObject, func(i *jscan.Iterator[S]) (err bool) {
-				if c < 1 {
-					c++
+			err := p.Scan(
+				inputObject, jscan.Options{},
+				func(i *jscan.Iterator[S]) (err bool) {
+					if c < 1 {
+						c++
+						return false
+					}
+					require.Equal(t, jscan.ValueTypeString, i.ValueType())
+					require.Equal(t, input, i.Value())
+					require.Equal(t, input, i.Key())
 					return false
-				}
-				require.Equal(t, jscan.ValueTypeString, i.ValueType())
-				require.Equal(t, input, i.Value())
-				require.Equal(t, input, i.Key())
-				return false
-			})
+				},
+			)
 			require.False(t, err.IsErr())
 		})
 		t.Run("ParserScanOne", func(t *testing.T) {
-			p := jscan.NewParser[S](jscan.OptionsParser{})
+			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
 			c := 0
 			trailing, err := p.ScanOne(
-				inputObject,
+				inputObject, jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) {
 					if c < 1 {
 						c++
@@ -1553,7 +1572,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("Scan", func(t *testing.T) {
 			c := 0
 			err := jscan.Scan[S](
-				inputObject,
+				inputObject, jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) {
 					if c < 1 {
 						c++
@@ -1570,7 +1589,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("ScanOne", func(t *testing.T) {
 			c := 0
 			trailing, err := jscan.ScanOne[S](
-				inputObject,
+				inputObject, jscan.Options{},
 				func(i *jscan.Iterator[S]) (err bool) {
 					if c < 1 {
 						c++
@@ -1586,14 +1605,15 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 			require.Len(t, trailing, 0)
 		})
 		t.Run("Valid", func(t *testing.T) {
-			require.True(t, jscan.Valid[S](input))
+			a := jscan.Valid[S](input, jscan.Options{})
+			require.True(t, a)
 		})
 		t.Run("Validate", func(t *testing.T) {
-			err := jscan.Validate[S](input)
+			err := jscan.Validate[S](input, jscan.Options{})
 			require.False(t, err.IsErr())
 		})
 		t.Run("ValidateOne", func(t *testing.T) {
-			_, err := jscan.ValidateOne[S](input)
+			_, err := jscan.ValidateOne[S](input, jscan.Options{})
 			require.False(t, err.IsErr())
 		})
 	})
@@ -1608,23 +1628,27 @@ func testDataType[S ~string | ~[]byte](input S) string {
 
 func TestIndexEnd(t *testing.T) {
 	c := 0
-	err := jscan.Scan(`{"x":["y"]}`, func(i *jscan.Iterator[string]) (err bool) {
-		switch c {
-		case 0:
-			require.Equal(t, jscan.ValueTypeObject, i.ValueType())
-			require.Equal(t, -1, i.ValueIndexEnd())
-		case 1:
-			require.Equal(t, jscan.ValueTypeArray, i.ValueType())
-			require.Equal(t, -1, i.ValueIndexEnd())
-		case 2:
-			require.Equal(t, jscan.ValueTypeString, i.ValueType())
-			require.Equal(t, len(`{"x":["y"`), i.ValueIndexEnd())
-		default:
-			t.Fatal("unexpected branch")
-		}
-		c++
-		return false
-	})
+	err := jscan.Scan(
+		`{"x":["y"]}`,
+		jscan.Options{},
+		func(i *jscan.Iterator[string]) (err bool) {
+			switch c {
+			case 0:
+				require.Equal(t, jscan.ValueTypeObject, i.ValueType())
+				require.Equal(t, -1, i.ValueIndexEnd())
+			case 1:
+				require.Equal(t, jscan.ValueTypeArray, i.ValueType())
+				require.Equal(t, -1, i.ValueIndexEnd())
+			case 2:
+				require.Equal(t, jscan.ValueTypeString, i.ValueType())
+				require.Equal(t, len(`{"x":["y"`), i.ValueIndexEnd())
+			default:
+				t.Fatal("unexpected branch")
+			}
+			c++
+			return false
+		},
+	)
 	require.False(t, err.IsErr())
 }
 

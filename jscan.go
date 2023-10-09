@@ -50,8 +50,8 @@ type stackNode struct {
 // Unlike (*Validator).Valid this function will take a validator instance
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
-func Valid[S ~string | ~[]byte](s S) bool {
-	return !Validate(s).IsErr()
+func Valid[S ~string | ~[]byte](s S, o Options) bool {
+	return !Validate(s, o).IsErr()
 }
 
 // ValidateOne scans one JSON value from s and returns an error if it's invalid
@@ -69,7 +69,9 @@ func Valid[S ~string | ~[]byte](s S) bool {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
-func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
+func ValidateOne[S ~string | ~[]byte](
+	s S, o Options,
+) (trailing S, err Error[S]) {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -83,7 +85,7 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 	}
 	v.stack = v.stack[:0]
 
-	return validate(v.stack, s, false)
+	return validate(v.stack, s, o.DisableUTF8Validation)
 }
 
 // Validate returns an error if s is invalid JSON.
@@ -98,7 +100,7 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
-func Validate[S ~string | ~[]byte](s S) Error[S] {
+func Validate[S ~string | ~[]byte](s S, o Options) Error[S] {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -112,7 +114,7 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 	}
 	v.stack = v.stack[:0]
 
-	t, err := validate(v.stack, s, false)
+	t, err := validate(v.stack, s, o.DisableUTF8Validation)
 	if err.IsErr() {
 		return err
 	}
@@ -131,20 +133,10 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 // The validator is more efficient than the parser at JSON validation.
 // A validator instance can be more efficient than global Valid, Validate and ValidateOne
 // function calls due to potential stack frame allocation avoidance.
-type Validator[S ~string | ~[]byte] struct {
-	stack                 []stackNodeType
-	disableUTF8Validation bool
-}
+type Validator[S ~string | ~[]byte] struct{ stack []stackNodeType }
 
-// OptionsValidator configures a validator instance.
-type OptionsValidator struct {
-	// PreallocStackFrames determines how many stack frames will be preallocated.
-	// If 0, then DefaultStackSizeValidator is applied by default.
-	// A higher value implies greater memory usage but also reduces the chance of
-	// dynamic memory allocations if the JSON depth surpasses the stack size.
-	// 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
-	PreallocStackFrames int
-
+// Options specifies parser options. Use zero value for default settings.
+type Options struct {
 	// DisableUTF8Validation disables UTF-8 validation which improves performance
 	// at the cost of RFC8259 compliance, see "8.1. Character Encoding"
 	// (https://datatracker.ietf.org/doc/html/rfc8259#section-8.1).
@@ -152,33 +144,36 @@ type OptionsValidator struct {
 }
 
 // NewValidator creates a new reusable validator instance.
-func NewValidator[S ~string | ~[]byte](o OptionsValidator) *Validator[S] {
-	if o.PreallocStackFrames == 0 {
-		o.PreallocStackFrames = DefaultStackSizeValidator
+//
+// preallocStackFrames determines how many stack frames will be preallocated.
+// If 0, then DefaultStackSizeValidator is applied by default.
+// A higher value implies greater memory usage but also reduces the chance of
+// dynamic memory allocations if the JSON depth surpasses the stack size.
+// 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
+func NewValidator[S ~string | ~[]byte](preallocStackFrames int) *Validator[S] {
+	if preallocStackFrames == 0 {
+		preallocStackFrames = DefaultStackSizeValidator
 	}
-	return &Validator[S]{
-		stack:                 make([]stackNodeType, 0, o.PreallocStackFrames),
-		disableUTF8Validation: o.DisableUTF8Validation,
-	}
+	return &Validator[S]{stack: make([]stackNodeType, 0, preallocStackFrames)}
 }
 
 // Valid returns true if s is a valid JSON value, otherwise returns false.
-func (v *Validator[S]) Valid(s S) bool {
-	return !v.Validate(s).IsErr()
+func (v *Validator[S]) Valid(s S, o Options) bool {
+	return !v.Validate(s, o).IsErr()
 }
 
 // ValidateOne scans one JSON value from s and returns an error if it's invalid
 // and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
-func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
-	return validate(v.stack, s, v.disableUTF8Validation)
+func (v *Validator[S]) ValidateOne(s S, o Options) (trailing S, err Error[S]) {
+	return validate(v.stack, s, o.DisableUTF8Validation)
 }
 
 // Validate returns an error if s is invalid JSON,
 // otherwise returns a zero value of Error[S].
-func (v *Validator[S]) Validate(s S) Error[S] {
-	t, err := validate(v.stack, s, v.disableUTF8Validation)
+func (v *Validator[S]) Validate(s S, o Options) Error[S] {
+	t, err := validate(v.stack, s, o.DisableUTF8Validation)
 	if err.IsErr() {
 		return err
 	}
@@ -216,7 +211,7 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, o Options, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
 	var i *Iterator[S]
 	switch any(s).(type) {
@@ -231,7 +226,7 @@ func ScanOne[S ~string | ~[]byte](
 	}
 	i.src = s
 	reset(i)
-	return scan(i, fn, false)
+	return scan(i, fn, o.DisableUTF8Validation)
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -251,7 +246,7 @@ func ScanOne[S ~string | ~[]byte](
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, o Options, fn func(*Iterator[S]) (err bool),
 ) (err Error[S]) {
 	var i *Iterator[S]
 	switch any(s).(type) {
@@ -266,7 +261,7 @@ func Scan[S ~string | ~[]byte](
 	}
 	i.src = s
 	reset(i)
-	t, err := scan(i, fn, false)
+	t, err := scan(i, fn, o.DisableUTF8Validation)
 	if err.IsErr() {
 		return err
 	}
@@ -284,37 +279,22 @@ func Scan[S ~string | ~[]byte](
 // Parser wraps an iterator in a reusable instance.
 // Reusing a parser instance is more efficient than global functions
 // that rely on a global iterator pool.
-type Parser[S ~string | ~[]byte] struct {
-	i                     *Iterator[S]
-	disableUTF8Validation bool
-}
-
-// OptionsParser configures a parser instance.
-type OptionsParser struct {
-	// PreallocStackFrames determines how many stack frames will be preallocated.
-	// If 0, then DefaultStackSizeParser is applied by default.
-	// A higher value implies greater memory usage but also reduces the chance of
-	// dynamic memory allocations if the JSON depth surpasses the stack size.
-	// 32 is equivalent to ~1KiB of memory usage on 64-bit systems (1 frame = ~32 bytes).
-	PreallocStackFrames int
-
-	// DisableUTF8Validation disables UTF-8 validation which improves performance
-	// at the cost of RFC8259 compliance, see "8.1. Character Encoding"
-	// (https://datatracker.ietf.org/doc/html/rfc8259#section-8.1).
-	DisableUTF8Validation bool
-}
+type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
 
 // NewParser creates a new reusable parser instance.
-func NewParser[S ~string | ~[]byte](o OptionsParser) *Parser[S] {
-	if o.PreallocStackFrames == 0 {
-		o.PreallocStackFrames = DefaultStackSizeValidator
+//
+// preallocStackFrames determines how many stack frames will be preallocated.
+// If 0, then DefaultStackSizeParser is applied by default.
+// A higher value implies greater memory usage but also reduces the chance of
+// dynamic memory allocations if the JSON depth surpasses the stack size.
+// 32 is equivalent to ~1KiB of memory usage on 64-bit systems (1 frame = ~32 bytes).
+func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
+	if preallocStackFrames == 0 {
+		preallocStackFrames = DefaultStackSizeValidator
 	}
-	i := &Iterator[S]{stack: make([]stackNode, o.PreallocStackFrames)}
+	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
-	return &Parser[S]{
-		i:                     i,
-		disableUTF8Validation: o.DisableUTF8Validation,
-	}
+	return &Parser[S]{i: i}
 }
 
 // ScanOne calls fn for every encountered value including objects and arrays.
@@ -329,11 +309,11 @@ func NewParser[S ~string | ~[]byte](o OptionsParser) *Parser[S] {
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, o Options, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
 	reset(p.i)
 	p.i.src = s
-	return scan(p.i, fn, false)
+	return scan(p.i, fn, o.DisableUTF8Validation)
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -342,12 +322,12 @@ func (p *Parser[S]) ScanOne(
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) Scan(
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, o Options, fn func(*Iterator[S]) (err bool),
 ) Error[S] {
 	reset(p.i)
 	p.i.src = s
 
-	t, err := scan(p.i, fn, false)
+	t, err := scan(p.i, fn, o.DisableUTF8Validation)
 	if err.IsErr() {
 		return err
 	}

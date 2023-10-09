@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/romshark/jscan/v2"
 
@@ -28,9 +29,9 @@ type Stats struct {
 	MaxArrayLen   int
 }
 
-func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
+func MustCalcStatsJscan(p *jscan.Parser[[]byte], o jscan.Options, str []byte) (s Stats) {
 	if err := p.Scan(
-		str,
+		str, o,
 		func(i *jscan.Iterator[[]byte]) (err bool) {
 			if i.KeyIndex() != -1 {
 				// Calculate key length excluding the quotes
@@ -102,10 +103,8 @@ func TestCalcStats(t *testing.T) {
 		MaxArrayLen:   5,
 	}
 
-	p := jscan.NewParser[[]byte](jscan.OptionsParser{
-		PreallocStackFrames: 64,
-	})
-	require.Equal(t, expect, MustCalcStatsJscan(p, []byte(input)))
+	p := jscan.NewParser[[]byte](64)
+	require.Equal(t, expect, MustCalcStatsJscan(p, jscan.Options{}, []byte(input)))
 }
 
 var gs Stats
@@ -130,21 +129,31 @@ func BenchmarkCalcStats(b *testing.B) {
 			src, err := bd.input.GetJSON()
 			require.NoError(b, err)
 
-			p := jscan.NewParser[[]byte](jscan.OptionsParser{
-				PreallocStackFrames: 1024,
+			b.Run("with_utf8_validation", func(b *testing.B) {
+				p := jscan.NewParser[[]byte](1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gs = MustCalcStatsJscan(p, jscan.Options{}, src)
+				}
 			})
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				gs = MustCalcStatsJscan(p, src)
-			}
+			b.Run("no_utf8_validation__", func(b *testing.B) {
+				p := jscan.NewParser[[]byte](1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gs = MustCalcStatsJscan(p, jscan.Options{
+						DisableUTF8Validation: true,
+					}, src)
+				}
+			})
 		})
 	}
 }
 
 func TestValid(t *testing.T) {
 	j := `[false,[[2, {"[foo]":[{"bar-baz":"fuz"}]}]]]`
+	require.True(t, utf8.ValidString(j))
 	require.True(t, json.Valid([]byte(j)))
-	require.True(t, jscan.Valid(j))
+	require.True(t, jscan.Valid(j, jscan.Options{}))
 }
 
 var GB bool
@@ -183,13 +192,21 @@ func BenchmarkValid(b *testing.B) {
 			src, err := bd.input.GetJSON()
 			require.NoError(b, err)
 
-			v := jscan.NewValidator[[]byte](jscan.OptionsValidator{
-				PreallocStackFrames: 1024,
+			b.Run("with_utf8_validation", func(b *testing.B) {
+				v := jscan.NewValidator[[]byte](1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					GB = v.Valid(src, jscan.Options{})
+				}
 			})
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				GB = v.Valid(src)
-			}
+
+			b.Run("no_utf8_validation__", func(b *testing.B) {
+				v := jscan.NewValidator[[]byte](1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					GB = v.Valid(src, jscan.Options{DisableUTF8Validation: true})
+				}
+			})
 		})
 	}
 }
