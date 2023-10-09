@@ -12,12 +12,12 @@ import (
 
 // Default stack sizes
 const (
-	DefaultStackSizeIterator  = 64
+	DefaultStackSizeParser    = 64
 	DefaultStackSizeValidator = 128
 )
 
 func newIterator[S ~string | ~[]byte]() *Iterator[S] {
-	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeIterator)}
+	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeParser)}
 }
 
 func newValidator[S ~string | ~[]byte]() *Validator[S] {
@@ -136,22 +136,23 @@ type Validator[S ~string | ~[]byte] struct {
 	disableUTF8Validation bool
 }
 
-// ValidatorOptions configures a validator instance.
-type ValidatorOptions struct {
+// OptionsValidator configures a validator instance.
+type OptionsValidator struct {
+	// PreallocStackFrames determines how many stack frames will be preallocated.
+	// If 0, then DefaultStackSizeValidator is applied by default.
+	// A higher value implies greater memory usage but also reduces the chance of
+	// dynamic memory allocations if the JSON depth surpasses the stack size.
+	// 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
 	PreallocStackFrames int
 
-	// DisableUTF8Validation disables UTF-8 validation which significantly
-	// improves performance at the cost of RFC8259 compliance which states that
-	// JSON strings must not contain illegal UTF-8 sequences.
+	// DisableUTF8Validation disables UTF-8 validation which improves performance
+	// at the cost of RFC8259 compliance, see "8.1. Character Encoding"
+	// (https://datatracker.ietf.org/doc/html/rfc8259#section-8.1).
 	DisableUTF8Validation bool
 }
 
 // NewValidator creates a new reusable validator instance.
-// A higher preallocStackFrames value implies greater memory usage but also reduces
-// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
-// preallocStackFrames of 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
-// Use DefaultStackSizeValidator when not sure.
-func NewValidator[S ~string | ~[]byte](o ValidatorOptions) *Validator[S] {
+func NewValidator[S ~string | ~[]byte](o OptionsValidator) *Validator[S] {
 	if o.PreallocStackFrames == 0 {
 		o.PreallocStackFrames = DefaultStackSizeValidator
 	}
@@ -288,23 +289,23 @@ type Parser[S ~string | ~[]byte] struct {
 	disableUTF8Validation bool
 }
 
-// ParserOptions configures a parser instance.
-type ParserOptions struct {
+// OptionsParser configures a parser instance.
+type OptionsParser struct {
+	// PreallocStackFrames determines how many stack frames will be preallocated.
+	// If 0, then DefaultStackSizeParser is applied by default.
+	// A higher value implies greater memory usage but also reduces the chance of
+	// dynamic memory allocations if the JSON depth surpasses the stack size.
+	// 32 is equivalent to ~1KiB of memory usage on 64-bit systems (1 frame = ~32 bytes).
 	PreallocStackFrames int
 
-	// DisableUTF8Validation disables UTF-8 validation which significantly
-	// improves performance at the cost of RFC8259 compliance which states that
-	// JSON strings must not contain illegal UTF-8 sequences.
+	// DisableUTF8Validation disables UTF-8 validation which improves performance
+	// at the cost of RFC8259 compliance, see "8.1. Character Encoding"
+	// (https://datatracker.ietf.org/doc/html/rfc8259#section-8.1).
 	DisableUTF8Validation bool
 }
 
 // NewParser creates a new reusable parser instance.
-// A higher preallocStackFrames value implies greater memory usage but also reduces
-// the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
-// preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
-// (1 frame = ~32 bytes).
-// Use DefaultStackSizeIterator when not sure.
-func NewParser[S ~string | ~[]byte](o ParserOptions) *Parser[S] {
+func NewParser[S ~string | ~[]byte](o OptionsParser) *Parser[S] {
 	if o.PreallocStackFrames == 0 {
 		o.PreallocStackFrames = DefaultStackSizeValidator
 	}

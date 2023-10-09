@@ -102,7 +102,7 @@ func TestCalcStats(t *testing.T) {
 		MaxArrayLen:   5,
 	}
 
-	p := jscan.NewParser[[]byte](jscan.ParserOptions{
+	p := jscan.NewParser[[]byte](jscan.OptionsParser{
 		PreallocStackFrames: 64,
 	})
 	require.Equal(t, expect, MustCalcStatsJscan(p, []byte(input)))
@@ -130,7 +130,7 @@ func BenchmarkCalcStats(b *testing.B) {
 			src, err := bd.input.GetJSON()
 			require.NoError(b, err)
 
-			p := jscan.NewParser[[]byte](jscan.ParserOptions{
+			p := jscan.NewParser[[]byte](jscan.OptionsParser{
 				PreallocStackFrames: 1024,
 			})
 			b.ResetTimer()
@@ -183,7 +183,7 @@ func BenchmarkValid(b *testing.B) {
 			src, err := bd.input.GetJSON()
 			require.NoError(b, err)
 
-			v := jscan.NewValidator[[]byte](jscan.ValidatorOptions{
+			v := jscan.NewValidator[[]byte](jscan.OptionsValidator{
 				PreallocStackFrames: 1024,
 			})
 			b.ResetTimer()
