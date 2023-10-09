@@ -655,7 +655,7 @@ func testScan[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 			require.True(t, a)
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
-			v := jscan.NewValidator[S](jscan.DefaultStackSizeValidator)
+			v := jscan.NewValidator[S](0)
 			a := v.Valid(S(td.input), jscan.Options{})
 			require.True(t, a)
 		})
@@ -666,7 +666,7 @@ func testScan[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 		})
 		t.Run("ParserScan", func(t *testing.T) {
 			j = 0
-			p := jscan.NewParser[S](jscan.DefaultStackSizeParser)
+			p := jscan.NewParser[S](0)
 			err := p.Scan(S(td.input), jscan.Options{}, check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
