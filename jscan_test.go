@@ -829,94 +829,140 @@ func TestErrorUnexpectedEOF(t *testing.T) {
 }
 
 func TestErrorInvalidUTF8(t *testing.T) {
-	for _, td := range []struct {
-		name   string
-		input  string
-		expect string
-	}{
-		{
-			name:   "in_string_value",
-			input:  `{"message": "Hello, world!` + string([]byte{0xc3, 0x28}) + `"}`,
-			expect: `error at index 29 ('}'): invalid UTF-8`,
-		},
-		{
-			name:   "in_object_field_name",
-			input:  `{"key_` + string([]byte{0xc3, 0x28}) + `":0}`,
-			expect: `error at index 9 (':'): invalid UTF-8`,
-		},
-	} {
-		t.Run(td.name, func(t *testing.T) {
-			require.False(t, utf8.ValidString(td.input))
+	testFn := func(t *testing.T, input string, beforeInvalidUTF8 string) {
+		t.Helper()
+		require.False(t, utf8.ValidString(input))
 
-			t.Run("Valid", func(t *testing.T) {
-				a := jscan.Valid(td.input, jscan.Options{})
-				require.False(t, a)
-			})
+		t.Run("Valid", func(t *testing.T) {
+			a := jscan.Valid(input, jscan.Options{})
+			require.False(t, a)
+		})
 
-			t.Run("Validate", func(t *testing.T) {
-				err := jscan.Validate(td.input, jscan.Options{})
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("Validate", func(t *testing.T) {
+			err := jscan.Validate(input, jscan.Options{})
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
+		})
 
-			t.Run("Validator_Valid", func(t *testing.T) {
-				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
-				a := v.Valid(td.input, jscan.Options{})
-				require.False(t, a)
-			})
+		t.Run("Validator_Valid", func(t *testing.T) {
+			v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+			a := v.Valid(input, jscan.Options{})
+			require.False(t, a)
+		})
 
-			t.Run("Validator_Validate", func(t *testing.T) {
-				v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
-				err := v.Validate(td.input, jscan.Options{})
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("Validator_Validate", func(t *testing.T) {
+			v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+			err := v.Validate(input, jscan.Options{})
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
+		})
 
-			t.Run("Scan", func(t *testing.T) {
-				err := jscan.Scan(
-					td.input, jscan.Options{},
-					func(i *jscan.Iterator[string]) (err bool) { return false },
-				)
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("Scan", func(t *testing.T) {
+			err := jscan.Scan(
+				input, jscan.Options{},
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
+		})
 
-			t.Run("ScanOne", func(t *testing.T) {
-				_, err := jscan.ScanOne(
-					td.input, jscan.Options{},
-					func(i *jscan.Iterator[string]) (err bool) { return false },
-				)
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("ScanOne", func(t *testing.T) {
+			_, err := jscan.ScanOne(
+				input, jscan.Options{},
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
+		})
 
-			t.Run("Parser_Scan", func(t *testing.T) {
-				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
-				err := p.Scan(
-					td.input, jscan.Options{},
-					func(i *jscan.Iterator[string]) (err bool) { return false },
-				)
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("Parser_Scan", func(t *testing.T) {
+			p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+			err := p.Scan(
+				input, jscan.Options{},
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
+		})
 
-			t.Run("Parser_ScanOne", func(t *testing.T) {
-				p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
-				_, err := p.ScanOne(
-					td.input, jscan.Options{},
-					func(i *jscan.Iterator[string]) (err bool) { return false },
-				)
-				require.True(t, err.IsErr())
-				require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
-				require.Equal(t, td.expect, err.Error())
-			})
+		t.Run("Parser_ScanOne", func(t *testing.T) {
+			p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+			_, err := p.ScanOne(
+				input, jscan.Options{},
+				func(i *jscan.Iterator[string]) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+			)
+			require.Equal(t, expectMsg, err.Error())
 		})
 	}
+
+	invalidUTF8Strings := []struct{ Name, Str string }{
+		// Lone start byte must be followed by
+		// a continuation byte in the range 0x80 to 0xBF.
+		{Name: "lone_start_byte", Str: "\xC3"},
+
+		// Start byte followed by incorrect number of continuation bytes.
+		// This 3-byte sequence start byte (E2) should be followed by
+		// 2 continuation bytes, but there's only 1.
+		{Name: "incorrect_continuation", Str: "\xE2\x82"},
+
+		// This represents the null byte, which should be just 0x00 in UTF-8.
+		// Using two bytes is an overlong encoding is invalid.
+		{Name: "overlong_encoding", Str: "\xC0\x80"},
+
+		// FE is not a valid start byte in UTF-8.
+		{Name: "invalid_start_byte", Str: "\xFE"},
+
+		// These are continuation bytes without a proper preceding start byte.
+		{Name: "continuation_bytes_without_preceding_start_byte", Str: "\x80\x81"},
+
+		// Surrogate pairs (U+D800 to U+DFFF) are not valid Unicode points and hence
+		// must not appear in a UTF-8 encoded string.
+		// This is an encoding for U+D800 which is a high surrogate.
+		{Name: "surrogate_pairs", Str: "\xED\xA0\x80"},
+	}
+
+	t.Run("field_name", func(t *testing.T) {
+		for _, td := range invalidUTF8Strings {
+			t.Run(td.Name, func(t *testing.T) {
+				in := `{"long_prefix_` + td.Str + `_long_suffix_string":0}`
+				testFn(t, in, `{"long_prefix_`)
+			})
+		}
+	})
+
+	t.Run("string_value", func(t *testing.T) {
+		for _, td := range invalidUTF8Strings {
+			t.Run(td.Name, func(t *testing.T) {
+				in := `[" ` + td.Str + `"]`
+				testFn(t, in, `[" `)
+			})
+		}
+	})
 }
 
 func TestErrorInvalidEscapeSequence(t *testing.T) {

@@ -581,16 +581,16 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 		errMsg = "unexpected token"
 	case ErrorCodeMalformedNumber:
 		errMsg = "malformed number"
-	case ErrorCodeUnexpectedEOF:
-		return fmt.Sprintf("error at index %d: unexpected EOF", index)
 	case ErrorCodeInvalidEscape:
 		errMsg = "invalid escape"
 	case ErrorCodeIllegalControlChar:
 		errMsg = "illegal control character"
 	case ErrorCodeCallback:
 		errMsg = "callback error"
+	case ErrorCodeUnexpectedEOF:
+		return fmt.Sprintf("error at index %d: unexpected EOF", index)
 	case ErrorCodeInvalidUTF8:
-		errMsg = "invalid UTF-8"
+		return fmt.Sprintf("error at index %d: invalid UTF-8", index)
 	default:
 		return ""
 	}
@@ -637,11 +637,18 @@ var lutEscape = [256]byte{
 	't':  1,
 }
 
-// getError returns the stringified error, if any.
 func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
 	return Error[S]{
 		Code:  c,
 		Src:   src,
 		Index: len(src) - len(s),
+	}
+}
+
+func getErrorInvalidUTF8[S ~string | ~[]byte](src S, index int) Error[S] {
+	return Error[S]{
+		Code:  ErrorCodeInvalidUTF8,
+		Src:   src,
+		Index: index,
 	}
 }

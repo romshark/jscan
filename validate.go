@@ -207,7 +207,9 @@ VALUE_STRING:
 			// https://cs.opensource.google/go/go/+/refs/tags/go1.21.2:src/unicode/utf8/utf8.go;l=528
 			// See LICENCES.md for more information.
 			{
+				startIndex := len(src) - len(ss)
 				ss = ss[:len(ss)-len(s)]
+				strLen := len(ss)
 				// Fast path. Check for and skip 8 bytes of
 				// ASCII characters per iteration.
 				for len(ss) >= 8 {
@@ -238,22 +240,22 @@ VALUE_STRING:
 					x := utf8.First[si]
 					if x == utf8.XX {
 						// Illegal starter byte.
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					size := int(x & 7)
 					if j+size > n {
 						// Short or invalid.
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					accept := utf8.AcceptRanges[x>>4]
 					if c := ss[j+1]; c < accept.Lo || accept.Hi < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					} else if size == 2 {
 					} else if c := ss[j+2]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					} else if size == 3 {
 					} else if c := ss[j+3]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					j += size
 				}
@@ -418,7 +420,9 @@ OBJ_KEY:
 			// https://cs.opensource.google/go/go/+/refs/tags/go1.21.2:src/unicode/utf8/utf8.go;l=528
 			// See LICENCES.md for more information.
 			{
+				startIndex := len(src) - len(ss)
 				ss = ss[:len(ss)-len(s)]
+				strLen := len(ss)
 				// Fast path. Check for and skip 8 bytes of
 				// ASCII characters per iteration.
 				for len(ss) >= 8 {
@@ -449,22 +453,22 @@ OBJ_KEY:
 					x := utf8.First[si]
 					if x == utf8.XX {
 						// Illegal starter byte.
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					size := int(x & 7)
 					if j+size > n {
 						// Short or invalid.
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					accept := utf8.AcceptRanges[x>>4]
 					if c := ss[j+1]; c < accept.Lo || accept.Hi < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					} else if size == 2 {
 					} else if c := ss[j+2]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					} else if size == 3 {
 					} else if c := ss[j+3]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getError(ErrorCodeInvalidUTF8, src, s)
+						return s, getErrorInvalidUTF8(src, startIndex+strLen-len(ss)+j)
 					}
 					j += size
 				}
