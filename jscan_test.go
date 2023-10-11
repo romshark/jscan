@@ -829,7 +829,7 @@ func TestErrorUnexpectedEOF(t *testing.T) {
 }
 
 func TestErrorInvalidUTF8(t *testing.T) {
-	testFn := func(t *testing.T, input string, beforeInvalidUTF8 string) {
+	testFn := func(t *testing.T, input, expectBefore, expectAfter string) {
 		t.Helper()
 		require.False(t, utf8.ValidString(input))
 
@@ -843,9 +843,20 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
+		})
+
+		t.Run("ValidateOne", func(t *testing.T) {
+			trailing, err := jscan.ValidateOne(input, jscan.Options{})
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(expectBefore),
+			)
+			require.Equal(t, expectMsg, err.Error())
+			require.Equal(t, expectAfter, trailing)
 		})
 
 		t.Run("Validator_Valid", func(t *testing.T) {
@@ -860,9 +871,21 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
+		})
+
+		t.Run("Validator_ValidateOne", func(t *testing.T) {
+			v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+			trailing, err := v.ValidateOne(input, jscan.Options{})
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+			expectMsg := fmt.Sprintf(
+				"error at index %d: invalid UTF-8", len(expectBefore),
+			)
+			require.Equal(t, expectMsg, err.Error())
+			require.Equal(t, expectAfter, trailing)
 		})
 
 		t.Run("Scan", func(t *testing.T) {
@@ -873,22 +896,23 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
 		})
 
 		t.Run("ScanOne", func(t *testing.T) {
-			_, err := jscan.ScanOne(
+			trailing, err := jscan.ScanOne(
 				input, jscan.Options{},
 				func(i *jscan.Iterator[string]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
+			require.Equal(t, expectAfter, trailing)
 		})
 
 		t.Run("Parser_Scan", func(t *testing.T) {
@@ -900,23 +924,24 @@ func TestErrorInvalidUTF8(t *testing.T) {
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
 		})
 
 		t.Run("Parser_ScanOne", func(t *testing.T) {
 			p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
-			_, err := p.ScanOne(
+			trailing, err := p.ScanOne(
 				input, jscan.Options{},
 				func(i *jscan.Iterator[string]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
-				"error at index %d: invalid UTF-8", len(beforeInvalidUTF8),
+				"error at index %d: invalid UTF-8", len(expectBefore),
 			)
 			require.Equal(t, expectMsg, err.Error())
+			require.Equal(t, expectAfter, trailing)
 		})
 	}
 
@@ -950,7 +975,7 @@ func TestErrorInvalidUTF8(t *testing.T) {
 		for _, td := range invalidUTF8Strings {
 			t.Run(td.Name, func(t *testing.T) {
 				in := `{"long_prefix_` + td.Str + `_long_suffix_string":0}`
-				testFn(t, in, `{"long_prefix_`)
+				testFn(t, in, `{"long_prefix_`, td.Str+`_long_suffix_string":0}`)
 			})
 		}
 	})
@@ -958,8 +983,8 @@ func TestErrorInvalidUTF8(t *testing.T) {
 	t.Run("string_value", func(t *testing.T) {
 		for _, td := range invalidUTF8Strings {
 			t.Run(td.Name, func(t *testing.T) {
-				in := `[" ` + td.Str + `"]`
-				testFn(t, in, `[" `)
+				in := `["long_prefix_` + td.Str + `_long_suffix_string"]`
+				testFn(t, in, `["long_prefix_`, td.Str+`_long_suffix_string"]`)
 			})
 		}
 	})

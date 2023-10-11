@@ -294,22 +294,27 @@ VALUE_STRING:
 					x := utf8.First[si]
 					if x == utf8.XX {
 						// Illegal starter byte.
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					size := int(x & 7)
 					if j+size > n {
 						// Short or invalid.
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					accept := utf8.AcceptRanges[x>>4]
 					if c := ss[j+1]; c < accept.Lo || accept.Hi < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					} else if size == 2 {
 					} else if c := ss[j+2]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					} else if size == 3 {
 					} else if c := ss[j+3]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					j += size
 				}
@@ -576,22 +581,27 @@ OBJ_KEY:
 					x := utf8.First[si]
 					if x == utf8.XX {
 						// Illegal starter byte.
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					size := int(x & 7)
 					if j+size > n {
 						// Short or invalid.
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					accept := utf8.AcceptRanges[x>>4]
 					if c := ss[j+1]; c < accept.Lo || accept.Hi < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					} else if size == 2 {
 					} else if c := ss[j+2]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					} else if size == 3 {
 					} else if c := ss[j+3]; c < utf8.Locb || utf8.Hicb < c {
-						return s, getErrorInvalidUTF8(i.src, startIndex+strLen-len(ss)+j)
+						index := startIndex + strLen - len(ss) + j
+						return i.src[index:], getErrorInvalidUTF8(i.src, index)
 					}
 					j += size
 				}
