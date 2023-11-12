@@ -828,6 +828,178 @@ func TestErrorUnexpectedEOF(t *testing.T) {
 	}
 }
 
+// TestErrorInvalidValUTF8TooShort tests an invalid UTF-8 string value
+// where the length of the string is insufficient to fit the last UTF-8 rune.
+func TestErrorInvalidValUTF8TooShort(t *testing.T) {
+	input := "\"\xf0\x90\""
+
+	t.Run("Valid", func(t *testing.T) {
+		a := jscan.Valid(input, jscan.Options{})
+		require.False(t, a)
+	})
+
+	t.Run("Validate", func(t *testing.T) {
+		err := jscan.Validate(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+	})
+
+	t.Run("ValidateOne", func(t *testing.T) {
+		trailing, err := jscan.ValidateOne(input, jscan.Options{})
+		require.True(t, err.IsErr())
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Validator_Valid", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		a := v.Valid(input, jscan.Options{})
+		require.False(t, a)
+	})
+
+	t.Run("Validator_Validate", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		err := v.Validate(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+	})
+
+	t.Run("Validator_ValidateOne", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		trailing, err := v.ValidateOne(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Scan", func(t *testing.T) {
+		err := jscan.Scan(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+	})
+
+	t.Run("ScanOne", func(t *testing.T) {
+		trailing, err := jscan.ScanOne(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Parser_Scan", func(t *testing.T) {
+		p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+		err := p.Scan(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+	})
+
+	t.Run("Parser_ScanOne", func(t *testing.T) {
+		p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+		trailing, err := p.ScanOne(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 1: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+}
+
+// TestErrorInvalidFieldUTF8TooShort tests an invalid UTF-8 field name string
+// where the length of the string is insufficient to fit the last UTF-8 rune.
+func TestErrorInvalidFieldUTF8TooShort(t *testing.T) {
+	input := "{\"\xf0\x90\""
+
+	t.Run("Valid", func(t *testing.T) {
+		a := jscan.Valid(input, jscan.Options{})
+		require.False(t, a)
+	})
+
+	t.Run("Validate", func(t *testing.T) {
+		err := jscan.Validate(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+	})
+
+	t.Run("ValidateOne", func(t *testing.T) {
+		trailing, err := jscan.ValidateOne(input, jscan.Options{})
+		require.True(t, err.IsErr())
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Validator_Valid", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		a := v.Valid(input, jscan.Options{})
+		require.False(t, a)
+	})
+
+	t.Run("Validator_Validate", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		err := v.Validate(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+	})
+
+	t.Run("Validator_ValidateOne", func(t *testing.T) {
+		v := jscan.NewValidator[string](jscan.DefaultStackSizeValidator)
+		trailing, err := v.ValidateOne(input, jscan.Options{})
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Scan", func(t *testing.T) {
+		err := jscan.Scan(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+	})
+
+	t.Run("ScanOne", func(t *testing.T) {
+		trailing, err := jscan.ScanOne(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+
+	t.Run("Parser_Scan", func(t *testing.T) {
+		p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+		err := p.Scan(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+	})
+
+	t.Run("Parser_ScanOne", func(t *testing.T) {
+		p := jscan.NewParser[string](jscan.DefaultStackSizeParser)
+		trailing, err := p.ScanOne(
+			input, jscan.Options{},
+			func(i *jscan.Iterator[string]) (err bool) { return false },
+		)
+		require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
+		require.Equal(t, "error at index 2: invalid UTF-8", err.Error())
+		require.Equal(t, "\xf0\x90\"", trailing)
+	})
+}
+
 func TestErrorInvalidUTF8(t *testing.T) {
 	testFn := func(t *testing.T, input, expectBefore, expectAfter string) {
 		t.Helper()
@@ -840,7 +1012,6 @@ func TestErrorInvalidUTF8(t *testing.T) {
 
 		t.Run("Validate", func(t *testing.T) {
 			err := jscan.Validate(input, jscan.Options{})
-			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeInvalidUTF8, err.Code)
 			expectMsg := fmt.Sprintf(
 				"error at index %d: invalid UTF-8", len(expectBefore),
@@ -971,7 +1142,7 @@ func TestErrorInvalidUTF8(t *testing.T) {
 		{Name: "surrogate_pairs", Str: "\xED\xA0\x80"},
 	}
 
-	t.Run("field_name", func(t *testing.T) {
+	t.Run("field_name_with_prefix_and_suffix", func(t *testing.T) {
 		for _, td := range invalidUTF8Strings {
 			t.Run(td.Name, func(t *testing.T) {
 				in := `{"long_prefix_` + td.Str + `_long_suffix_string":0}`
@@ -980,11 +1151,29 @@ func TestErrorInvalidUTF8(t *testing.T) {
 		}
 	})
 
-	t.Run("string_value", func(t *testing.T) {
+	t.Run("string_value_with_prefix_and_suffix", func(t *testing.T) {
 		for _, td := range invalidUTF8Strings {
 			t.Run(td.Name, func(t *testing.T) {
 				in := `["long_prefix_` + td.Str + `_long_suffix_string"]`
 				testFn(t, in, `["long_prefix_`, td.Str+`_long_suffix_string"]`)
+			})
+		}
+	})
+
+	t.Run("field_name_with_standalone", func(t *testing.T) {
+		for _, td := range invalidUTF8Strings {
+			t.Run(td.Name, func(t *testing.T) {
+				in := `{"` + td.Str + `":0}`
+				testFn(t, in, `{"`, td.Str+`":0}`)
+			})
+		}
+	})
+
+	t.Run("string_value_with_standalone", func(t *testing.T) {
+		for _, td := range invalidUTF8Strings {
+			t.Run(td.Name, func(t *testing.T) {
+				in := `["` + td.Str + `"]`
+				testFn(t, in, `["`, td.Str+`"]`)
 			})
 		}
 	})
