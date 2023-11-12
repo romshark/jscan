@@ -137,8 +137,9 @@ type Validator[S ~string | ~[]byte] struct{ stack []stackNodeType }
 
 // Options specifies parser options. Use zero value for default settings.
 type Options struct {
-	// DisableUTF8Validation disables UTF-8 validation which improves performance
-	// at the cost of RFC8259 compliance, see "8.1. Character Encoding"
+	// DisableUTF8Validation disables UTF-8 validation which improves performance.
+	// May be used in systems that are part of a closed ecosystem and therefore
+	// don't necessarily require UTF-8 encoding, see "8.1. Character Encoding"
 	// (https://datatracker.ietf.org/doc/html/rfc8259#section-8.1).
 	DisableUTF8Validation bool
 }
