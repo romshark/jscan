@@ -261,6 +261,8 @@ func TestReadNumberErr(t *testing.T) {
 		{"42.E0", "E0"},
 		{"42.e0", "e0"},
 		{"42E.0", ".0"},
+		{"0.1234567890e", ""},
+		{"1234567890.1234567890e", ""},
 	} {
 		t.Run(tt.input, func(t *testing.T) {
 			for _, t2 := range []struct {

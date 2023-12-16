@@ -1,6 +1,7 @@
 package jsonnum_test
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/romshark/jscan/v2/internal/jsonnum"
@@ -40,7 +41,6 @@ func BenchmarkValid(b *testing.B) {
 }
 
 func BenchmarkInvalid(b *testing.B) {
-	var err bool
 	for _, bb := range []string{
 		"a",
 		"-",
@@ -55,11 +55,16 @@ func BenchmarkInvalid(b *testing.B) {
 		"0.1234567890e",
 	} {
 		b.Run("", func(b *testing.B) {
+			// This err will not be checked since "01" is not technically wrong
+			// according to jsonnum.ReadNumber, it would return ("1", false) instead.
+			// All inputs are already tested in TestReadNumberErr and TestReadNumberZero.
+			var err bool
+			var remainderString string
+			var remainderBytes []byte
+
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					if _, err = jsonnum.ReadNumber(bb); !err {
-						b.Fatal("error expected")
-					}
+					remainderString, err = jsonnum.ReadNumber(bb)
 				}
 			})
 
@@ -67,11 +72,13 @@ func BenchmarkInvalid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					if _, err = jsonnum.ReadNumber(bb); !err {
-						b.Fatal("error expected")
-					}
+					remainderBytes, err = jsonnum.ReadNumber(bb)
 				}
 			})
+
+			runtime.KeepAlive(err)
+			runtime.KeepAlive(remainderString)
+			runtime.KeepAlive(remainderBytes)
 		})
 	}
 }
