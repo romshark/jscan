@@ -55,7 +55,7 @@ func BenchmarkInvalid(b *testing.B) {
 		"0.1234567890e",
 	} {
 		b.Run("", func(b *testing.B) {
-			// This err will not be checked since "01" is not technically wrong
+			// This exit value will not be checked since "01" is not technically wrong
 			// according to jsonnum.ReadNumber, it would return ("1", false) instead.
 			// All inputs are already tested in TestReadNumberErr and TestReadNumberZero.
 			var exit bool
