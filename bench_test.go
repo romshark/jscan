@@ -31,7 +31,7 @@ type Stats struct {
 func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
 	if err := p.Scan(
 		str,
-		func(i *jscan.Iterator[[]byte]) (err bool) {
+		func(i *jscan.Iterator[[]byte]) (exit bool) {
 			if i.KeyIndex() != -1 {
 				// Calculate key length excluding the quotes
 				l := i.KeyIndexEnd() - i.KeyIndex() - 2

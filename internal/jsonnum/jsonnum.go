@@ -2,7 +2,7 @@ package jsonnum
 
 // ReadNumber returns the index of the end of the number value
 // and err=true if a syntax error was encountered.
-func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
+func ReadNumber[S ~string | ~[]byte](s S) (trailing S, exit bool) {
 	var i int
 
 	if s[0] == '-' {
