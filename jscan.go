@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
 )
@@ -47,7 +48,7 @@ type stackNode struct {
 // Iterator provides access to the recently encountered value.
 type Iterator[S ~string | ~[]byte] struct {
 	stack   []stackNode
-	src     S
+	src     string
 	pointer []byte
 
 	valueType             ValueType
@@ -92,7 +93,15 @@ func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
 	}
-	return i.src[i.keyIndex:i.keyIndexEnd]
+	s := i.src[i.keyIndex:i.keyIndexEnd]
+	var z S
+	switch any(z).(type) {
+	case string:
+		return S(s)
+	case []byte:
+		return S(unsafeBytesToString([]byte(s)))
+	}
+	return z
 }
 
 // Value returns the value if any.
@@ -100,7 +109,15 @@ func (i *Iterator[S]) Value() (value S) {
 	if i.valueIndexEnd == -1 {
 		return
 	}
-	return i.src[i.valueIndex:i.valueIndexEnd]
+	s := i.src[i.valueIndex:i.valueIndexEnd]
+	var z S
+	switch any(z).(type) {
+	case string:
+		return S(s)
+	case []byte:
+		return S(unsafeBytesToString([]byte(s)))
+	}
+	return z
 }
 
 // ScanStack calls fn for every element in the stack.
@@ -160,8 +177,8 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 
 func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 	return Error[S]{
+		src:   i.src,
 		Code:  c,
-		Src:   i.src,
 		Index: i.valueIndex,
 	}
 }
@@ -172,7 +189,7 @@ func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 // (Error).IsErr() returning false is equivalent to err == nil.
 type Error[S ~string | ~[]byte] struct {
 	// Src refers to the original source.
-	Src S
+	src string
 
 	// Index points to the error start index in the source.
 	Index int
@@ -190,14 +207,8 @@ func (e Error[S]) IsErr() bool { return e.Code != 0 }
 // Calling Error should be avoided in performance-critical code as it
 // relies on dynamic memory allocation.
 func (e Error[S]) Error() string {
-	if e.Index < len(e.Src) {
-		var r rune
-		switch x := any(e.Src).(type) {
-		case string:
-			r, _ = utf8.DecodeRuneInString(x[e.Index:])
-		case []byte:
-			r, _ = utf8.DecodeRune(x[e.Index:])
-		}
+	if e.Index < len(e.src) {
+		r, _ := utf8.DecodeRuneInString(e.src[e.Index:])
 		return errorMessage(e.Code, e.Index, r)
 	}
 	return errorMessage(e.Code, e.Index, 0)
@@ -335,10 +346,18 @@ var lutEscape = [256]byte{
 }
 
 // getError returns the stringified error, if any.
-func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
+func getError[S ~string | ~[]byte](c ErrorCode, src, s string) Error[S] {
 	return Error[S]{
 		Code:  c,
-		Src:   src,
+		src:   src,
 		Index: len(src) - len(s),
 	}
+}
+
+func unsafeStringToBytes(str string) []byte {
+	return unsafe.Slice(unsafe.StringData(str), len(str))
+}
+
+func unsafeBytesToString(bs []byte) string {
+	return unsafe.String(unsafe.SliceData(bs), len(bs))
 }
