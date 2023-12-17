@@ -29,7 +29,7 @@ import (
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
-) (trailing S, err Error[S]) {
+) (trailing S, err Error) {
 	var i *Iterator[S]
 	switch any(s).(type) {
 	case string:
@@ -66,7 +66,7 @@ func ScanOne[S ~string | ~[]byte](
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
-) (err Error[S]) {
+) (err Error) {
 	var i *Iterator[S]
 	switch any(s).(type) {
 	case string:
@@ -94,7 +94,7 @@ func Scan[S ~string | ~[]byte](
 	if len(t) > 0 {
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // Parser wraps an iterator in a reusable instance.
@@ -127,7 +127,7 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
-) (trailing S, err Error[S]) {
+) (trailing S, err Error) {
 	reset(p.i)
 	p.i.src = s
 	return scan(p.i, fn)
@@ -140,7 +140,7 @@ func (p *Parser[S]) ScanOne(
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
-) Error[S] {
+) Error {
 	reset(p.i)
 	p.i.src = s
 
@@ -156,14 +156,14 @@ func (p *Parser[S]) Scan(
 	if len(t) > 0 {
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
 func scan[S ~string | ~[]byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
-) (S, Error[S]) {
+) (S, Error) {
 	var (
 		rollback S // Used as fallback for error report
 		s        = i.src
@@ -699,7 +699,7 @@ VALUE_OR_ARR_TERM:
 
 AFTER_VALUE:
 	if len(i.stack) == 0 {
-		return s, Error[S]{}
+		return s, Error{}
 	}
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)

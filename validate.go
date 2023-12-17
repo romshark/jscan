@@ -29,7 +29,7 @@ func Valid[S ~string | ~[]byte](s S) bool {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
-func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
+func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error) {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -60,7 +60,7 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
-func Validate[S ~string | ~[]byte](s S) Error[S] {
+func Validate[S ~string | ~[]byte](s S) Error {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -88,7 +88,7 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 	if len(t) > 0 {
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // NewValidator creates a new reusable validator instance.
@@ -117,13 +117,13 @@ func (v *Validator[S]) Valid(s S) bool {
 // and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
-func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
+func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error) {
 	return validate(v.stack, s)
 }
 
 // Validate returns an error if s is invalid JSON,
-// otherwise returns a zero value of Error[S].
-func (v *Validator[S]) Validate(s S) Error[S] {
+// otherwise returns a zero value of Error.
+func (v *Validator[S]) Validate(s S) Error {
 	t, err := validate(v.stack, s)
 	if err.IsErr() {
 		return err
@@ -136,11 +136,11 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 	if len(t) > 0 {
 		return getError(ErrorCodeUnexpectedToken, s, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // validate returns the remainder of i.src and an error if any is encountered.
-func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
+func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error) {
 	var (
 		rollback S // Used as fallback for error report
 		src      = s
@@ -556,7 +556,7 @@ VALUE_OR_ARR_TERM:
 AFTER_VALUE:
 	stTop()
 	if top == 0 {
-		return s, Error[S]{}
+		return s, Error{}
 	}
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, src, s)
