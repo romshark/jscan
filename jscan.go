@@ -25,10 +25,8 @@ func newValidator[S ~string | ~[]byte]() *Validator[S] {
 }
 
 var (
-	iteratorPoolString  = sync.Pool{New: func() any { return newIterator[string]() }}
-	iteratorPoolBytes   = sync.Pool{New: func() any { return newIterator[[]byte]() }}
-	validatorPoolString = sync.Pool{New: func() any { return newValidator[string]() }}
-	validatorPoolBytes  = sync.Pool{New: func() any { return newValidator[[]byte]() }}
+	iteratorPool  = sync.Pool{New: func() any { return newIterator[string]() }}
+	validatorPool = sync.Pool{New: func() any { return newValidator[string]() }}
 )
 
 type stackNodeType int8
@@ -175,8 +173,8 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	i.pointer = i.pointer[:0]
 }
 
-func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
-	return Error[S]{
+func (i *Iterator[S]) getError(c ErrorCode) Error {
+	return Error{
 		src:   i.src,
 		Code:  c,
 		Index: i.valueIndex,
@@ -187,7 +185,7 @@ func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 // The only exception is ErrorCodeCallback which indicates a callback
 // explicitly breaking by returning true instead of a syntax error.
 // (Error).IsErr() returning false is equivalent to err == nil.
-type Error[S ~string | ~[]byte] struct {
+type Error struct {
 	// Src refers to the original source.
 	src string
 
@@ -198,15 +196,15 @@ type Error[S ~string | ~[]byte] struct {
 	Code ErrorCode
 }
 
-var _ error = Error[string]{}
+var _ error = Error{}
 
 // IsErr returns true if there is an error, otherwise returns false.
-func (e Error[S]) IsErr() bool { return e.Code != 0 }
+func (e Error) IsErr() bool { return e.Code != 0 }
 
 // Error stringifies the error implementing the built-in error interface.
 // Calling Error should be avoided in performance-critical code as it
 // relies on dynamic memory allocation.
-func (e Error[S]) Error() string {
+func (e Error) Error() string {
 	if e.Index < len(e.src) {
 		r, _ := utf8.DecodeRuneInString(e.src[e.Index:])
 		return errorMessage(e.Code, e.Index, r)
@@ -346,8 +344,8 @@ var lutEscape = [256]byte{
 }
 
 // getError returns the stringified error, if any.
-func getError[S ~string | ~[]byte](c ErrorCode, src, s string) Error[S] {
-	return Error[S]{
+func getError(c ErrorCode, src, s string) Error {
+	return Error{
 		Code:  c,
 		src:   src,
 		Index: len(src) - len(s),

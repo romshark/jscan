@@ -29,21 +29,22 @@ func Valid[S ~string | ~[]byte](s S) bool {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
-func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
-	var v *Validator[S]
-	if s, ok := any(s).([]byte); ok {
-		x := validatorPoolBytes.Get()
-		defer validatorPoolBytes.Put(x)
-		v = x.(*Validator[S])
-		v.stack = v.stack[:0]
-		t, err := validate[S](v.stack, unsafeBytesToString(s))
-		return S(unsafeStringToBytes(t)), err
+func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error) {
+	var str string
+	switch v := any(s).(type) {
+	case string:
+		str = v
+	case []byte:
+		str = unsafeBytesToString(v)
+	default:
+		str = string(s)
 	}
-	x := validatorPoolString.Get()
-	defer validatorPoolString.Put(x)
-	v = x.(*Validator[S])
+
+	x := validatorPool.Get()
+	defer validatorPool.Put(x)
+	v := x.(*Validator[S])
 	v.stack = v.stack[:0]
-	t, err := validate[S](v.stack, string(s))
+	t, err := validate[S](v.stack, str)
 	return S(t), err
 }
 
@@ -59,7 +60,7 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
-func Validate[S ~string | ~[]byte](s S) Error[S] {
+func Validate[S ~string | ~[]byte](s S) Error {
 	var str string
 	switch v := any(s).(type) {
 	case string:
@@ -70,24 +71,24 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 		str = string(s)
 	}
 
-	x := validatorPoolString.Get()
-	defer validatorPoolString.Put(x)
+	x := validatorPool.Get()
+	defer validatorPool.Put(x)
 	v := x.(*Validator[string])
 	v.stack = v.stack[:0]
 
 	t, err := validate[string](v.stack, str)
 	if err.IsErr() {
-		return Error[S]{}
+		return Error{}
 	}
 	var illegalChar bool
 	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError[S](ErrorCodeIllegalControlChar, str, t)
+		return getError(ErrorCodeIllegalControlChar, str, t)
 	}
 	if len(t) > 0 {
-		return getError[S](ErrorCodeUnexpectedToken, str, t)
+		return getError(ErrorCodeUnexpectedToken, str, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // NewValidator creates a new reusable validator instance.
@@ -116,7 +117,7 @@ func (v *Validator[S]) Valid(s S) bool {
 // and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
-func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
+func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error) {
 	if s, ok := any(s).([]byte); ok {
 		t, err := validate[S](v.stack, unsafeBytesToString(s))
 		return S(unsafeStringToBytes(t)), err
@@ -127,7 +128,7 @@ func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
 
 // Validate returns an error if s is invalid JSON,
 // otherwise returns a zero value of Error.
-func (v *Validator[S]) Validate(s S) Error[S] {
+func (v *Validator[S]) Validate(s S) Error {
 	switch s := any(s).(type) {
 	case string:
 		t, err := validate[S](v.stack, s)
@@ -137,10 +138,10 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 		var illegalChar bool
 		t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 		if illegalChar {
-			return getError[S](ErrorCodeIllegalControlChar, s, t)
+			return getError(ErrorCodeIllegalControlChar, s, t)
 		}
 		if len(t) > 0 {
-			return getError[S](ErrorCodeUnexpectedToken, s, t)
+			return getError(ErrorCodeUnexpectedToken, s, t)
 		}
 	case []byte:
 		ss := unsafeBytesToString(s)
@@ -151,17 +152,17 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 		var illegalChar bool
 		t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 		if illegalChar {
-			return getError[S](ErrorCodeIllegalControlChar, ss, t)
+			return getError(ErrorCodeIllegalControlChar, ss, t)
 		}
 		if len(t) > 0 {
-			return getError[S](ErrorCodeUnexpectedToken, ss, t)
+			return getError(ErrorCodeUnexpectedToken, ss, t)
 		}
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // validate returns the remainder of i.src and an error if any is encountered.
-func validate[S ~string | ~[]byte](st []stackNodeType, s string) (string, Error[S]) {
+func validate[S ~string | ~[]byte](st []stackNodeType, s string) (string, Error) {
 	var (
 		rollback string // Used as fallback for error report
 		src      = s
@@ -181,18 +182,18 @@ func validate[S ~string | ~[]byte](st []stackNodeType, s string) (string, Error[
 
 VALUE:
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	switch s[0] {
@@ -212,25 +213,25 @@ VALUE:
 		goto VALUE_TRUE
 	}
 	if s[0] < 0x20 {
-		return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+		return s, getError(ErrorCodeIllegalControlChar, src, s)
 	}
-	return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+	return s, getError(ErrorCodeUnexpectedToken, src, s)
 
 VALUE_OBJECT:
 	s = s[1:]
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	if s[0] == '}' {
@@ -249,7 +250,7 @@ VALUE_NUMBER:
 	{
 		rollback = s
 		if s, b = jsonnum.ReadNumber(s); b {
-			return s, getError[S](ErrorCodeMalformedNumber, src, rollback)
+			return s, getError(ErrorCodeMalformedNumber, src, rollback)
 		}
 	}
 	goto AFTER_VALUE
@@ -326,27 +327,27 @@ VALUE_STRING:
 
 	CHECK_STRING_CHARACTER:
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
 				s = s[1:]
-				return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
 			if lutEscape[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError[S](ErrorCodeInvalidEscape, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError[S](ErrorCodeInvalidEscape, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			s = s[5:]
 		case '"':
@@ -354,7 +355,7 @@ VALUE_STRING:
 			goto AFTER_VALUE
 		default:
 			if s[0] < 0x20 {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 			s = s[1:]
 		}
@@ -362,46 +363,46 @@ VALUE_STRING:
 
 VALUE_NULL:
 	if len(s) < 4 || string(s[:4]) != "null" {
-		return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	s = s[len("null"):]
 	goto AFTER_VALUE
 
 VALUE_FALSE:
 	if len(s) < 5 || string(s[:5]) != "false" {
-		return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	s = s[len("false"):]
 	goto AFTER_VALUE
 
 VALUE_TRUE:
 	if s := s; len(s) < 4 || string(s[:4]) != "true" {
-		return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	s = s[len("true"):]
 	goto AFTER_VALUE
 
 OBJ_KEY:
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	if s[0] != '"' {
 		if s[0] < 0x20 {
-			return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+			return s, getError(ErrorCodeIllegalControlChar, src, s)
 		}
-		return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 
 	s = s[1:]
@@ -475,27 +476,27 @@ OBJ_KEY:
 
 	CHECK_FIELDNAME_STRING_CHARACTER:
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
 				s = s[1:]
-				return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
 			if lutEscape[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError[S](ErrorCodeInvalidEscape, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError[S](ErrorCodeInvalidEscape, src, s)
+				return s, getError(ErrorCodeInvalidEscape, src, s)
 			}
 			s = s[5:]
 		case '"':
@@ -503,50 +504,50 @@ OBJ_KEY:
 			goto AFTER_OBJ_KEY_STRING
 		default:
 			if s[0] < 0x20 {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 			s = s[1:]
 		}
 	}
 AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	if s[0] != ':' {
 		if s[0] < 0x20 {
-			return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+			return s, getError(ErrorCodeIllegalControlChar, src, s)
 		}
-		return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	s = s[1:]
 	goto VALUE
 
 VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	switch s[0] {
@@ -570,28 +571,28 @@ VALUE_OR_ARR_TERM:
 		goto VALUE_NUMBER
 	}
 	if s[0] < 0x20 {
-		return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+		return s, getError(ErrorCodeIllegalControlChar, src, s)
 	}
-	return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+	return s, getError(ErrorCodeUnexpectedToken, src, s)
 
 AFTER_VALUE:
 	stTop()
 	if top == 0 {
-		return s, Error[S]{}
+		return s, Error{}
 	}
 	if len(s) < 1 {
-		return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+		return s, getError(ErrorCodeUnexpectedEOF, src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+				return s, getError(ErrorCodeIllegalControlChar, src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError[S](ErrorCodeUnexpectedEOF, src, s)
+			return s, getError(ErrorCodeUnexpectedEOF, src, s)
 		}
 	}
 	switch s[0] {
@@ -603,21 +604,21 @@ AFTER_VALUE:
 		goto OBJ_KEY
 	case '}':
 		if top != stackNodeTypeObject {
-			return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+			return s, getError(ErrorCodeUnexpectedToken, src, s)
 		}
 		s = s[1:]
 		stPop()
 		goto AFTER_VALUE
 	case ']':
 		if top != stackNodeTypeArray {
-			return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+			return s, getError(ErrorCodeUnexpectedToken, src, s)
 		}
 		s = s[1:]
 		stPop()
 		goto AFTER_VALUE
 	}
 	if s[0] < 0x20 {
-		return s, getError[S](ErrorCodeIllegalControlChar, src, s)
+		return s, getError(ErrorCodeIllegalControlChar, src, s)
 	}
-	return s, getError[S](ErrorCodeUnexpectedToken, src, s)
+	return s, getError(ErrorCodeUnexpectedToken, src, s)
 }
