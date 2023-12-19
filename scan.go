@@ -42,7 +42,7 @@ func ScanOne[S ~string | ~[]byte](
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// member and element values. If fn returns true, ScanOne immediately stops and
+// member and element values. If fn returns true, Scan immediately stops and
 // returns ErrorCodeCallback.
 //
 // Unlike (*Parser).Scan this function will take an iterator instance
