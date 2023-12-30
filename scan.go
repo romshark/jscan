@@ -7,7 +7,8 @@ import (
 
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// member and element values.
+// member and element values. If fn returns true, ScanOne immediately stops and
+// returns ErrorCodeCallback.
 //
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
@@ -28,7 +29,7 @@ import (
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, fn func(*Iterator[S]) (exit bool),
 ) (trailing S, err Error[S]) {
 	var i *Iterator[S]
 	switch any(s).(type) {
@@ -50,7 +51,8 @@ func ScanOne[S ~string | ~[]byte](
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// member and element values.
+// member and element values. If fn returns true, Scan immediately stops and
+// returns ErrorCodeCallback.
 //
 // Unlike (*Parser).Scan this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
@@ -65,7 +67,7 @@ func ScanOne[S ~string | ~[]byte](
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, fn func(*Iterator[S]) (exit bool),
 ) (err Error[S]) {
 	var i *Iterator[S]
 	switch any(s).(type) {
@@ -116,7 +118,8 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// member and element values.
+// member and element values. If fn returns true, ScanOne immediately stops and
+// returns ErrorCodeCallback.
 //
 // Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
 // it encounters anything other than EOF after reading a valid JSON value.
@@ -126,7 +129,7 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, fn func(*Iterator[S]) (exit bool),
 ) (trailing S, err Error[S]) {
 	reset(p.i)
 	p.i.src = s
@@ -135,11 +138,12 @@ func (p *Parser[S]) ScanOne(
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
-// member and element values.
+// member and element values. If fn returns true, Scan immediately stops and
+// returns ErrorCodeCallback.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) Scan(
-	s S, fn func(*Iterator[S]) (err bool),
+	s S, fn func(*Iterator[S]) (exit bool),
 ) Error[S] {
 	reset(p.i)
 	p.i.src = s
@@ -162,7 +166,7 @@ func (p *Parser[S]) Scan(
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
 func scan[S ~string | ~[]byte](
-	i *Iterator[S], fn func(*Iterator[S]) (err bool),
+	i *Iterator[S], fn func(*Iterator[S]) (exit bool),
 ) (S, Error[S]) {
 	var (
 		rollback S // Used as fallback for error report

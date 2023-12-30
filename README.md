@@ -55,7 +55,7 @@ func main() {
 		]
 	}`
 
-	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (err bool) {
+	err := jscan.Scan(j, func(i *jscan.Iterator[string]) (exit bool) {
 		fmt.Printf("%q:\n", i.Pointer())
 		fmt.Printf("├─ valueType:  %s\n", i.ValueType().String())
 		if k := i.Key(); k != "" {

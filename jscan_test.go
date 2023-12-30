@@ -66,14 +66,14 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
 				string(input),
-				func(i *jscan.Iterator[string]) (err bool) { return false },
+				func(i *jscan.Iterator[string]) (exit bool) { return false },
 			)
 			require.False(t, err.IsErr())
 		})
 		t.Run("ScanOne", func(t *testing.T) {
 			_, err := jscan.ScanOne(
 				string(input),
-				func(i *jscan.Iterator[string]) (err bool) { return false },
+				func(i *jscan.Iterator[string]) (exit bool) { return false },
 			)
 			require.False(t, err.IsErr())
 		})
@@ -117,13 +117,13 @@ func testStrictErr[S ~string | ~[]byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		t.Run("ParserScan", func(t *testing.T) {
 			err := jscan.NewParser[S](1024).Scan(
-				input, func(i *jscan.Iterator[S]) (err bool) { return false },
+				input, func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.True(t, err.IsErr())
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
-				input, func(i *jscan.Iterator[S]) (err bool) { return false },
+				input, func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.True(t, err.IsErr())
 		})
@@ -1028,7 +1028,7 @@ func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan[S](
 				S(td.input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
@@ -1037,7 +1037,7 @@ func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 			p := jscan.NewParser[S](64)
 			err := p.Scan(
 				S(td.input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
@@ -1228,7 +1228,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			p := jscan.NewParser[S](64)
 			_, err := p.ScanOne(
 				S(input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1238,7 +1238,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			p := jscan.NewParser[S](64)
 			err := p.Scan(
 				S(input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1247,7 +1247,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 		t.Run("ScanOne", func(t *testing.T) {
 			_, err := jscan.ScanOne[S](
 				S(input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1256,7 +1256,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan[S](
 				S(input),
-				func(i *jscan.Iterator[S]) (err bool) { return false },
+				func(i *jscan.Iterator[S]) (exit bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1276,7 +1276,7 @@ func testReturnErrorTrue[S ~string | ~[]byte](t *testing.T, input S) {
 		j := 0
 		err := jscan.Scan(
 			input,
-			func(i *jscan.Iterator[S]) (err bool) {
+			func(i *jscan.Iterator[S]) (exit bool) {
 				require.Equal(t, jscan.ValueTypeObject, i.ValueType())
 				j++
 				return true // Expect immediate return
@@ -1330,7 +1330,7 @@ func testScanOne[S ~string | ~[]byte](
 		for i, c, s := 0, 1, s; len(s) > 0; c++ {
 			trailing, err := jscan.ScanOne(
 				s,
-				func(itr *jscan.Iterator[S]) (err bool) {
+				func(itr *jscan.Iterator[S]) (exit bool) {
 					require.Equal(t, expect[i], TypeValuePair{
 						Type:  itr.ValueType(),
 						Value: string(itr.Value()),
@@ -1434,7 +1434,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("ParserScan", func(t *testing.T) {
 			p := jscan.NewParser[S](64)
 			c := 0
-			err := p.Scan(inputObject, func(i *jscan.Iterator[S]) (err bool) {
+			err := p.Scan(inputObject, func(i *jscan.Iterator[S]) (exit bool) {
 				if c < 1 {
 					c++
 					return false
@@ -1451,7 +1451,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 			c := 0
 			trailing, err := p.ScanOne(
 				inputObject,
-				func(i *jscan.Iterator[S]) (err bool) {
+				func(i *jscan.Iterator[S]) (exit bool) {
 					if c < 1 {
 						c++
 						return false
@@ -1469,7 +1469,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 			c := 0
 			err := jscan.Scan[S](
 				inputObject,
-				func(i *jscan.Iterator[S]) (err bool) {
+				func(i *jscan.Iterator[S]) (exit bool) {
 					if c < 1 {
 						c++
 						return false
@@ -1486,7 +1486,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 			c := 0
 			trailing, err := jscan.ScanOne[S](
 				inputObject,
-				func(i *jscan.Iterator[S]) (err bool) {
+				func(i *jscan.Iterator[S]) (exit bool) {
 					if c < 1 {
 						c++
 						return false
@@ -1523,7 +1523,7 @@ func testDataType[S ~string | ~[]byte](input S) string {
 
 func TestIndexEnd(t *testing.T) {
 	c := 0
-	err := jscan.Scan(`{"x":["y"]}`, func(i *jscan.Iterator[string]) (err bool) {
+	err := jscan.Scan(`{"x":["y"]}`, func(i *jscan.Iterator[string]) (exit bool) {
 		switch c {
 		case 0:
 			require.Equal(t, jscan.ValueTypeObject, i.ValueType())
