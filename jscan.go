@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
+	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
 // Default stack sizes
@@ -73,6 +74,230 @@ type Iterator[S ~string | ~[]byte] struct {
 	level                 int
 	keyIndex, keyIndexEnd int
 	arrayIndex            int
+}
+
+// ArrayLen returns the number of items in the current array,
+// or -1 if the current value isn't a valid array value.
+func (i *Iterator[S]) ArrayLen() (count int) {
+	if i.valueType != ValueTypeArray {
+		return -1
+	}
+	s := i.src[i.valueIndex+1:]
+	if len(s) < 1 {
+		return -1
+	}
+	switch s[0] {
+	case ' ', '\t', '\r', '\n':
+		var notOK bool
+		s, notOK = strfind.EndOfWhitespaceSeq(s)
+		if notOK {
+			return -1
+		}
+	}
+	if len(s) < 1 {
+		return -1
+	}
+	if s[0] != ']' {
+		count++
+	}
+
+	stack := 0
+
+MAIN_LOOP:
+	for {
+		for ; len(s) > 15; s = s[16:] {
+			if lutCount[s[0]] == 1 {
+				goto CHECK_CHAR
+			}
+			if lutCount[s[1]] == 1 {
+				s = s[1:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[2]] == 1 {
+				s = s[2:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[3]] == 1 {
+				s = s[3:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[4]] == 1 {
+				s = s[4:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[5]] == 1 {
+				s = s[5:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[6]] == 1 {
+				s = s[6:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[7]] == 1 {
+				s = s[7:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[8]] == 1 {
+				s = s[8:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[9]] == 1 {
+				s = s[9:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[10]] == 1 {
+				s = s[10:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[11]] == 1 {
+				s = s[11:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[12]] == 1 {
+				s = s[12:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[13]] == 1 {
+				s = s[13:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[14]] == 1 {
+				s = s[14:]
+				goto CHECK_CHAR
+			}
+			if lutCount[s[15]] == 1 {
+				s = s[15:]
+				goto CHECK_CHAR
+			}
+			s = s[16:]
+		}
+
+	CHECK_CHAR:
+		if len(s) < 1 {
+			return -1
+		}
+		switch s[0] {
+		case ',':
+			if stack < 1 {
+				count++
+			}
+		case ']', '}':
+			if stack == 0 {
+				return count
+			}
+			stack--
+		case '[', '{':
+			stack++
+		case '"':
+			goto SKIP_STRING
+		}
+		s = s[1:]
+	}
+
+SKIP_STRING:
+	s = s[1:]
+	for {
+		for ; len(s) > 15; s = s[16:] {
+			if lutStr[s[0]] != 0 {
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[1]] != 0 {
+				s = s[1:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[2]] != 0 {
+				s = s[2:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[3]] != 0 {
+				s = s[3:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[4]] != 0 {
+				s = s[4:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[5]] != 0 {
+				s = s[5:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[6]] != 0 {
+				s = s[6:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[7]] != 0 {
+				s = s[7:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[8]] != 0 {
+				s = s[8:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[9]] != 0 {
+				s = s[9:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[10]] != 0 {
+				s = s[10:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[11]] != 0 {
+				s = s[11:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[12]] != 0 {
+				s = s[12:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[13]] != 0 {
+				s = s[13:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[14]] != 0 {
+				s = s[14:]
+				goto CHECK_STRING_CHARACTER
+			}
+			if lutStr[s[15]] != 0 {
+				s = s[15:]
+				goto CHECK_STRING_CHARACTER
+			}
+			continue
+		}
+
+	CHECK_STRING_CHARACTER:
+		if len(s) < 1 {
+			return -1
+		}
+		switch s[0] {
+		case '\\':
+			if len(s) < 2 {
+				return -1
+			}
+			if lutEscape[s[1]] == 1 {
+				s = s[2:]
+				continue
+			}
+			if s[1] != 'u' {
+				return -1
+			}
+			if len(s) < 6 ||
+				lutSX[s[5]] != 2 ||
+				lutSX[s[4]] != 2 ||
+				lutSX[s[3]] != 2 ||
+				lutSX[s[2]] != 2 {
+				return -1
+			}
+			s = s[5:]
+		case '"':
+			s = s[1:]
+			goto MAIN_LOOP
+		default:
+			if s[0] < 0x20 {
+				return -1
+			}
+			s = s[1:]
+		}
+	}
 }
 
 // Level returns the depth level of the current value.
@@ -320,6 +545,11 @@ func errorMessage(c ErrorCode, index int, atIndex rune) string {
 		"error at index %d ('%s'): %s",
 		index, string(atIndex), errMsg,
 	)
+}
+
+// lutCount maps all characters interesting.
+var lutCount = [256]byte{
+	',': 1, '[': 1, ']': 1, '{': 1, '}': 1, '"': 1,
 }
 
 // lutSX maps space characters such as whitespace, tab, line-break and

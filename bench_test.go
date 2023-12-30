@@ -190,6 +190,10 @@ func BenchmarkValid(b *testing.B) {
 
 type SourceProvider interface{ GetJSON() ([]byte, error) }
 
+type SrcStr string
+
+func (s SrcStr) GetJSON() ([]byte, error) { return []byte(s), nil }
+
 type SrcMake func() []byte
 
 func (s SrcMake) GetJSON() ([]byte, error) { return s(), nil }

@@ -1542,3 +1542,158 @@ func TestIndexEnd(t *testing.T) {
 	})
 	require.False(t, err.IsErr())
 }
+
+var testsCount = []struct {
+	Name   string
+	Input  SourceProvider
+	Expect int
+}{
+	{
+		Name:   "null",
+		Input:  SrcStr(`null`),
+		Expect: -1,
+	},
+	{
+		Name:   "number",
+		Input:  SrcStr(`3.14`),
+		Expect: -1,
+	},
+	{
+		Name:   "false",
+		Input:  SrcStr(`false`),
+		Expect: -1,
+	},
+	{
+		Name:   "true",
+		Input:  SrcStr(`true`),
+		Expect: -1,
+	},
+	{
+		Name:   "object_empty",
+		Input:  SrcStr(`{}`),
+		Expect: -1,
+	},
+	{
+		Name:   "object_nonempty",
+		Input:  SrcStr(`{"f,o,o":"b,a,r"}`),
+		Expect: -1,
+	},
+	{
+		Name:   "none",
+		Input:  SrcStr(`[]`),
+		Expect: 0,
+	},
+	{
+		Name:   "none_withspace",
+		Input:  SrcStr("[ \t\n\r]"),
+		Expect: 0,
+	},
+	{
+		Name:   "one_num",
+		Input:  SrcStr("[1]"),
+		Expect: 1,
+	},
+	{
+		Name:   "two_num",
+		Input:  SrcStr("[1, 2]"),
+		Expect: 2,
+	},
+	{
+		Name:   "three_num",
+		Input:  SrcStr("[1, 2,123]"),
+		Expect: 3,
+	},
+	{
+		Name:   "one_array",
+		Input:  SrcStr("[[]]"),
+		Expect: 1,
+	},
+	{
+		Name:   "one_array_nested",
+		Input:  SrcStr("[[[],[]]]"),
+		Expect: 1,
+	},
+	{
+		Name:   "two_arrays",
+		Input:  SrcStr("[ [ ], [] ]"),
+		Expect: 2,
+	},
+	{
+		Name:   "three_arrays",
+		Input:  SrcStr("[[], [],[ ]]"),
+		Expect: 3,
+	},
+	{
+		Name:   "one_string_commas",
+		Input:  SrcStr(`[",,,"]`),
+		Expect: 1,
+	},
+	{
+		Name:   "one_string_brackets",
+		Input:  SrcStr(`["[][]"]`),
+		Expect: 1,
+	},
+	{
+		Name:   "three_strings",
+		Input:  SrcStr(`[ "[][]" , ",," , "\",\"\\" ]`),
+		Expect: 3,
+	},
+	{
+		Name:   "one_object",
+		Input:  SrcStr(`[{"foo":"bar"}]`),
+		Expect: 1,
+	},
+	{
+		Name:   "two_objects",
+		Input:  SrcStr(`[{"foo":"bar"},{"bazz":"fazz"}]`),
+		Expect: 2,
+	},
+	{
+		Name: "three_objects_nested",
+		Input: SrcStr(`[
+			{ "foo": [ {"subarray":[1,2,3,4]}, {"subarray":[]} ] },
+			{ "x":3.14, "y":10.001 },
+			{}
+		]`),
+		Expect: 3,
+	},
+	{
+		Name:   "array_int_1024",
+		Input:  SrcFile("array_int_1024_12k.json"),
+		Expect: 1024,
+	},
+	{
+		Name:   "array_int_1024",
+		Input:  SrcFile("array_dec_1024_10k.json"),
+		Expect: 1024,
+	},
+	{
+		Name:   "array_nullbool_1024",
+		Input:  SrcFile("array_nullbool_1024_5k.json"),
+		Expect: 1024,
+	},
+	{
+		Name:   "array_str_1024",
+		Input:  SrcFile("array_str_1024_639k.json"),
+		Expect: 1024,
+	},
+}
+
+func TestCount(t *testing.T) {
+	for _, td := range testsCount {
+		t.Run(td.Name, func(t *testing.T) {
+			var count int
+			input, err := td.Input.GetJSON()
+			require.NoError(t, err)
+			errs := jscan.Scan(string(input), func(i *jscan.Iterator[string]) (err bool) {
+				if i.Level() != 0 {
+					return false
+				}
+				count = i.ArrayLen()
+				return false
+			})
+			require.False(t, errs.IsErr(), "unexpected error: %v", errs)
+			require.Equal(t, td.Expect, count)
+		})
+	}
+}
