@@ -258,7 +258,7 @@ VALUE_NUMBER:
 		}
 		s = s[1:]
 		for len(s) >= 16 {
-			if lutED[s[0]] != 2 {
+			if lutED[s[0]] != lutEDDigit {
 				goto INT_NONDIGIT
 			}
 			if lutED[s[1]] != lutEDDigit {
@@ -611,7 +611,7 @@ VALUE_STRING:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
-			if lutED[s[1]] == 1 {
+			if lutED[s[1]] == lutEDEscapable {
 				s = s[2:]
 				continue
 			}
@@ -760,7 +760,7 @@ OBJ_KEY:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, src, s)
 			}
-			if lutED[s[1]] == 1 {
+			if lutED[s[1]] == lutEDEscapable {
 				s = s[2:]
 				continue
 			}
