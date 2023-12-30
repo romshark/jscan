@@ -1,6 +1,13 @@
-<a href="https://goreportcard.com/report/github.com/romshark/valfile">
-    <img src="https://goreportcard.com/badge/github.com/romshark/valfile" alt="GoReportCard">
+<a href="https://pkg.go.dev/github.com/romshark/jscan/v2">
+    <img src="https://godoc.org/github.com/romshark/jscan/v2?status.svg" alt="GoDoc">
 </a>
+<a href="https://goreportcard.com/report/github.com/romshark/jscan/v2">
+    <img src="https://goreportcard.com/badge/github.com/romshark/jscan/v2" alt="GoReportCard">
+</a>
+<a href='https://coveralls.io/github/romshark/jscan?branch=main'>
+    <img src='https://coveralls.io/repos/github/romshark/jscan/badge.svg?branch=main' alt='Coverage Status' />
+</a>
+
 
 # jscan
 jscan provides high-performance zero-allocation JSON iterator and validator for Go. This module doesn't provide `Marshal`/`Unmarshal` capabilities, instead it focuses on highly efficient iteration over JSON data with on-the-fly validation.
