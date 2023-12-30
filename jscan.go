@@ -70,7 +70,6 @@ type Iterator[S ~string | ~[]byte] struct {
 	valueType             ValueType
 	valueIndex            int
 	valueIndexEnd         int
-	level                 int
 	keyIndex, keyIndexEnd int
 	arrayIndex            int
 }
@@ -225,7 +224,6 @@ func reset[S ~string | ~[]byte](i *Iterator[S]) {
 	i.stack = i.stack[:0]
 	i.pointer = i.pointer[:0]
 	i.valueType = 0
-	i.level = 0
 	i.keyIndex, i.keyIndexEnd = -1, -1
 	i.valueIndexEnd = -1
 	i.arrayIndex = 0
