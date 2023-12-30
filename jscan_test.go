@@ -1514,6 +1514,458 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 	})
 }
 
+func TestNumbers(t *testing.T) {
+	for _, td := range []struct {
+		Input  string
+		Expect string
+	}{
+		{
+			Input:  `[0]`,
+			Expect: "0",
+		},
+		{
+			Input:  `[1]`,
+			Expect: "1",
+		},
+		{
+			Input:  `[12]`,
+			Expect: "12",
+		},
+		{
+			Input:  `[123]`,
+			Expect: "123",
+		},
+		{
+			Input:  `[1234]`,
+			Expect: "1234",
+		},
+		{
+			Input:  `[12345]`,
+			Expect: "12345",
+		},
+		{
+			Input:  `[123456]`,
+			Expect: "123456",
+		},
+		{
+			Input:  `[1234567]`,
+			Expect: "1234567",
+		},
+		{
+			Input:  `[12345678]`,
+			Expect: "12345678",
+		},
+		{
+			Input:  `[123456789]`,
+			Expect: "123456789",
+		},
+		{
+			Input:  `[1234567891]`,
+			Expect: "1234567891",
+		},
+		{
+			Input:  `[12345678912]`,
+			Expect: "12345678912",
+		},
+		{
+			Input:  `[123456789123]`,
+			Expect: "123456789123",
+		},
+		{
+			Input:  `[1234567891234]`,
+			Expect: "1234567891234",
+		},
+		{
+			Input:  `[12345678912345]`,
+			Expect: "12345678912345",
+		},
+		{
+			Input:  `[123456789123456]`,
+			Expect: "123456789123456",
+		},
+		{
+			Input:  `[1234567891234567]`,
+			Expect: "1234567891234567",
+		},
+		{
+			Input:  `[12345678912345678]`,
+			Expect: "12345678912345678",
+		},
+		{
+			Input:  `[123456789123456789]`,
+			Expect: "123456789123456789",
+		},
+
+		{
+			Input:  `[0,1234567890123456]`,
+			Expect: "0",
+		},
+		{
+			Input:  `[1,1234567890123456]`,
+			Expect: "1",
+		},
+		{
+			Input:  `[12,1234567890123456]`,
+			Expect: "12",
+		},
+		{
+			Input:  `[123,1234567890123456]`,
+			Expect: "123",
+		},
+		{
+			Input:  `[1234,1234567890123456]`,
+			Expect: "1234",
+		},
+		{
+			Input:  `[12345,1234567890123456]`,
+			Expect: "12345",
+		},
+		{
+			Input:  `[123456,1234567890123456]`,
+			Expect: "123456",
+		},
+		{
+			Input:  `[1234567,1234567890123456]`,
+			Expect: "1234567",
+		},
+		{
+			Input:  `[12345678,1234567890123456]`,
+			Expect: "12345678",
+		},
+		{
+			Input:  `[123456789,1234567890123456]`,
+			Expect: "123456789",
+		},
+		{
+			Input:  `[1234567891,1234567890123456]`,
+			Expect: "1234567891",
+		},
+		{
+			Input:  `[12345678912,1234567890123456]`,
+			Expect: "12345678912",
+		},
+		{
+			Input:  `[123456789123,1234567890123456]`,
+			Expect: "123456789123",
+		},
+		{
+			Input:  `[1234567891234,1234567890123456]`,
+			Expect: "1234567891234",
+		},
+		{
+			Input:  `[12345678912345,1234567890123456]`,
+			Expect: "12345678912345",
+		},
+		{
+			Input:  `[123456789123456,1234567890123456]`,
+			Expect: "123456789123456",
+		},
+		{
+			Input:  `[1234567891234567,1234567890123456]`,
+			Expect: "1234567891234567",
+		},
+		{
+			Input:  `[12345678912345678,1234567890123456]`,
+			Expect: "12345678912345678",
+		},
+		{
+			Input:  `[123456789123456789,1234567890123456]`,
+			Expect: "123456789123456789",
+		},
+
+		{
+			Input:  `[0.1]`,
+			Expect: "0.1",
+		},
+		{
+			Input:  `[0.12]`,
+			Expect: "0.12",
+		},
+		{
+			Input:  `[0.123]`,
+			Expect: "0.123",
+		},
+		{
+			Input:  `[0.1234]`,
+			Expect: "0.1234",
+		},
+		{
+			Input:  `[0.12345]`,
+			Expect: "0.12345",
+		},
+		{
+			Input:  `[0.123456]`,
+			Expect: "0.123456",
+		},
+		{
+			Input:  `[0.1234567]`,
+			Expect: "0.1234567",
+		},
+		{
+			Input:  `[0.12345678]`,
+			Expect: "0.12345678",
+		},
+		{
+			Input:  `[0.123456789]`,
+			Expect: "0.123456789",
+		},
+		{
+			Input:  `[0.1234567891]`,
+			Expect: "0.1234567891",
+		},
+		{
+			Input:  `[0.12345678912]`,
+			Expect: "0.12345678912",
+		},
+		{
+			Input:  `[0.123456789123]`,
+			Expect: "0.123456789123",
+		},
+		{
+			Input:  `[0.1234567891234]`,
+			Expect: "0.1234567891234",
+		},
+		{
+			Input:  `[0.12345678912345]`,
+			Expect: "0.12345678912345",
+		},
+		{
+			Input:  `[0.123456789123456]`,
+			Expect: "0.123456789123456",
+		},
+		{
+			Input:  `[0.1234567891234567]`,
+			Expect: "0.1234567891234567",
+		},
+		{
+			Input:  `[0.12345678912345678]`,
+			Expect: "0.12345678912345678",
+		},
+		{
+			Input:  `[0.123456789123456789]`,
+			Expect: "0.123456789123456789",
+		},
+
+		{
+			Input:  `[0.1,1234567890123456]`,
+			Expect: "0.1",
+		},
+		{
+			Input:  `[0.12,1234567890123456]`,
+			Expect: "0.12",
+		},
+		{
+			Input:  `[0.123,1234567890123456]`,
+			Expect: "0.123",
+		},
+		{
+			Input:  `[0.1234,1234567890123456]`,
+			Expect: "0.1234",
+		},
+		{
+			Input:  `[0.12345,1234567890123456]`,
+			Expect: "0.12345",
+		},
+		{
+			Input:  `[0.123456,1234567890123456]`,
+			Expect: "0.123456",
+		},
+		{
+			Input:  `[0.1234567,1234567890123456]`,
+			Expect: "0.1234567",
+		},
+		{
+			Input:  `[0.12345678,1234567890123456]`,
+			Expect: "0.12345678",
+		},
+		{
+			Input:  `[0.123456789,1234567890123456]`,
+			Expect: "0.123456789",
+		},
+		{
+			Input:  `[0.1234567891,1234567890123456]`,
+			Expect: "0.1234567891",
+		},
+		{
+			Input:  `[0.12345678912,1234567890123456]`,
+			Expect: "0.12345678912",
+		},
+		{
+			Input:  `[0.123456789123,1234567890123456]`,
+			Expect: "0.123456789123",
+		},
+		{
+			Input:  `[0.1234567891234,1234567890123456]`,
+			Expect: "0.1234567891234",
+		},
+		{
+			Input:  `[0.12345678912345,1234567890123456]`,
+			Expect: "0.12345678912345",
+		},
+		{
+			Input:  `[0.123456789123456,1234567890123456]`,
+			Expect: "0.123456789123456",
+		},
+		{
+			Input:  `[0.1234567891234567,1234567890123456]`,
+			Expect: "0.1234567891234567",
+		},
+		{
+			Input:  `[0.12345678912345678,1234567890123456]`,
+			Expect: "0.12345678912345678",
+		},
+		{
+			Input:  `[0.123456789123456789,1234567890123456]`,
+			Expect: "0.123456789123456789",
+		},
+
+		{
+			Input:  `[2e1,2e1234567890123456]`,
+			Expect: "2e1",
+		},
+		{
+			Input:  `[2e12,2e1234567890123456]`,
+			Expect: "2e12",
+		},
+		{
+			Input:  `[2e123,2e1234567890123456]`,
+			Expect: "2e123",
+		},
+		{
+			Input:  `[2e1234,2e1234567890123456]`,
+			Expect: "2e1234",
+		},
+		{
+			Input:  `[2e12345,2e1234567890123456]`,
+			Expect: "2e12345",
+		},
+		{
+			Input:  `[2e123456,2e1234567890123456]`,
+			Expect: "2e123456",
+		},
+		{
+			Input:  `[2e1234567,2e1234567890123456]`,
+			Expect: "2e1234567",
+		},
+		{
+			Input:  `[2e12345678,2e1234567890123456]`,
+			Expect: "2e12345678",
+		},
+		{
+			Input:  `[2e123456789,2e1234567890123456]`,
+			Expect: "2e123456789",
+		},
+		{
+			Input:  `[2e1234567891,2e1234567890123456]`,
+			Expect: "2e1234567891",
+		},
+		{
+			Input:  `[2e12345678912,2e1234567890123456]`,
+			Expect: "2e12345678912",
+		},
+		{
+			Input:  `[2e123456789123,2e1234567890123456]`,
+			Expect: "2e123456789123",
+		},
+		{
+			Input:  `[2e1234567891234,2e1234567890123456]`,
+			Expect: "2e1234567891234",
+		},
+		{
+			Input:  `[2e12345678912345,2e1234567890123456]`,
+			Expect: "2e12345678912345",
+		},
+		{
+			Input:  `[2e123456789123456,2e1234567890123456]`,
+			Expect: "2e123456789123456",
+		},
+		{
+			Input:  `[2e1234567891234567,2e1234567890123456]`,
+			Expect: "2e1234567891234567",
+		},
+		{
+			Input:  `[2e12345678912345678,2e1234567890123456]`,
+			Expect: "2e12345678912345678",
+		},
+		{
+			Input:  `[2e123456789123456789,2e1234567890123456]`,
+			Expect: "2e123456789123456789",
+		},
+	} {
+		testNumbers(t, string(td.Input), td.Expect)
+		testNumbers(t, []byte(td.Input), []byte(td.Expect))
+	}
+}
+
+func testNumbers[S ~string | ~[]byte](t *testing.T, input, expect S) {
+	t.Run(testDataType(input), func(t *testing.T) {
+		t.Run("ParserScan", func(t *testing.T) {
+			p := jscan.NewParser[S](64)
+			err := p.Scan(input, func(i *jscan.Iterator[S]) (err bool) {
+				if i.Level() > 0 && i.ArrayIndex() == 0 {
+					require.Equal(t, jscan.ValueTypeNumber, i.ValueType())
+					require.Equal(t, expect, i.Value())
+				}
+				return false
+			})
+			require.False(t, err.IsErr())
+		})
+		t.Run("ParserScanOne", func(t *testing.T) {
+			p := jscan.NewParser[S](64)
+			trailing, err := p.ScanOne(
+				input,
+				func(i *jscan.Iterator[S]) (err bool) {
+					if i.Level() > 0 && i.ArrayIndex() == 0 {
+						require.Equal(t, jscan.ValueTypeNumber, i.ValueType())
+						require.Equal(t, expect, i.Value())
+					}
+					return false
+				},
+			)
+			require.False(t, err.IsErr())
+			require.Len(t, trailing, 0)
+		})
+		t.Run("Scan", func(t *testing.T) {
+			err := jscan.Scan[S](
+				input,
+				func(i *jscan.Iterator[S]) (err bool) {
+					if i.Level() > 0 && i.ArrayIndex() == 0 {
+						require.Equal(t, jscan.ValueTypeNumber, i.ValueType())
+						require.Equal(t, expect, i.Value())
+					}
+					return false
+				},
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ScanOne", func(t *testing.T) {
+			trailing, err := jscan.ScanOne[S](
+				input,
+				func(i *jscan.Iterator[S]) (err bool) {
+					if i.Level() > 0 && i.ArrayIndex() == 0 {
+						require.Equal(t, jscan.ValueTypeNumber, i.ValueType())
+						require.Equal(t, expect, i.Value())
+					}
+					return false
+				},
+			)
+			require.False(t, err.IsErr())
+			require.Len(t, trailing, 0)
+		})
+		t.Run("Valid", func(t *testing.T) {
+			require.True(t, jscan.Valid[S](input))
+		})
+		t.Run("Validate", func(t *testing.T) {
+			err := jscan.Validate[S](input)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ValidateOne", func(t *testing.T) {
+			_, err := jscan.ValidateOne[S](input)
+			require.False(t, err.IsErr())
+		})
+	})
+}
+
 func testDataType[S ~string | ~[]byte](input S) string {
 	if _, ok := any(input).([]byte); ok {
 		return "bytes"

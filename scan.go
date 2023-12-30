@@ -1,7 +1,6 @@
 package jscan
 
 import (
-	"github.com/romshark/jscan/v2/internal/jsonnum"
 	"github.com/romshark/jscan/v2/internal/strfind"
 )
 
@@ -165,10 +164,9 @@ func scan[S ~string | ~[]byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
 ) (S, Error[S]) {
 	var (
-		rollback S // Used as fallback for error report
-		s        = i.src
-		b        bool
-		ks, ke   int
+		s      = i.src
+		b      bool
+		ks, ke int
 	)
 
 VALUE:
@@ -280,14 +278,315 @@ VALUE_ARRAY:
 	goto VALUE_OR_ARR_TERM
 
 VALUE_NUMBER:
+	i.valueIndex = len(i.src) - len(s)
 	{
-		i.valueIndex = len(i.src) - len(s)
-		{
-			rollback = s
-			if s, b = jsonnum.ReadNumber(s); b {
-				return s, getError(ErrorCodeMalformedNumber, i.src, rollback)
+		if s[0] == '-' {
+			// Signed
+			s = s[1:]
+			if len(s) < 1 {
+				// Expected at least one digit
+				return s, i.getError(ErrorCodeMalformedNumber)
 			}
 		}
+
+		if s[0] == '0' {
+			s = s[1:]
+			if len(s) < 1 {
+				goto ON_NUM // Zero
+			}
+			// Leading zero
+			switch s[0] {
+			case '.':
+				s = s[1:]
+				goto FRACTION
+			case 'e', 'E':
+				s = s[1:]
+				goto EXPONENT_SIGN
+			default:
+				goto ON_NUM // Zero
+			}
+		}
+
+		// Integer
+		if len(s) < 1 || (s[0] < '1' || s[0] > '9') {
+			// Expected at least one digit
+			return s, i.getError(ErrorCodeMalformedNumber)
+		}
+		s = s[1:]
+		for len(s) >= 16 {
+			if lutED[s[0]] != lutEDDigit {
+				goto INT_NONDIGIT
+			}
+			if lutED[s[1]] != lutEDDigit {
+				s = s[1:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[2]] != lutEDDigit {
+				s = s[2:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[3]] != lutEDDigit {
+				s = s[3:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[4]] != lutEDDigit {
+				s = s[4:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[5]] != lutEDDigit {
+				s = s[5:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[6]] != lutEDDigit {
+				s = s[6:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[7]] != lutEDDigit {
+				s = s[7:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[8]] != lutEDDigit {
+				s = s[8:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[9]] != lutEDDigit {
+				s = s[9:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[10]] != lutEDDigit {
+				s = s[10:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[11]] != lutEDDigit {
+				s = s[11:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[12]] != lutEDDigit {
+				s = s[12:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[13]] != lutEDDigit {
+				s = s[13:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[14]] != lutEDDigit {
+				s = s[14:]
+				goto INT_NONDIGIT
+			}
+			if lutED[s[15]] != lutEDDigit {
+				s = s[15:]
+				goto INT_NONDIGIT
+			}
+			s = s[16:]
+		}
+		for ; len(s) > 0; s = s[1:] {
+			if s[0] < '0' || s[0] > '9' {
+				if s[0] == 'e' || s[0] == 'E' {
+					s = s[1:]
+					goto EXPONENT_SIGN
+				} else if s[0] == '.' {
+					s = s[1:]
+					goto FRACTION
+				}
+				goto ON_NUM // Integer
+			}
+		}
+
+		if len(s) < 1 {
+			goto ON_NUM // Integer without exponent
+		}
+
+	FRACTION:
+		if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
+			// Expected at least one digit
+			return s, i.getError(ErrorCodeMalformedNumber)
+		}
+		s = s[1:]
+
+		for len(s) >= 16 {
+			if lutED[s[0]] != lutEDDigit {
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[1]] != lutEDDigit {
+				s = s[1:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[2]] != lutEDDigit {
+				s = s[2:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[3]] != lutEDDigit {
+				s = s[3:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[4]] != lutEDDigit {
+				s = s[4:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[5]] != lutEDDigit {
+				s = s[5:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[6]] != lutEDDigit {
+				s = s[6:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[7]] != lutEDDigit {
+				s = s[7:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[8]] != lutEDDigit {
+				s = s[8:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[9]] != lutEDDigit {
+				s = s[9:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[10]] != lutEDDigit {
+				s = s[10:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[11]] != lutEDDigit {
+				s = s[11:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[12]] != lutEDDigit {
+				s = s[12:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[13]] != lutEDDigit {
+				s = s[13:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[14]] != lutEDDigit {
+				s = s[14:]
+				goto FRAC_NONDIGIT
+			}
+			if lutED[s[15]] != lutEDDigit {
+				s = s[15:]
+				goto FRAC_NONDIGIT
+			}
+			s = s[16:]
+		}
+		for ; len(s) > 0; s = s[1:] {
+			if s[0] < '0' || s[0] > '9' {
+				if s[0] == 'e' || s[0] == 'E' {
+					s = s[1:]
+					goto EXPONENT_SIGN
+				}
+				goto ON_NUM
+			}
+		}
+
+		if len(s) < 1 {
+			goto ON_NUM // Number (with fraction but) without exponent
+		}
+
+	EXPONENT_SIGN:
+		if len(s) < 1 {
+			// Missing exponent value
+			return s, i.getError(ErrorCodeMalformedNumber)
+		}
+		if s[0] == '-' || s[0] == '+' {
+			s = s[1:]
+		}
+		if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
+			// Expected at least one digit
+			return s, i.getError(ErrorCodeMalformedNumber)
+		}
+		s = s[1:]
+
+		for len(s) >= 16 {
+			if lutED[s[0]] != lutEDDigit {
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[1]] != lutEDDigit {
+				s = s[1:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[2]] != lutEDDigit {
+				s = s[2:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[3]] != lutEDDigit {
+				s = s[3:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[4]] != lutEDDigit {
+				s = s[4:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[5]] != lutEDDigit {
+				s = s[5:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[6]] != lutEDDigit {
+				s = s[6:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[7]] != lutEDDigit {
+				s = s[7:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[8]] != lutEDDigit {
+				s = s[8:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[9]] != lutEDDigit {
+				s = s[9:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[10]] != lutEDDigit {
+				s = s[10:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[11]] != lutEDDigit {
+				s = s[11:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[12]] != lutEDDigit {
+				s = s[12:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[13]] != lutEDDigit {
+				s = s[13:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[14]] != lutEDDigit {
+				s = s[14:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			if lutED[s[15]] != lutEDDigit {
+				s = s[15:]
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+			s = s[16:]
+		}
+		for ; len(s) > 0; s = s[1:] {
+			if s[0] < '0' || s[0] > '9' {
+				goto ON_NUM // Number with (fraction and) exponent
+			}
+		}
+		goto ON_NUM
+
+	INT_NONDIGIT:
+		if s[0] == 'e' || s[0] == 'E' {
+			s = s[1:]
+			goto EXPONENT_SIGN
+		} else if s[0] == '.' {
+			s = s[1:]
+			goto FRACTION
+		}
+		goto ON_NUM // Integer
+
+	FRAC_NONDIGIT:
+		if s[0] == 'e' || s[0] == 'E' {
+			s = s[1:]
+			goto EXPONENT_SIGN
+		}
+
+	ON_NUM:
 		i.valueIndexEnd = len(i.src) - len(s)
 		i.valueType = ValueTypeNumber
 
@@ -387,7 +686,7 @@ VALUE_STRING:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == lutEDEscapable {
 				s = s[2:]
 				continue
 			}
@@ -605,7 +904,7 @@ OBJ_KEY:
 				s = s[1:]
 				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
 			}
-			if lutEscape[s[1]] == 1 {
+			if lutED[s[1]] == lutEDEscapable {
 				s = s[2:]
 				continue
 			}
