@@ -23,6 +23,9 @@ import (
 // and avoid an unecessary iterator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
 //
+//	m := json.RawMessage(`1`)
+//	jscan.ScanOne([]byte(m), // Cast m to []byte to avoid allocation!
+//
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
@@ -56,6 +59,9 @@ func ScanOne[S ~string | ~[]byte](
 // TIP: Explicitly cast s to string or []byte to use the global iterator pools
 // and avoid an unecessary iterator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.Scan([]byte(m), // Cast m to []byte to avoid allocation!
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](

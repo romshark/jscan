@@ -26,6 +26,9 @@ func Valid[S ~string | ~[]byte](s S) bool {
 // TIP: Explicitly cast s to string or []byte to use the global validator pools
 // and avoid an unecessary validator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
 func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 	var v *Validator[S]
 	switch any(s).(type) {
@@ -54,6 +57,9 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 // TIP: Explicitly cast s to string or []byte to use the global validator pools
 // and avoid an unecessary validator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
+//
+//	m := json.RawMessage(`1`)
+//	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
 func Validate[S ~string | ~[]byte](s S) Error[S] {
 	var v *Validator[S]
 	switch any(s).(type) {
