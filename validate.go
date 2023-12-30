@@ -22,6 +22,10 @@ func Valid[S ~string | ~[]byte](s S) bool {
 // Unlike (*Validator).ValidateOne this function will take a validator instance
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global validator pools
+// and avoid an unecessary validator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
 func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 	var v *Validator[S]
 	switch any(s).(type) {
@@ -33,6 +37,8 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 		x := validatorPoolBytes.Get()
 		defer validatorPoolBytes.Put(x)
 		v = x.(*Validator[S])
+	default:
+		v = newValidator[S]()
 	}
 	v.stack = v.stack[:0]
 
@@ -44,6 +50,10 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 // Unlike (*Validator).Validate this function will take a validator instance
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global validator pools
+// and avoid an unecessary validator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
 func Validate[S ~string | ~[]byte](s S) Error[S] {
 	var v *Validator[S]
 	switch any(s).(type) {
@@ -55,6 +65,8 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 		x := validatorPoolBytes.Get()
 		defer validatorPoolBytes.Put(x)
 		v = x.(*Validator[S])
+	default:
+		v = newValidator[S]()
 	}
 	v.stack = v.stack[:0]
 

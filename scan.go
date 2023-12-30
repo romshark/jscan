@@ -19,6 +19,10 @@ import (
 // from a global iterator pool and can therefore be less efficient.
 // Consider reusing a Parser instance instead.
 //
+// TIP: Explicitly cast s to string or []byte to use the global iterator pools
+// and avoid an unecessary iterator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
+//
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
@@ -33,6 +37,8 @@ func ScanOne[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
+	default:
+		i = newIterator[S]()
 	}
 	i.src = s
 	reset(i)
@@ -46,6 +52,10 @@ func ScanOne[S ~string | ~[]byte](
 // Unlike (*Parser).Scan this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
 // Consider reusing a Parser instance instead.
+//
+// TIP: Explicitly cast s to string or []byte to use the global iterator pools
+// and avoid an unecessary iterator allocation such as when dealing with
+// json.RawMessage and similar types derived from string or []byte.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
@@ -61,6 +71,8 @@ func Scan[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
+	default:
+		i = newIterator[S]()
 	}
 	i.src = s
 	reset(i)

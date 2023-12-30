@@ -15,37 +15,20 @@ const (
 	DefaultStackSizeValidator = 128
 )
 
-var iteratorPoolString = sync.Pool{
-	New: func() any {
-		return &Iterator[string]{
-			stack: make([]stackNode, 0, DefaultStackSizeIterator),
-		}
-	},
+func newIterator[S ~string | ~[]byte]() *Iterator[S] {
+	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeIterator)}
 }
 
-var iteratorPoolBytes = sync.Pool{
-	New: func() any {
-		return &Iterator[[]byte]{
-			stack: make([]stackNode, 0, DefaultStackSizeIterator),
-		}
-	},
+func newValidator[S ~string | ~[]byte]() *Validator[S] {
+	return &Validator[S]{stack: make([]stackNodeType, 0, DefaultStackSizeValidator)}
 }
 
-var validatorPoolString = sync.Pool{
-	New: func() any {
-		return &Validator[string]{
-			stack: make([]stackNodeType, 0, DefaultStackSizeValidator),
-		}
-	},
-}
-
-var validatorPoolBytes = sync.Pool{
-	New: func() any {
-		return &Validator[[]byte]{
-			stack: make([]stackNodeType, 0, DefaultStackSizeValidator),
-		}
-	},
-}
+var (
+	iteratorPoolString  = sync.Pool{New: func() any { return newIterator[string]() }}
+	iteratorPoolBytes   = sync.Pool{New: func() any { return newIterator[[]byte]() }}
+	validatorPoolString = sync.Pool{New: func() any { return newValidator[string]() }}
+	validatorPoolBytes  = sync.Pool{New: func() any { return newValidator[[]byte]() }}
+)
 
 type stackNodeType int8
 

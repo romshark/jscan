@@ -1542,3 +1542,70 @@ func TestIndexEnd(t *testing.T) {
 	})
 	require.False(t, err.IsErr())
 }
+
+// TestDerivedTypes tests types derived from string and []byte as inputs
+func TestDerivedTypes(t *testing.T) {
+	t.Run("byte_slice_derivative", func(t *testing.T) {
+		input := json.RawMessage(`0`)
+
+		t.Run("Scan", func(t *testing.T) {
+			err := jscan.Scan(
+				input,
+				func(i *jscan.Iterator[json.RawMessage]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ScanOne", func(t *testing.T) {
+			_, err := jscan.ScanOne(
+				input,
+				func(i *jscan.Iterator[json.RawMessage]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("Validate", func(t *testing.T) {
+			err := jscan.Validate(input)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ValidateOne", func(t *testing.T) {
+			_, err := jscan.ValidateOne(input)
+			require.False(t, err.IsErr())
+		})
+		t.Run("Valid", func(t *testing.T) {
+			isValid := jscan.Valid(input)
+			require.True(t, isValid)
+		})
+	})
+
+	t.Run("string_derivative", func(t *testing.T) {
+		type String string
+
+		input := String(`0`)
+
+		t.Run("Scan", func(t *testing.T) {
+			err := jscan.Scan(
+				input,
+				func(i *jscan.Iterator[String]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ScanOne", func(t *testing.T) {
+			_, err := jscan.ScanOne(
+				input,
+				func(i *jscan.Iterator[String]) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("Validate", func(t *testing.T) {
+			err := jscan.Validate(input)
+			require.False(t, err.IsErr())
+		})
+		t.Run("ValidateOne", func(t *testing.T) {
+			_, err := jscan.ValidateOne(input)
+			require.False(t, err.IsErr())
+		})
+		t.Run("Valid", func(t *testing.T) {
+			isValid := jscan.Valid(input)
+			require.True(t, isValid)
+		})
+	})
+}
