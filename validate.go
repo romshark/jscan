@@ -236,8 +236,7 @@ VALUE_NUMBER:
 		if s[0] == '0' {
 			s = s[1:]
 			if len(s) < 1 {
-				// Zero
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Zero
 			}
 			// Leading zero
 			switch s[0] {
@@ -248,8 +247,7 @@ VALUE_NUMBER:
 				s = s[1:]
 				goto EXPONENT_SIGN
 			default:
-				// Zero
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Zero
 			}
 		}
 
@@ -334,14 +332,12 @@ VALUE_NUMBER:
 					s = s[1:]
 					goto FRACTION
 				}
-				// Integer
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Integer
 			}
 		}
 
 		if len(s) < 1 {
-			// Integer without exponent
-			goto AFTER_VALUE
+			goto AFTER_VALUE // Integer without exponent
 		}
 
 	FRACTION:
@@ -428,8 +424,7 @@ VALUE_NUMBER:
 		}
 
 		if len(s) < 1 {
-			// Number (with fraction but) without exponent
-			goto AFTER_VALUE
+			goto AFTER_VALUE // Number (with fraction but) without exponent
 		}
 
 	EXPONENT_SIGN:
@@ -448,90 +443,73 @@ VALUE_NUMBER:
 
 		for len(s) >= 16 {
 			if lutED[s[0]] != lutEDDigit {
-				// Number with (fraction and) exponent
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[1]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[1:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[2]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[2:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[3]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[3:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[4]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[4:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[5]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[5:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[6]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[6:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[7]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[7:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[8]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[8:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[9]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[9:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[10]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[10:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[11]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[11:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[12]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[12:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[13]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[13:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[14]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[14:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			if lutED[s[15]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[15:]
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 			s = s[16:]
 		}
 		for ; len(s) > 0; s = s[1:] {
 			if s[0] < '0' || s[0] > '9' {
-				// Number with (fraction and) exponent
-				goto AFTER_VALUE
+				goto AFTER_VALUE // Number with (fraction and) exponent
 			}
 		}
 		goto AFTER_VALUE
@@ -544,8 +522,7 @@ VALUE_NUMBER:
 			s = s[1:]
 			goto FRACTION
 		}
-		// Integer
-		goto AFTER_VALUE
+		goto AFTER_VALUE // Integer
 	FRAC_NONDIGIT:
 		if s[0] == 'e' || s[0] == 'E' {
 			s = s[1:]

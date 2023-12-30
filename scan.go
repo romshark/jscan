@@ -292,8 +292,7 @@ VALUE_NUMBER:
 		if s[0] == '0' {
 			s = s[1:]
 			if len(s) < 1 {
-				// Zero
-				goto ON_NUM
+				goto ON_NUM // Zero
 			}
 			// Leading zero
 			switch s[0] {
@@ -304,8 +303,7 @@ VALUE_NUMBER:
 				s = s[1:]
 				goto EXPONENT_SIGN
 			default:
-				// Zero
-				goto ON_NUM
+				goto ON_NUM // Zero
 			}
 		}
 
@@ -390,14 +388,12 @@ VALUE_NUMBER:
 					s = s[1:]
 					goto FRACTION
 				}
-				// Integer
-				goto ON_NUM
+				goto ON_NUM // Integer
 			}
 		}
 
 		if len(s) < 1 {
-			// Integer without exponent
-			goto ON_NUM
+			goto ON_NUM // Integer without exponent
 		}
 
 	FRACTION:
@@ -484,8 +480,7 @@ VALUE_NUMBER:
 		}
 
 		if len(s) < 1 {
-			// Number (with fraction but) without exponent
-			goto ON_NUM
+			goto ON_NUM // Number (with fraction but) without exponent
 		}
 
 	EXPONENT_SIGN:
@@ -504,90 +499,73 @@ VALUE_NUMBER:
 
 		for len(s) >= 16 {
 			if lutED[s[0]] != lutEDDigit {
-				// Number with (fraction and) exponent
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[1]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[1:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[2]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[2:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[3]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[3:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[4]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[4:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[5]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[5:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[6]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[6:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[7]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[7:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[8]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[8:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[9]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[9:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[10]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[10:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[11]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[11:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[12]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[12:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[13]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[13:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[14]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[14:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			if lutED[s[15]] != lutEDDigit {
-				// Number with (fraction and) exponent
 				s = s[15:]
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 			s = s[16:]
 		}
 		for ; len(s) > 0; s = s[1:] {
 			if s[0] < '0' || s[0] > '9' {
-				// Number with (fraction and) exponent
-				goto ON_NUM
+				goto ON_NUM // Number with (fraction and) exponent
 			}
 		}
 		goto ON_NUM
@@ -600,8 +578,7 @@ VALUE_NUMBER:
 			s = s[1:]
 			goto FRACTION
 		}
-		// Integer
-		goto ON_NUM
+		goto ON_NUM // Integer
 
 	FRAC_NONDIGIT:
 		if s[0] == 'e' || s[0] == 'E' {
