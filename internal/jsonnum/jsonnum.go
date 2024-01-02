@@ -1,8 +1,16 @@
 package jsonnum
 
-// ReadNumber returns the index of the end of the number value
-// and err=true if a syntax error was encountered.
-func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
+type ReturnCode byte
+
+const (
+	ReturnCodeErr     ReturnCode = 0
+	ReturnCodeInteger ReturnCode = 9  // Translates to jscan.TokenTypeInteger
+	ReturnCodeNumber  ReturnCode = 10 // Translates to jscan.TokenTypeNumber
+)
+
+// ReadNumber returns s with the read number value cut off
+// and err=ReturnCodeErr if a syntax error was encountered.
+func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err ReturnCode) {
 	var i int
 
 	if s[0] == '-' {
@@ -10,7 +18,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 		s = s[1:]
 		if len(s) < 1 {
 			// Expected at least one digit
-			return s, true
+			return s, ReturnCodeErr
 		}
 	}
 
@@ -18,7 +26,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 		s = s[1:]
 		if len(s) < 1 {
 			// Zero
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		// Leading zero
 		switch s[0] {
@@ -30,14 +38,14 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			goto EXPONENT_SIGN
 		default:
 			// Zero
-			return s, false
+			return s, ReturnCodeInteger
 		}
 	}
 
 	// Integer
 	if len(s) < 1 || (s[0] < '1' || s[0] > '9') {
 		// Expected at least one digit
-		return s, true
+		return s, ReturnCodeErr
 	}
 	s = s[1:]
 	for len(s) >= 8 {
@@ -50,7 +58,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 				goto FRACTION
 			}
 			// Integer
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[1] < '0' || s[1] > '9' {
 			if s[1] == 'e' || s[1] == 'E' {
@@ -62,7 +70,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[1:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[2] < '0' || s[2] > '9' {
 			if s[2] == 'e' || s[2] == 'E' {
@@ -74,7 +82,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[2:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[3] < '0' || s[3] > '9' {
 			if s[3] == 'e' || s[3] == 'E' {
@@ -86,7 +94,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[3:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[4] < '0' || s[4] > '9' {
 			if s[4] == 'e' || s[4] == 'E' {
@@ -98,7 +106,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[4:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[5] < '0' || s[5] > '9' {
 			if s[5] == 'e' || s[5] == 'E' {
@@ -110,7 +118,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[5:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[6] < '0' || s[6] > '9' {
 			if s[6] == 'e' || s[6] == 'E' {
@@ -122,7 +130,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[6:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		if s[7] < '0' || s[7] > '9' {
 			if s[7] == 'e' || s[7] == 'E' {
@@ -134,7 +142,7 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[7:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 		s = s[8:]
 	}
@@ -149,20 +157,20 @@ func ReadNumber[S ~string | ~[]byte](s S) (trailing S, err bool) {
 			}
 			// Integer
 			s = s[i:]
-			return s, false
+			return s, ReturnCodeInteger
 		}
 	}
 	s = s[i:]
 
 	if len(s) < 1 {
 		// Integer without exponent
-		return s, false
+		return s, ReturnCodeInteger
 	}
 
 FRACTION:
 	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
 		// Expected at least one digit
-		return s, true
+		return s, ReturnCodeErr
 	}
 	s = s[1:]
 
@@ -172,7 +180,7 @@ FRACTION:
 				s = s[1:]
 				goto EXPONENT_SIGN
 			}
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[1] < '0' || s[1] > '9' {
 			if s[1] == 'e' || s[1] == 'E' {
@@ -180,7 +188,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[1:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[2] < '0' || s[2] > '9' {
 			if s[2] == 'e' || s[2] == 'E' {
@@ -188,7 +196,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[2:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[3] < '0' || s[3] > '9' {
 			if s[3] == 'e' || s[3] == 'E' {
@@ -196,7 +204,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[3:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[4] < '0' || s[4] > '9' {
 			if s[4] == 'e' || s[4] == 'E' {
@@ -204,7 +212,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[4:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[5] < '0' || s[5] > '9' {
 			if s[5] == 'e' || s[5] == 'E' {
@@ -212,7 +220,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[5:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[6] < '0' || s[6] > '9' {
 			if s[6] == 'e' || s[6] == 'E' {
@@ -220,7 +228,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[6:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[7] < '0' || s[7] > '9' {
 			if s[7] == 'e' || s[7] == 'E' {
@@ -228,7 +236,7 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[7:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		s = s[8:]
 	}
@@ -239,69 +247,69 @@ FRACTION:
 				goto EXPONENT_SIGN
 			}
 			s = s[i:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 	}
 	s = s[i:]
 
 	if len(s) < 1 {
 		// Number (with fraction but) without exponent
-		return s, false
+		return s, ReturnCodeNumber
 	}
 
 EXPONENT_SIGN:
 	if len(s) < 1 {
 		// Missing exponent value
-		return s, true
+		return s, ReturnCodeErr
 	}
 	if s[0] == '-' || s[0] == '+' {
 		s = s[1:]
 	}
 	if len(s) < 1 || (s[0] < '0' || s[0] > '9') {
 		// Expected at least one digit
-		return s, true
+		return s, ReturnCodeErr
 	}
 	s = s[1:]
 
 	for len(s) >= 8 {
 		if s[0] < '0' || s[0] > '9' {
 			// Number with (fraction and) exponent
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[1] < '0' || s[1] > '9' {
 			// Number with (fraction and) exponent
 			s = s[1:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[2] < '0' || s[2] > '9' {
 			// Number with (fraction and) exponent
 			s = s[2:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[3] < '0' || s[3] > '9' {
 			// Number with (fraction and) exponent
 			s = s[3:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[4] < '0' || s[4] > '9' {
 			// Number with (fraction and) exponent
 			s = s[4:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[5] < '0' || s[5] > '9' {
 			// Number with (fraction and) exponent
 			s = s[5:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[6] < '0' || s[6] > '9' {
 			// Number with (fraction and) exponent
 			s = s[6:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		if s[7] < '0' || s[7] > '9' {
 			// Number with (fraction and) exponent
 			s = s[7:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 		s = s[8:]
 	}
@@ -309,9 +317,9 @@ EXPONENT_SIGN:
 		if s[i] < '0' || s[i] > '9' {
 			// Number with (fraction and) exponent
 			s = s[i:]
-			return s, false
+			return s, ReturnCodeNumber
 		}
 	}
 	s = s[i:]
-	return s, false
+	return s, ReturnCodeNumber
 }

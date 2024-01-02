@@ -227,7 +227,8 @@ VALUE_ARRAY:
 VALUE_NUMBER:
 	{
 		rollback = s
-		if s, b = jsonnum.ReadNumber(s); b {
+		var rc jsonnum.ReturnCode
+		if s, rc = jsonnum.ReadNumber(s); rc == jsonnum.ReturnCodeErr {
 			return s, getError(ErrorCodeMalformedNumber, src, rollback)
 		}
 	}

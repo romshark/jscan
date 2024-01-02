@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/romshark/jscan/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -77,6 +78,22 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 			)
 			require.False(t, err.IsErr())
 		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			k := jscan.NewTokenizer[string](64, 128)
+			err := k.Tokenize(
+				string(input),
+				func(tokens []jscan.Token) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
+		t.Run("TokenizerTokenizeOne", func(t *testing.T) {
+			k := jscan.NewTokenizer[string](64, 128)
+			_, err := k.TokenizeOne(
+				string(input),
+				func(tokens []jscan.Token) (err bool) { return false },
+			)
+			require.False(t, err.IsErr())
+		})
 	})
 }
 
@@ -107,6 +124,15 @@ func testOKOrErr[S ~string | ~[]byte](t *testing.T, input S) {
 			t.Skip("allowed to fail")
 		}
 	})
+	t.Run("TokenizerTokenize", func(t *testing.T) {
+		v := jscan.NewTokenizer[string](1024, 4*1024)
+		err := v.Tokenize(string(input), func(tokens []jscan.Token) (err bool) {
+			return false
+		})
+		if err.IsErr() {
+			t.Skip("allowed to fail")
+		}
+	})
 }
 
 // testStrictErr runs tests with the "n_" prefix that parsers must reject.
@@ -120,12 +146,14 @@ func testStrictErr[S ~string | ~[]byte](t *testing.T, input S) {
 				input, func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
+			require.NotEqual(t, err.Code, jscan.ErrorCodeCallback)
 		})
 		t.Run("Scan", func(t *testing.T) {
 			err := jscan.Scan(
 				input, func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
+			require.NotEqual(t, err.Code, jscan.ErrorCodeCallback)
 		})
 		t.Run("ValidatorValid", func(t *testing.T) {
 			require.False(t, jscan.NewValidator[S](1024).Valid(input))
@@ -140,6 +168,13 @@ func testStrictErr[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("Validate", func(t *testing.T) {
 			require.True(t, jscan.Validate[S](input).IsErr())
 		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			err := jscan.NewTokenizer[S](1024, 4*1024).Tokenize(
+				input, func(tokens []jscan.Token) (err bool) { return false },
+			)
+			require.True(t, err.IsErr())
+			require.NotEqual(t, err.Code, jscan.ErrorCodeCallback)
+		})
 	})
 }
 
@@ -153,12 +188,13 @@ type Record struct {
 }
 
 type ScanTest struct {
-	name   string
-	input  string
-	expect []Record
+	name         string
+	input        string
+	expect       []Record
+	expectTokens []jscan.Token
 }
 
-func TestScan(t *testing.T) {
+func TestParsingValid(t *testing.T) {
 	for _, td := range []ScanTest{
 		{
 			name:  "null",
@@ -169,6 +205,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 					Value:      "null",
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
 		{
@@ -181,6 +220,9 @@ func TestScan(t *testing.T) {
 					Value:      "true",
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeTrue, Index: 0, End: 4},
+			},
 		},
 		{
 			name:  "bool_false",
@@ -191,6 +233,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 					Value:      "false",
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeFalse, Index: 0, End: 5},
 			},
 		},
 		{
@@ -203,6 +248,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeInteger, Index: 0, End: 2},
+			},
 		},
 		{
 			name:  "number_decimal",
@@ -213,6 +261,9 @@ func TestScan(t *testing.T) {
 					Value:      "42.5",
 					ArrayIndex: -1,
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNumber, Index: 0, End: 4},
 			},
 		},
 		{
@@ -225,6 +276,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNumber, Index: 0, End: 5},
+			},
 		},
 		{
 			name:  "number_exponent",
@@ -235,6 +289,9 @@ func TestScan(t *testing.T) {
 					Value:      "2.99792458e8",
 					ArrayIndex: -1,
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNumber, Index: 0, End: 12},
 			},
 		},
 		{
@@ -247,6 +304,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeString, Index: 0, End: 4},
+			},
 		},
 		{
 			name:  "escaped_unicode_string",
@@ -258,6 +318,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeString, Index: 0, End: len(`"жш\"ц\\\\\""`)},
+			},
 		},
 		{
 			name:  "empty_array",
@@ -268,6 +331,10 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeArray, Index: 0, End: 1},
+				{Type: jscan.TokenTypeArrayEnd, Index: 1, End: 0},
+			},
 		},
 		{
 			name:  "empty_object",
@@ -277,6 +344,10 @@ func TestScan(t *testing.T) {
 					ValueType:  jscan.ValueTypeObject,
 					ArrayIndex: -1,
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeObject, Index: 0, End: 1},
+				{Type: jscan.TokenTypeObjectEnd, Index: 1, End: 0},
 			},
 		},
 		{
@@ -327,6 +398,69 @@ func TestScan(t *testing.T) {
 					Pointer:    "/1",
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeArray, Index: 0, Elements: 2, End: 12}, // <────┐ 0
+				{Type: jscan.TokenTypeArray, Index: 1, Elements: 2, End: 9},  // <───┐│ 1
+				{Type: jscan.TokenTypeNull, Index: 2, End: 6},                //     ││ 2
+				{Type: jscan.TokenTypeArray, Index: 7, Elements: 1, End: 8},  // <──┐││ 3
+				{Type: jscan.TokenTypeObject, Index: 8, Elements: 1, End: 7}, // <─┐│││ 4
+				{Type: jscan.TokenTypeKey, Index: 9, End: 14},                //   ││││ 5
+				{Type: jscan.TokenTypeTrue, Index: 15, End: 19},              //   ││││ 6
+				{Type: jscan.TokenTypeObjectEnd, Index: 19, End: 4},          // ──┘│││ 7
+				{Type: jscan.TokenTypeArrayEnd, Index: 20, End: 3},           // ───┘││ 8
+				{Type: jscan.TokenTypeArrayEnd, Index: 21, End: 1},           // ────┘│ 9
+				{Type: jscan.TokenTypeArray, Index: 23, End: 11},             // <─┐  │ 10
+				{Type: jscan.TokenTypeArrayEnd, Index: 24, End: 10},          // ──┘  │ 11
+				{Type: jscan.TokenTypeArrayEnd, Index: 25, End: 0},           // ─────┘ 12
+			},
+		},
+		{
+			name:  "escaped_reverse_solidus_in_field_name",
+			input: `{"\\":null}`,
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeObject,
+					ArrayIndex: -1,
+				},
+				{
+					ValueType:  jscan.ValueTypeNull,
+					Key:        `"\\"`,
+					Value:      "null",
+					Level:      1,
+					ArrayIndex: -1,
+					Pointer:    `/\\`,
+				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 3}, // <─┐ 0
+				{Type: jscan.TokenTypeKey, Index: 1, End: 5},                 //   │ 1
+				{Type: jscan.TokenTypeNull, Index: 6, End: 10},               //   │ 2
+				{Type: jscan.TokenTypeObjectEnd, Index: 10, End: 0},          // ──┘ 3
+			},
+		},
+		{
+			name:  "escaped_quotes_in_field_name",
+			input: `{"\"":null}`,
+			expect: []Record{
+				{
+					ValueType:  jscan.ValueTypeObject,
+					ArrayIndex: -1,
+				},
+				{
+					ValueType:  jscan.ValueTypeNull,
+					Key:        `"\""`,
+					Value:      "null",
+					Level:      1,
+					ArrayIndex: -1,
+					Pointer:    `/\"`,
+				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 3}, // <─┐ 0
+				{Type: jscan.TokenTypeKey, Index: 1, End: 5},                 //   │ 1
+				{Type: jscan.TokenTypeNull, Index: 6, End: 10},               //   │ 2
+				{Type: jscan.TokenTypeObjectEnd, Index: 10, End: 0},          // ──┘ 3
+			},
 		},
 		{
 			name:  "escaped_pointer",
@@ -364,6 +498,18 @@ func TestScan(t *testing.T) {
 					ArrayIndex: 1,
 					Pointer:    `/~1/1`,
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 9}, // <───┐ 0
+				{Type: jscan.TokenTypeKey, Index: 1, End: 4},                 //     │ 1
+				{Type: jscan.TokenTypeArray, Index: 5, Elements: 2, End: 8},  // <──┐│ 2
+				{Type: jscan.TokenTypeObject, Index: 6, Elements: 1, End: 6}, // <─┐││ 3
+				{Type: jscan.TokenTypeKey, Index: 7, End: 10},                //   │││ 4
+				{Type: jscan.TokenTypeNull, Index: 11, End: 15},              //   │││ 5
+				{Type: jscan.TokenTypeObjectEnd, Index: 15, End: 3},          // ──┘││ 6
+				{Type: jscan.TokenTypeInteger, Index: 17, End: 18},           //    ││ 7
+				{Type: jscan.TokenTypeArrayEnd, Index: 18, End: 2},           // ───┘│ 8
+				{Type: jscan.TokenTypeObjectEnd, Index: 19, End: 0},          // ────┘ 9
 			},
 		},
 		{
@@ -547,6 +693,50 @@ func TestScan(t *testing.T) {
 					Pointer:    "/a3/1/a3",
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeObject, Index: 0, Elements: 9, End: 41},   // <───┐ 0
+				{Type: jscan.TokenTypeKey, Index: 6, End: 9},                    //     │ 1
+				{Type: jscan.TokenTypeString, Index: 11, End: 18},               //     │ 2
+				{Type: jscan.TokenTypeKey, Index: 24, End: 27},                  //     │ 3
+				{Type: jscan.TokenTypeTrue, Index: 29, End: 33},                 //     │ 4
+				{Type: jscan.TokenTypeKey, Index: 39, End: 42},                  //     │ 5
+				{Type: jscan.TokenTypeFalse, Index: 44, End: 49},                //     │ 6
+				{Type: jscan.TokenTypeKey, Index: 55, End: 58},                  //     │ 7
+				{Type: jscan.TokenTypeNull, Index: 60, End: 64},                 //     │ 8
+				{Type: jscan.TokenTypeKey, Index: 70, End: 73},                  //     │ 9
+				{Type: jscan.TokenTypeNumber, Index: 75, End: 83},               //     │ 10
+				{Type: jscan.TokenTypeKey, Index: 89, End: 93},                  //     │ 11
+				{Type: jscan.TokenTypeObject, Index: 95, Elements: 0, End: 13},  // <┐  │ 12
+				{Type: jscan.TokenTypeObjectEnd, Index: 96, End: 12},            // ─┘  │ 13
+				{Type: jscan.TokenTypeKey, Index: 103, End: 107},                //     │ 14
+				{Type: jscan.TokenTypeArray, Index: 109, Elements: 0, End: 16},  // <┐  │ 15
+				{Type: jscan.TokenTypeArrayEnd, Index: 110, End: 15},            // ─┘  │ 16
+				{Type: jscan.TokenTypeKey, Index: 117, End: 120},                //     │ 17
+				{Type: jscan.TokenTypeObject, Index: 122, Elements: 2, End: 32}, // <──┐│ 18
+				{Type: jscan.TokenTypeKey, Index: 129, End: 132},                //    ││ 19
+				{Type: jscan.TokenTypeString, Index: 134, End: 141},             //    ││ 20
+				{Type: jscan.TokenTypeKey, Index: 148, End: 151},                //    ││ 21
+				{Type: jscan.TokenTypeArray, Index: 153, Elements: 6, End: 31},  // <─┐││ 22
+				{Type: jscan.TokenTypeTrue, Index: 161, End: 165},               //   │││ 23
+				{Type: jscan.TokenTypeFalse, Index: 173, End: 178},              //   │││ 24
+				{Type: jscan.TokenTypeNull, Index: 186, End: 190},               //   │││ 25
+				{Type: jscan.TokenTypeString, Index: 198, End: 204},             //   │││ 26
+				{Type: jscan.TokenTypeNumber, Index: 212, End: 220},             //   │││ 27
+				{Type: jscan.TokenTypeArray, Index: 228, Elements: 1, End: 30},  // <┐│││ 28
+				{Type: jscan.TokenTypeString, Index: 229, End: 234},             //  ││││ 29
+				{Type: jscan.TokenTypeArrayEnd, Index: 234, End: 28},            // ─┘│││ 30
+				{Type: jscan.TokenTypeArrayEnd, Index: 241, End: 22},            // ──┘││ 31
+				{Type: jscan.TokenTypeObjectEnd, Index: 247, End: 18},           // ───┘│ 32
+				{Type: jscan.TokenTypeKey, Index: 254, End: 258},                //     │ 33
+				{Type: jscan.TokenTypeArray, Index: 260, Elements: 2, End: 40},  // <─┐ │ 34
+				{Type: jscan.TokenTypeInteger, Index: 262, End: 263},            //   │ │ 35
+				{Type: jscan.TokenTypeObject, Index: 265, Elements: 1, End: 39}, // <┐│ │ 36
+				{Type: jscan.TokenTypeKey, Index: 266, End: 270},                //  ││ │ 37
+				{Type: jscan.TokenTypeInteger, Index: 272, End: 273},            //  ││ │ 38
+				{Type: jscan.TokenTypeObjectEnd, Index: 273, End: 36},           // ─┘│ │ 39
+				{Type: jscan.TokenTypeArrayEnd, Index: 275, End: 34},            // ──┘ │ 40
+				{Type: jscan.TokenTypeObjectEnd, Index: 280, End: 0},            // ────┘ 41
+			},
 		},
 		{
 			name:  "trailing_space",
@@ -557,6 +747,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 					Value:      "null",
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
 		{
@@ -569,6 +762,9 @@ func TestScan(t *testing.T) {
 					Value:      "null",
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
+			},
 		},
 		{
 			name:  "trailing_tab",
@@ -579,6 +775,9 @@ func TestScan(t *testing.T) {
 					ArrayIndex: -1,
 					Value:      "null",
 				},
+			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
 		{
@@ -591,17 +790,20 @@ func TestScan(t *testing.T) {
 					Value:      "null",
 				},
 			},
+			expectTokens: []jscan.Token{
+				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
+			},
 		},
 	} {
 		t.Run(td.name, func(t *testing.T) {
 			require.True(t, json.Valid([]byte(td.input)))
-			testScan[string](t, td)
-			testScan[[]byte](t, td)
+			testParsingValid[string](t, td)
+			testParsingValid[[]byte](t, td)
 		})
 	}
 }
 
-func testScan[S ~string | ~[]byte](t *testing.T, td ScanTest) {
+func testParsingValid[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 	t.Run(testDataType(td.input), func(t *testing.T) {
 		j := 0
 		check := func(t *testing.T) func(i *jscan.Iterator[S]) bool {
@@ -654,7 +856,33 @@ func testScan[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 			err := p.Scan(S(td.input), check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 1024)
+			var cp []jscan.Token
+			err := k.Tokenize(S(td.input), func(tokens []jscan.Token) (err bool) {
+				cp = make([]jscan.Token, len(tokens))
+				copy(cp, tokens)
+				return false
+			})
+			require.False(t, err.IsErr(), "unexpected error: %s", err)
+			compareTokens(t, td.expectTokens, cp)
+		})
 	})
+}
+
+func compareTokens(t *testing.T, expected, actual []jscan.Token) {
+	t.Helper()
+	assert.Len(t, actual, len(expected))
+	for i, e := range expected {
+		if i >= len(actual) {
+			t.Errorf("missing index %d: %v", i, e)
+			continue
+		}
+		assert.Equal(t, e.Type.String(), actual[i].Type.String(), "type at index %d", i)
+		assert.Equal(t, e.Index, actual[i].Index, "index at index %d", i)
+		assert.Equal(t, e.End, actual[i].End, "end at index %d", i)
+		assert.Equal(t, e.Elements, actual[i].Elements, "elements at index %d", i)
+	}
 }
 
 type ErrorTest struct {
@@ -1042,6 +1270,15 @@ func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
 		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 128)
+			err := k.Tokenize(
+				S(td.input),
+				func(tokens []jscan.Token) (err bool) { return false },
+			)
+			require.Equal(t, td.expect, err.Error())
+			require.True(t, err.IsErr())
+		})
 	})
 }
 
@@ -1257,6 +1494,26 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			err := jscan.Scan[S](
 				S(input),
 				func(i *jscan.Iterator[S]) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 128)
+			err := k.Tokenize(
+				S(input),
+				func(tokens []jscan.Token) (err bool) { return false },
+			)
+			require.Equal(t, expectErr, err.Error())
+			require.True(t, err.IsErr())
+			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
+		})
+		t.Run("TokenizerTokenizeOne", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 128)
+			_, err := k.TokenizeOne(
+				S(input),
+				func(tokens []jscan.Token) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1510,6 +1767,35 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("ValidateOne", func(t *testing.T) {
 			_, err := jscan.ValidateOne[S](input)
 			require.False(t, err.IsErr())
+		})
+		t.Run("TokenizerTokenize", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 1024)
+			c := 0
+			err := k.Tokenize(input, func(tokens []jscan.Token) (err bool) {
+				require.Len(t, tokens, 1)
+				require.Equal(t, 0, tokens[0].Index)
+				require.Equal(t, jscan.TokenTypeString, tokens[0].Type)
+				require.Equal(t, len(input), tokens[0].End)
+				c++
+				return false
+			})
+			require.False(t, err.IsErr())
+			require.Equal(t, 1, c)
+		})
+		t.Run("TokenizerTokenizeOne", func(t *testing.T) {
+			k := jscan.NewTokenizer[S](64, 1024)
+			c := 0
+			tail, err := k.TokenizeOne(input, func(tokens []jscan.Token) (err bool) {
+				require.Len(t, tokens, 1)
+				require.Equal(t, 0, tokens[0].Index)
+				require.Equal(t, jscan.TokenTypeString, tokens[0].Type)
+				require.Equal(t, len(input), tokens[0].End)
+				c++
+				return false
+			})
+			require.False(t, err.IsErr())
+			require.Equal(t, 1, c)
+			require.Len(t, tail, 0)
 		})
 	})
 }

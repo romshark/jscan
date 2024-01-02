@@ -68,6 +68,51 @@ func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
 	return
 }
 
+func MustCalcStatsJscanTokenizer[S []byte | string](p *jscan.Tokenizer[S], str S) (s Stats) {
+	if err := p.Tokenize(
+		str,
+		func(tokens []jscan.Token) (err bool) {
+			depth := 0
+			for i := range tokens {
+				switch tokens[i].Type {
+				case jscan.TokenTypeKey:
+					l := tokens[i].End - tokens[i].Index - 2
+					s.TotalKeys++
+					if l > s.MaxKeyLen {
+						s.MaxKeyLen = l
+					}
+				case jscan.TokenTypeObject:
+					depth++
+					s.TotalObjects++
+				case jscan.TokenTypeArray:
+					depth++
+					if depth > s.MaxDepth {
+						s.MaxDepth = depth
+					}
+					s.TotalArrays++
+					if tokens[i].Elements > s.MaxArrayLen {
+						s.MaxArrayLen = tokens[i].Elements
+					}
+				case jscan.TokenTypeNull:
+					s.TotalNulls++
+				case jscan.TokenTypeFalse, jscan.TokenTypeTrue:
+					s.TotalBooleans++
+				case jscan.TokenTypeNumber, jscan.TokenTypeInteger:
+					s.TotalNumbers++
+				case jscan.TokenTypeString:
+					s.TotalStrings++
+				case jscan.TokenTypeObjectEnd, jscan.TokenTypeArrayEnd:
+					depth--
+				}
+			}
+			return false
+		},
+	); err.IsErr() {
+		panic(fmt.Errorf("unexpected error: %s", err))
+	}
+	return
+}
+
 func TestCalcStats(t *testing.T) {
 	const input = `{
 		"s":"value",
@@ -104,6 +149,9 @@ func TestCalcStats(t *testing.T) {
 
 	p := jscan.NewParser[[]byte](64)
 	require.Equal(t, expect, MustCalcStatsJscan(p, []byte(input)))
+
+	k := jscan.NewTokenizer[[]byte](128, 10)
+	require.Equal(t, expect, MustCalcStatsJscanTokenizer(k, []byte(input)))
 }
 
 var gs Stats
@@ -125,14 +173,26 @@ func BenchmarkCalcStats(b *testing.B) {
 		{"array_str_1024_639k___", SrcFile("array_str_1024_639k.json")},
 	} {
 		b.Run(bd.name, func(b *testing.B) {
-			src, err := bd.input.GetJSON()
-			require.NoError(b, err)
+			b.Run("parser", func(b *testing.B) {
+				src, err := bd.input.GetJSON()
+				require.NoError(b, err)
 
-			p := jscan.NewParser[[]byte](1024)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				gs = MustCalcStatsJscan(p, src)
-			}
+				p := jscan.NewParser[[]byte](1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gs = MustCalcStatsJscan(p, src)
+				}
+			})
+			b.Run("tokenizer", func(b *testing.B) {
+				src, err := bd.input.GetJSON()
+				require.NoError(b, err)
+
+				k := jscan.NewTokenizer[[]byte](64, 1024)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					gs = MustCalcStatsJscanTokenizer(k, src)
+				}
+			})
 		})
 	}
 }

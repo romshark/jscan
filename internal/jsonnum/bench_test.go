@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkValid(b *testing.B) {
-	var err bool
+	var rc jsonnum.ReturnCode
 	for _, bb := range []string{
 		"0,",
 		"1e10,",
@@ -21,7 +21,7 @@ func BenchmarkValid(b *testing.B) {
 		b.Run("", func(b *testing.B) {
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					if _, err = jsonnum.ReadNumber(bb); err {
+					if _, rc = jsonnum.ReadNumber(bb); rc == jsonnum.ReturnCodeErr {
 						b.Fatal("unexpected error")
 					}
 				}
@@ -31,7 +31,7 @@ func BenchmarkValid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					if _, err = jsonnum.ReadNumber(bb); err {
+					if _, rc = jsonnum.ReadNumber(bb); rc == jsonnum.ReturnCodeErr {
 						b.Fatal("unexpected error")
 					}
 				}
@@ -55,16 +55,16 @@ func BenchmarkInvalid(b *testing.B) {
 		"0.1234567890e",
 	} {
 		b.Run("", func(b *testing.B) {
-			// This err will not be checked since "01" is not technically wrong
+			// This rc will not be checked since "01" is not technically wrong
 			// according to jsonnum.ReadNumber, it would return ("1", false) instead.
 			// All inputs are already tested in TestReadNumberErr and TestReadNumberZero.
-			var err bool
+			var rc jsonnum.ReturnCode
 			var remainderString string
 			var remainderBytes []byte
 
 			b.Run("string", func(b *testing.B) {
 				for i := 0; i < b.N; i++ {
-					remainderString, err = jsonnum.ReadNumber(bb)
+					remainderString, rc = jsonnum.ReadNumber(bb)
 				}
 			})
 
@@ -72,11 +72,11 @@ func BenchmarkInvalid(b *testing.B) {
 				bb := []byte(bb)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					remainderBytes, err = jsonnum.ReadNumber(bb)
+					remainderBytes, rc = jsonnum.ReadNumber(bb)
 				}
 			})
 
-			runtime.KeepAlive(err)
+			runtime.KeepAlive(rc)
 			runtime.KeepAlive(remainderString)
 			runtime.KeepAlive(remainderBytes)
 		})

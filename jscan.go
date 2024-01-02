@@ -13,6 +13,8 @@ import (
 const (
 	DefaultStackSizeIterator  = 64
 	DefaultStackSizeValidator = 128
+	DefaultStackSizeTokenizer = 128
+	DefaultTokenBufferSize    = 1024
 )
 
 func newIterator[S ~string | ~[]byte]() *Iterator[S] {
