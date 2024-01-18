@@ -10,7 +10,9 @@
 
 
 # jscan
-jscan provides high-performance zero-allocation JSON iterator and validator for Go. This module doesn't provide `Marshal`/`Unmarshal` capabilities *yet* (an [experimental decoder](https://github.com/romshark/jscan-experimental-decoder) with backward compatibility to [encoding/json](https://pkg.go.dev/encoding/json) is WiP 🧪), instead it focuses on highly efficient iteration over JSON data with on-the-fly validation.
+jscan provides high-performance zero-allocation JSON iterator and validator for Go. This module doesn't provide `Marshal`/`Unmarshal` capabilities *yet*, instead it focuses on highly efficient iteration over JSON data with on-the-fly validation.
+
+An [experimental decoder](https://github.com/romshark/jscan-experimental-decoder) with backward compatibility to [encoding/json](https://pkg.go.dev/encoding/json) is WiP 🧪 and is expected to be introduced together with jscan v3.
 
 jscan is tested against https://github.com/nst/JSONTestSuite, a comprehensive test suite for [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259) compliant JSON parsers.
 
