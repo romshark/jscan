@@ -254,68 +254,68 @@ func ExampleTokenizer_decodeVector3DArray() {
 	var data []Vector3D
 
 	var err error
-	errTokenizer := tokenizer.Tokenize(src, func(tokens []jscan.Token) (errTok bool) {
-		if tokens[0].Type != jscan.TokenTypeArray {
-			err = fmt.Errorf("expected array at index %d", tokens[0].Index)
+	errTokenizer := tokenizer.Tokenize(src, func(t []jscan.Token[string]) (errTok bool) {
+		if t[0].Type != jscan.TokenTypeArray {
+			err = fmt.Errorf("expected array at index %d", t[0].Index)
 			return true
 		}
-		tokens = tokens[1 : len(tokens)-1]
+		t = t[1 : len(t)-1]
 		// Preallocate slice since we know the number of objects in advance.
-		data = make([]Vector3D, tokens[0].Elements)
+		data = make([]Vector3D, t[0].Elements)
 
-		mustParseField := func(defined bool, val jscan.Token) (float64, error) {
+		mustParseField := func(defined bool, val jscan.Token[string]) (float64, error) {
 			if defined {
-				return 0, fmt.Errorf("duplicated field at index %d", tokens[0].Index)
+				return 0, fmt.Errorf("duplicated field at index %d", t[0].Index)
 			}
 			if val.Type != jscan.TokenTypeNumber && val.Type != jscan.TokenTypeInteger {
-				return 0, fmt.Errorf("expected number at index %d", tokens[0].Index)
+				return 0, fmt.Errorf("expected number at index %d", t[0].Index)
 			}
 			v, errParse := strconv.ParseFloat(src[val.Index:val.End], 64)
 			if errParse != nil {
 				return 0, fmt.Errorf("parsing number at index %d: %v",
-					tokens[0].Index, err)
+					t[0].Index, err)
 			}
 			return v, nil
 		}
 
 		for i := 0; i < len(data); i++ {
-			if tokens[0].Type != jscan.TokenTypeObject {
-				err = fmt.Errorf("expected object at index %d", tokens[0].Index)
+			if t[0].Type != jscan.TokenTypeObject {
+				err = fmt.Errorf("expected object at index %d", t[0].Index)
 				return true
 			}
-			tokens = tokens[1:] // Skip object start token
+			t = t[1:] // Skip object start token
 			hasX, hasY, hasZ := false, false, false
 
 			for k := 0; k < 3; k++ {
-				fieldName := src[tokens[0].Index:tokens[0].End]
+				fieldName := src[t[0].Index:t[0].End]
 				switch string(fieldName) {
 				case `"x"`:
-					if data[i].X, err = mustParseField(hasX, tokens[1]); err != nil {
+					if data[i].X, err = mustParseField(hasX, t[1]); err != nil {
 						return true
 					}
-					hasX, tokens = true, tokens[2:] // Skip key and value
+					hasX, t = true, t[2:] // Skip key and value
 				case `"y"`:
-					if data[i].Y, err = mustParseField(hasY, tokens[1]); err != nil {
+					if data[i].Y, err = mustParseField(hasY, t[1]); err != nil {
 						return true
 					}
-					hasY, tokens = true, tokens[2:]
+					hasY, t = true, t[2:]
 				case `"z"`:
-					if data[i].Z, err = mustParseField(hasZ, tokens[1]); err != nil {
+					if data[i].Z, err = mustParseField(hasZ, t[1]); err != nil {
 						return true
 					}
-					hasZ, tokens = true, tokens[2:]
+					hasZ, t = true, t[2:]
 				default:
 					err = fmt.Errorf("unknown field %q at index %d",
-						string(fieldName), tokens[0].Index)
+						string(fieldName), t[0].Index)
 					return true
 				}
 			}
 
-			if tokens[0].Type != jscan.TokenTypeObjectEnd {
+			if t[0].Type != jscan.TokenTypeObjectEnd {
 				err = fmt.Errorf("unknown extra field %q in object at index %d",
-					string(src[tokens[0].Index:tokens[0].End]), tokens[0].Index)
+					string(src[t[0].Index:t[0].End]), t[0].Index)
 			}
-			tokens = tokens[1:] // Skip object end
+			t = t[1:] // Skip object end
 		}
 
 		return false

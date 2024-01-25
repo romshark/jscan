@@ -71,7 +71,7 @@ func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
 func MustCalcStatsJscanTokenizer[S []byte | string](p *jscan.Tokenizer[S], str S) (s Stats) {
 	if err := p.Tokenize(
 		str,
-		func(tokens []jscan.Token) (err bool) {
+		func(tokens []jscan.Token[S]) (err bool) {
 			depth := 0
 			for i := range tokens {
 				switch tokens[i].Type {

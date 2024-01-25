@@ -1,6 +1,11 @@
 package jscan
 
 import (
+	"fmt"
+	"strconv"
+	"unsafe"
+
+	"github.com/romshark/jscan/v2/internal/atoi"
 	"github.com/romshark/jscan/v2/internal/jsonnum"
 	"github.com/romshark/jscan/v2/internal/strfind"
 )
@@ -74,7 +79,7 @@ func (t TokenType) String() string {
 }
 
 // Token is any JSON token except comma, colon and space.
-type Token struct {
+type Token[S ~string | ~[]byte] struct {
 	// Index declares the start byte index in the source.
 	Index int
 
@@ -102,10 +107,301 @@ type Token struct {
 	Type TokenType
 }
 
+var (
+	ErrOverflow  = fmt.Errorf("token value overflows integer type")
+	ErrWrongType = fmt.Errorf("token value has different type")
+)
+
+const intSize = unsafe.Sizeof(int(0))
+
+// Int returns the int value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns int(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type int.
+func (t Token[S]) Int(src S) (int, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	if intSize != 8 {
+		v, overflow := atoi.I32(src[t.Index:t.End])
+		if overflow {
+			return 0, ErrOverflow
+		}
+		return int(v), nil
+	}
+	v, overflow := atoi.I64(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return int(v), nil
+}
+
+// Int8 returns the int8 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns int8(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type int8.
+func (t Token[S]) Int8(src S) (int8, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.I8(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return v, nil
+}
+
+// Int16 returns the int16 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns int16(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type int16.
+func (t Token[S]) Int16(src S) (int16, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.I16(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return v, nil
+}
+
+// Int32 returns the int32 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns int32(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type int32.
+func (t Token[S]) Int32(src S) (int32, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.I32(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return v, nil
+}
+
+// Int64 returns the int64 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns int64(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type int64.
+func (t Token[S]) Int64(src S) (int64, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.I64(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return v, nil
+}
+
+// Uint returns the uint value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns uint(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type uint.
+func (t Token[S]) Uint(src S) (uint, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger || src[t.Index] == '-' {
+		return 0, ErrWrongType
+	}
+	if intSize != 8 {
+		v, overflow := atoi.U32(src[t.Index:t.End])
+		if overflow {
+			return 0, ErrOverflow
+		}
+		return uint(v), nil
+	}
+	v, overflow := atoi.U64(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return uint(v), nil
+}
+
+// Uint8 returns the uint8 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns uint8(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type uint8.
+func (t Token[S]) Uint8(src S) (uint8, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger || src[t.Index] == '-' {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.U8(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return uint8(v), nil
+}
+
+// Uint16 returns the uint16 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns uint16(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type uint16.
+func (t Token[S]) Uint16(src S) (uint16, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger || src[t.Index] == '-' {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.U16(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return uint16(v), nil
+}
+
+// Uint32 returns the uint32 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns uint32(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type uint32.
+func (t Token[S]) Uint32(src S) (uint32, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger || src[t.Index] == '-' {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.U32(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return uint32(v), nil
+}
+
+// Uint64 returns the uint64 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns uint64(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrOverflow if the value would overflow type uint64.
+func (t Token[S]) Uint64(src S) (uint64, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeInteger || src[t.Index] == '-' {
+		return 0, ErrWrongType
+	}
+	v, overflow := atoi.U64(src[t.Index:t.End])
+	if overflow {
+		return 0, ErrOverflow
+	}
+	return uint64(v), nil
+}
+
+// Float32 returns the float32 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns float32(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't a number value.
+func (t Token[S]) Float32(src S) (float32, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeNumber && t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	var sz S
+	var s string
+	if _, ok := any(sz).([]byte); ok {
+		b := []byte(src[t.Index:t.End])
+		s = unsafe.String(unsafe.SliceData(b), len(b))
+	} else {
+		s = string(src[t.Index:t.End])
+	}
+	v, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		return 0, err
+	}
+	return float32(v), nil
+}
+
+// Float64 returns the float64 value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns float64(0) if the token is a null value.
+// Returns ErrWrongType if the token isn't a number value.
+func (t Token[S]) Float64(src S) (float64, error) {
+	if t.Type == TokenTypeNull {
+		return 0, nil
+	}
+	if t.Type != TokenTypeNumber && t.Type != TokenTypeInteger {
+		return 0, ErrWrongType
+	}
+	var sz S
+	var s string
+	if _, ok := any(sz).([]byte); ok {
+		b := []byte(src[t.Index:t.End])
+		s = unsafe.String(unsafe.SliceData(b), len(b))
+	} else {
+		s = string(src[t.Index:t.End])
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0, err
+	}
+	return v, nil
+}
+
+// Bool returns the bool value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns bool(false) if the token is a null value.
+// Returns ErrWrongType if the token isn't a boolean value.
+func (t Token[S]) Bool(src S) (bool, error) {
+	switch t.Type {
+	case TokenTypeTrue:
+		return true, nil
+	case TokenTypeFalse, TokenTypeNull:
+		return false, nil
+	}
+	return false, ErrWrongType
+}
+
+// String returns the string value of the token.
+// Expects src to be the source string provided to the tokenizer.
+// Returns string("") if the token is a null value.
+// Returns ErrWrongType if the token isn't a string value.
+func (t Token[S]) String(src S) (string, error) {
+	switch t.Type {
+	case TokenTypeNull:
+		return "", nil
+	case TokenTypeString:
+		return string(src[t.Index+1 : t.End-1]), nil
+	}
+	return "", ErrWrongType
+}
+
 // Tokenizer is a reusable tokenizer instance holding a stack and a token buffer
 // which are reused across method calls.
 type Tokenizer[S ~string | ~[]byte] struct {
-	buffer []Token
+	buffer []Token[S]
 	stack  []int // Buffer index
 }
 
@@ -124,7 +420,7 @@ func NewTokenizer[S ~string | ~[]byte](
 	preallocStackFrames, preallocTokenBuffer int,
 ) *Tokenizer[S] {
 	t := &Tokenizer[S]{
-		buffer: make([]Token, preallocTokenBuffer),
+		buffer: make([]Token[S], preallocTokenBuffer),
 		stack:  make([]int, preallocStackFrames),
 	}
 	return t
@@ -140,7 +436,7 @@ func NewTokenizer[S ~string | ~[]byte](
 //
 // WARNING: Don't use or alias tokens after fn returns!
 func (t *Tokenizer[S]) TokenizeOne(
-	s S, fn func(tokens []Token) (err bool),
+	s S, fn func(tokens []Token[S]) (err bool),
 ) (trailing S, err Error[S]) {
 	return t.tokenize(s, fn)
 }
@@ -153,7 +449,7 @@ func (t *Tokenizer[S]) topStackType() TokenType {
 //
 // WARNING: Don't use or alias tokens after fn returns!
 func (t *Tokenizer[S]) Tokenize(
-	s S, fn func(tokens []Token) (err bool),
+	s S, fn func(tokens []Token[S]) (err bool),
 ) Error[S] {
 	tail, err := t.tokenize(s, fn)
 	if err.IsErr() {
@@ -172,7 +468,7 @@ func (t *Tokenizer[S]) Tokenize(
 
 // tokenize calls fn once all tokens are parsed to the buffer.
 // Returns the remainder of src and an error if any is encountered.
-func (t *Tokenizer[S]) tokenize(src S, fn func(tokens []Token) (err bool)) (S, Error[S]) {
+func (t *Tokenizer[S]) tokenize(src S, fn func(tokens []Token[S]) (err bool)) (S, Error[S]) {
 	// Reset tokenizer
 	t.buffer = t.buffer[:0]
 	t.stack = t.stack[:0]
@@ -243,13 +539,13 @@ VALUE_OBJECT:
 	if s[0] == '}' {
 		t.buffer = append(
 			t.buffer,
-			Token{
+			Token[S]{
 				Index:    index,
 				End:      len(t.buffer) + 1,
 				Type:     TokenTypeObject,
 				Elements: 0,
 			},
-			Token{
+			Token[S]{
 				Index:    len(src) - len(s),
 				End:      len(t.buffer),
 				Type:     TokenTypeObjectEnd,
@@ -261,7 +557,7 @@ VALUE_OBJECT:
 	}
 
 	t.stack = append(t.stack, len(t.buffer))
-	t.buffer = append(t.buffer, Token{
+	t.buffer = append(t.buffer, Token[S]{
 		Index:    index,
 		End:      0, // To be set once the end is discovered.
 		Type:     TokenTypeObject,
@@ -293,13 +589,13 @@ VALUE_ARRAY:
 	if s[0] == ']' {
 		t.buffer = append(
 			t.buffer,
-			Token{
+			Token[S]{
 				Index:    index,
 				End:      len(t.buffer) + 1,
 				Type:     TokenTypeArray,
 				Elements: 0,
 			},
-			Token{
+			Token[S]{
 				Index:    len(src) - len(s),
 				End:      len(t.buffer),
 				Type:     TokenTypeArrayEnd,
@@ -313,7 +609,7 @@ VALUE_ARRAY:
 	t.stack = append(t.stack, len(t.buffer))
 	t.buffer = append(
 		t.buffer,
-		Token{
+		Token[S]{
 			Index: index,
 			End:   0, // To be set once the end is discovered.
 			Type:  TokenTypeArray,
@@ -352,7 +648,7 @@ VALUE_NUMBER:
 		if s, rc = jsonnum.ReadNumber(s); rc == jsonnum.ReturnCodeErr {
 			return s, getError(ErrorCodeMalformedNumber, src, rollback)
 		}
-		t.buffer = append(t.buffer, Token{
+		t.buffer = append(t.buffer, Token[S]{
 			Index:    index,
 			End:      len(src) - len(s),
 			Type:     TokenType(rc),
@@ -460,7 +756,7 @@ VALUE_STRING:
 		case '"':
 			s = s[1:]
 
-			t.buffer = append(t.buffer, Token{
+			t.buffer = append(t.buffer, Token[S]{
 				Type:     TokenTypeString,
 				Index:    index,
 				Elements: 0,
@@ -481,7 +777,7 @@ VALUE_NULL:
 		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	index = len(src) - len(s)
-	t.buffer = append(t.buffer, Token{
+	t.buffer = append(t.buffer, Token[S]{
 		Type:     TokenTypeNull,
 		Index:    index,
 		End:      index + len("null"),
@@ -496,7 +792,7 @@ VALUE_FALSE:
 		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	index = len(src) - len(s)
-	t.buffer = append(t.buffer, Token{
+	t.buffer = append(t.buffer, Token[S]{
 		Type:     TokenTypeFalse,
 		Index:    index,
 		End:      index + len("false"),
@@ -511,7 +807,7 @@ VALUE_TRUE:
 		return s, getError(ErrorCodeUnexpectedToken, src, s)
 	}
 	index = len(src) - len(s)
-	t.buffer = append(t.buffer, Token{
+	t.buffer = append(t.buffer, Token[S]{
 		Type:     TokenTypeTrue,
 		Index:    index,
 		End:      index + len("true"),
@@ -642,7 +938,7 @@ OBJ_KEY:
 			s = s[5:]
 		case '"':
 			s = s[1:]
-			t.buffer = append(t.buffer, Token{
+			t.buffer = append(t.buffer, Token[S]{
 				Type:     TokenTypeKey,
 				Index:    index,
 				End:      len(src) - len(s),
@@ -716,7 +1012,7 @@ AFTER_VALUE:
 		}
 
 		t.buffer[t.stack[len(t.stack)-1]].End = len(t.buffer) // Link start token
-		t.buffer = append(t.buffer, Token{
+		t.buffer = append(t.buffer, Token[S]{
 			Index: len(src) - len(s),
 			End:   t.stack[len(t.stack)-1],
 			Type:  TokenTypeObjectEnd,
@@ -731,7 +1027,7 @@ AFTER_VALUE:
 		}
 
 		t.buffer[t.stack[len(t.stack)-1]].End = len(t.buffer) // Link start token
-		t.buffer = append(t.buffer, Token{
+		t.buffer = append(t.buffer, Token[S]{
 			Index: len(src) - len(s),
 			End:   t.stack[len(t.stack)-1],
 			Type:  TokenTypeArrayEnd,

@@ -3,8 +3,10 @@ package jscan_test
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -82,7 +84,7 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 			k := jscan.NewTokenizer[string](64, 128)
 			err := k.Tokenize(
 				string(input),
-				func(tokens []jscan.Token) (err bool) { return false },
+				func(tokens []jscan.Token[string]) (err bool) { return false },
 			)
 			require.False(t, err.IsErr())
 		})
@@ -90,7 +92,7 @@ func testStrictOK[S ~string | ~[]byte](t *testing.T, input S) {
 			k := jscan.NewTokenizer[string](64, 128)
 			_, err := k.TokenizeOne(
 				string(input),
-				func(tokens []jscan.Token) (err bool) { return false },
+				func(tokens []jscan.Token[string]) (err bool) { return false },
 			)
 			require.False(t, err.IsErr())
 		})
@@ -126,7 +128,7 @@ func testOKOrErr[S ~string | ~[]byte](t *testing.T, input S) {
 	})
 	t.Run("TokenizerTokenize", func(t *testing.T) {
 		v := jscan.NewTokenizer[string](1024, 4*1024)
-		err := v.Tokenize(string(input), func(tokens []jscan.Token) (err bool) {
+		err := v.Tokenize(string(input), func(tokens []jscan.Token[string]) (err bool) {
 			return false
 		})
 		if err.IsErr() {
@@ -170,7 +172,7 @@ func testStrictErr[S ~string | ~[]byte](t *testing.T, input S) {
 		})
 		t.Run("TokenizerTokenize", func(t *testing.T) {
 			err := jscan.NewTokenizer[S](1024, 4*1024).Tokenize(
-				input, func(tokens []jscan.Token) (err bool) { return false },
+				input, func(tokens []jscan.Token[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
 			require.NotEqual(t, err.Code, jscan.ErrorCodeCallback)
@@ -187,15 +189,15 @@ type Record struct {
 	Pointer    string
 }
 
-type ScanTest struct {
+type ScanTest[S ~string | ~[]byte] struct {
 	name         string
-	input        string
+	input        S
 	expect       []Record
-	expectTokens []jscan.Token
+	expectTokens []jscan.Token[S]
 }
 
 func TestParsingValid(t *testing.T) {
-	for _, td := range []ScanTest{
+	for _, td := range []ScanTest[string]{
 		{
 			name:  "null",
 			input: "null",
@@ -206,7 +208,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "null",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
@@ -220,7 +222,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "true",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeTrue, Index: 0, End: 4},
 			},
 		},
@@ -234,7 +236,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "false",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeFalse, Index: 0, End: 5},
 			},
 		},
@@ -248,7 +250,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeInteger, Index: 0, End: 2},
 			},
 		},
@@ -262,7 +264,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNumber, Index: 0, End: 4},
 			},
 		},
@@ -276,7 +278,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNumber, Index: 0, End: 5},
 			},
 		},
@@ -290,7 +292,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNumber, Index: 0, End: 12},
 			},
 		},
@@ -304,7 +306,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeString, Index: 0, End: 4},
 			},
 		},
@@ -318,7 +320,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeString, Index: 0, End: len(`"жш\"ц\\\\\""`)},
 			},
 		},
@@ -331,7 +333,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeArray, Index: 0, End: 1},
 				{Type: jscan.TokenTypeArrayEnd, Index: 1, End: 0},
 			},
@@ -345,7 +347,7 @@ func TestParsingValid(t *testing.T) {
 					ArrayIndex: -1,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeObject, Index: 0, End: 1},
 				{Type: jscan.TokenTypeObjectEnd, Index: 1, End: 0},
 			},
@@ -398,7 +400,7 @@ func TestParsingValid(t *testing.T) {
 					Pointer:    "/1",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeArray, Index: 0, Elements: 2, End: 12}, // <────┐ 0
 				{Type: jscan.TokenTypeArray, Index: 1, Elements: 2, End: 9},  // <───┐│ 1
 				{Type: jscan.TokenTypeNull, Index: 2, End: 6},                //     ││ 2
@@ -431,7 +433,7 @@ func TestParsingValid(t *testing.T) {
 					Pointer:    `/\\`,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 3}, // <─┐ 0
 				{Type: jscan.TokenTypeKey, Index: 1, End: 5},                 //   │ 1
 				{Type: jscan.TokenTypeNull, Index: 6, End: 10},               //   │ 2
@@ -455,7 +457,7 @@ func TestParsingValid(t *testing.T) {
 					Pointer:    `/\"`,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 3}, // <─┐ 0
 				{Type: jscan.TokenTypeKey, Index: 1, End: 5},                 //   │ 1
 				{Type: jscan.TokenTypeNull, Index: 6, End: 10},               //   │ 2
@@ -499,7 +501,7 @@ func TestParsingValid(t *testing.T) {
 					Pointer:    `/~1/1`,
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeObject, Index: 0, Elements: 1, End: 9}, // <───┐ 0
 				{Type: jscan.TokenTypeKey, Index: 1, End: 4},                 //     │ 1
 				{Type: jscan.TokenTypeArray, Index: 5, Elements: 2, End: 8},  // <──┐│ 2
@@ -693,7 +695,7 @@ func TestParsingValid(t *testing.T) {
 					Pointer:    "/a3/1/a3",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeObject, Index: 0, Elements: 9, End: 41},   // <───┐ 0
 				{Type: jscan.TokenTypeKey, Index: 6, End: 9},                    //     │ 1
 				{Type: jscan.TokenTypeString, Index: 11, End: 18},               //     │ 2
@@ -748,7 +750,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "null",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
@@ -762,7 +764,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "null",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
@@ -776,7 +778,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "null",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
@@ -790,7 +792,7 @@ func TestParsingValid(t *testing.T) {
 					Value:      "null",
 				},
 			},
-			expectTokens: []jscan.Token{
+			expectTokens: []jscan.Token[string]{
 				{Type: jscan.TokenTypeNull, Index: 0, End: 4},
 			},
 		},
@@ -798,12 +800,11 @@ func TestParsingValid(t *testing.T) {
 		t.Run(td.name, func(t *testing.T) {
 			require.True(t, json.Valid([]byte(td.input)))
 			testParsingValid[string](t, td)
-			testParsingValid[[]byte](t, td)
 		})
 	}
 }
 
-func testParsingValid[S ~string | ~[]byte](t *testing.T, td ScanTest) {
+func testParsingValid[S ~string | ~[]byte](t *testing.T, td ScanTest[S]) {
 	t.Run(testDataType(td.input), func(t *testing.T) {
 		j := 0
 		check := func(t *testing.T) func(i *jscan.Iterator[S]) bool {
@@ -858,19 +859,19 @@ func testParsingValid[S ~string | ~[]byte](t *testing.T, td ScanTest) {
 		})
 		t.Run("TokenizerTokenize", func(t *testing.T) {
 			k := jscan.NewTokenizer[S](64, 1024)
-			var cp []jscan.Token
-			err := k.Tokenize(S(td.input), func(tokens []jscan.Token) (err bool) {
-				cp = make([]jscan.Token, len(tokens))
+			var cp []jscan.Token[S]
+			err := k.Tokenize(S(td.input), func(tokens []jscan.Token[S]) (err bool) {
+				cp = make([]jscan.Token[S], len(tokens))
 				copy(cp, tokens)
 				return false
 			})
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
-			compareTokens(t, td.expectTokens, cp)
+			compareTokens[S](t, td.expectTokens, cp)
 		})
 	})
 }
 
-func compareTokens(t *testing.T, expected, actual []jscan.Token) {
+func compareTokens[S ~string | ~[]byte](t *testing.T, expected, actual []jscan.Token[S]) {
 	t.Helper()
 	assert.Len(t, actual, len(expected))
 	for i, e := range expected {
@@ -1274,7 +1275,7 @@ func testError[S ~string | ~[]byte](t *testing.T, td ErrorTest) {
 			k := jscan.NewTokenizer[S](64, 128)
 			err := k.Tokenize(
 				S(td.input),
-				func(tokens []jscan.Token) (err bool) { return false },
+				func(tokens []jscan.Token[S]) (err bool) { return false },
 			)
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
@@ -1503,7 +1504,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			k := jscan.NewTokenizer[S](64, 128)
 			err := k.Tokenize(
 				S(input),
-				func(tokens []jscan.Token) (err bool) { return false },
+				func(tokens []jscan.Token[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1513,7 +1514,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 			k := jscan.NewTokenizer[S](64, 128)
 			_, err := k.TokenizeOne(
 				S(input),
-				func(tokens []jscan.Token) (err bool) { return false },
+				func(tokens []jscan.Token[S]) (err bool) { return false },
 			)
 			require.Equal(t, expectErr, err.Error())
 			require.True(t, err.IsErr())
@@ -1771,7 +1772,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("TokenizerTokenize", func(t *testing.T) {
 			k := jscan.NewTokenizer[S](64, 1024)
 			c := 0
-			err := k.Tokenize(input, func(tokens []jscan.Token) (err bool) {
+			err := k.Tokenize(input, func(tokens []jscan.Token[S]) (err bool) {
 				require.Len(t, tokens, 1)
 				require.Equal(t, 0, tokens[0].Index)
 				require.Equal(t, jscan.TokenTypeString, tokens[0].Type)
@@ -1785,7 +1786,7 @@ func testStrings[S ~string | ~[]byte](t *testing.T, input S) {
 		t.Run("TokenizerTokenizeOne", func(t *testing.T) {
 			k := jscan.NewTokenizer[S](64, 1024)
 			c := 0
-			tail, err := k.TokenizeOne(input, func(tokens []jscan.Token) (err bool) {
+			tail, err := k.TokenizeOne(input, func(tokens []jscan.Token[S]) (err bool) {
 				require.Len(t, tokens, 1)
 				require.Equal(t, 0, tokens[0].Index)
 				require.Equal(t, jscan.TokenTypeString, tokens[0].Type)
@@ -1894,4 +1895,672 @@ func TestDerivedTypes(t *testing.T) {
 			require.True(t, isValid)
 		})
 	})
+}
+
+func TestTokenBool(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Bool(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `true`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Bool(src)
+		require.NoError(t, err)
+		require.Equal(t, true, v)
+	})
+
+	src = `false`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Bool(src)
+		require.NoError(t, err)
+		require.Equal(t, false, v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Bool(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenString(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.String(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `"text"`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.String(src)
+		require.NoError(t, err)
+		require.Equal(t, "text", v)
+	})
+
+	src = `""`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.String(src)
+		require.NoError(t, err)
+		require.Equal(t, "", v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.String(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenFloat32(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `3.1415`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.NoError(t, err)
+		require.Equal(t, float32(3.1415), v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.NoError(t, err)
+		require.Equal(t, float32(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.NoError(t, err)
+		require.Equal(t, float32(42), v)
+	})
+
+	src = `-42.0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.NoError(t, err)
+		require.Equal(t, float32(-42), v)
+	})
+
+	src = `123456e123456`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.ErrorIs(t, err, strconv.ErrRange)
+		require.Zero(t, v)
+	})
+
+	src = `false`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float32(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+
+	{ // Bytes
+		src := []byte(`3.1415`)
+		testValueToken(t, src, func(t *testing.T, token jscan.Token[[]byte]) {
+			v, err := token.Float32(src)
+			require.NoError(t, err)
+			require.Equal(t, float32(3.1415), v)
+		})
+	}
+}
+
+func TestTokenFloat64(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `3.1415`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.NoError(t, err)
+		require.Equal(t, float64(3.1415), v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.NoError(t, err)
+		require.Equal(t, float64(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.NoError(t, err)
+		require.Equal(t, float64(42), v)
+	})
+
+	src = `-42.0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.NoError(t, err)
+		require.Equal(t, float64(-42), v)
+	})
+
+	src = `123456e123456`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.ErrorIs(t, err, strconv.ErrRange)
+		require.Zero(t, v)
+	})
+
+	src = `false`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Float64(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+
+	{ // Bytes
+		src := []byte(`3.1415`)
+		testValueToken(t, src, func(t *testing.T, token jscan.Token[[]byte]) {
+			v, err := token.Float64(src)
+			require.NoError(t, err)
+			require.Equal(t, float64(3.1415), v)
+		})
+	}
+}
+
+func TestTokenInt(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.NoError(t, err)
+		require.Equal(t, int(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.NoError(t, err)
+		require.Equal(t, int(42), v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.NoError(t, err)
+		require.Equal(t, int(-42), v)
+	})
+
+	src = `9223372036854775808`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-9223372036854775809`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `3.14`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenInt8(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.NoError(t, err)
+		require.Equal(t, int8(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.NoError(t, err)
+		require.Equal(t, int8(42), v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.NoError(t, err)
+		require.Equal(t, int8(-42), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxInt8+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = fmt.Sprintf("%d", math.MinInt8-1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `3.14`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int8(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenInt16(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.NoError(t, err)
+		require.Equal(t, int16(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.NoError(t, err)
+		require.Equal(t, int16(42), v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.NoError(t, err)
+		require.Equal(t, int16(-42), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxInt16+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = fmt.Sprintf("%d", math.MinInt16-1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `3.14`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int16(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenInt32(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.NoError(t, err)
+		require.Equal(t, int32(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.NoError(t, err)
+		require.Equal(t, int32(42), v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.NoError(t, err)
+		require.Equal(t, int32(-42), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxInt32+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = fmt.Sprintf("%d", math.MinInt32-1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `3.14`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int32(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenInt64(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.NoError(t, err)
+		require.Equal(t, int64(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.NoError(t, err)
+		require.Equal(t, int64(42), v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.NoError(t, err)
+		require.Equal(t, int64(-42), v)
+	})
+
+	src = `9223372036854775808`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-9223372036854775809`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `3.14`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Int64(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenUint(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.NoError(t, err)
+		require.Equal(t, uint(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.NoError(t, err)
+		require.Equal(t, uint(42), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxUint32)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.NoError(t, err)
+		require.Equal(t, uint(math.MaxUint32), v)
+	})
+
+	src = `18446744073709551616`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenUint8(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.NoError(t, err)
+		require.Equal(t, uint8(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.NoError(t, err)
+		require.Equal(t, uint8(42), v)
+	})
+
+	src = fmt.Sprintf("%d", uint8(math.MaxUint8))
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.NoError(t, err)
+		require.Equal(t, uint8(math.MaxUint8), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxUint8+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint8(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenUint16(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.NoError(t, err)
+		require.Equal(t, uint16(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.NoError(t, err)
+		require.Equal(t, uint16(42), v)
+	})
+
+	src = fmt.Sprintf("%d", uint16(math.MaxUint16))
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.NoError(t, err)
+		require.Equal(t, uint16(math.MaxUint16), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxUint16+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint16(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenUint32(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.NoError(t, err)
+		require.Equal(t, uint32(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.NoError(t, err)
+		require.Equal(t, uint32(42), v)
+	})
+
+	src = fmt.Sprintf("%d", uint32(math.MaxUint32))
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.NoError(t, err)
+		require.Equal(t, uint32(math.MaxUint32), v)
+	})
+
+	src = fmt.Sprintf("%d", math.MaxUint32+1)
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint32(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func TestTokenUint64(t *testing.T) {
+	src := `null`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.NoError(t, err)
+		require.Zero(t, v)
+	})
+
+	src = `0`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.NoError(t, err)
+		require.Equal(t, uint64(0), v)
+	})
+
+	src = `42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.NoError(t, err)
+		require.Equal(t, uint64(42), v)
+	})
+
+	src = fmt.Sprintf("%d", uint64(math.MaxUint64))
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.NoError(t, err)
+		require.Equal(t, uint64(math.MaxUint64), v)
+	})
+
+	src = `18446744073709551616`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.ErrorIs(t, err, jscan.ErrOverflow)
+		require.Zero(t, v)
+	})
+
+	src = `-42`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.Uint64(src)
+		require.ErrorIs(t, err, jscan.ErrWrongType)
+		require.Zero(t, v)
+	})
+}
+
+func testValueToken[S ~string | ~[]byte](
+	t *testing.T, input S, check func(t *testing.T, token jscan.Token[S]),
+) {
+	t.Helper()
+	tok := jscan.NewTokenizer[S](4, 16)
+	err := tok.Tokenize(input, func(tokens []jscan.Token[S]) (err bool) {
+		require.Len(t, tokens, 1)
+		check(t, tokens[0])
+		return false
+	})
+	require.False(t, err.IsErr())
 }
