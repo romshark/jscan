@@ -198,6 +198,9 @@ func ExampleValidateOne() {
 	// null
 }
 
+// ExampleScan_decode2DIntArray demonstrates how to use jscan.Scan to decode
+// a 2D int array. Please keep in mind that the Tokenizer will most likely
+// provide much better performance.
 func ExampleScan_decode2DIntArray() {
 	j := `[[1,2,34,567],[8901,2147483647,-1,42]]`
 
@@ -237,6 +240,8 @@ func ExampleScan_decode2DIntArray() {
 	// [[1 2 34 567] [8901 2147483647 -1 42]]
 }
 
+// ExampleTokenizer_decodeVector3DArray demonstrates how the Tokenizer may
+// be used to decode a slice of struct{ X, Y, Z float64 }.
 func ExampleTokenizer_decodeVector3DArray() {
 	src := `[
 		{"x": 12,   "y": 24,   "z": 12},
@@ -259,21 +264,18 @@ func ExampleTokenizer_decodeVector3DArray() {
 			err = fmt.Errorf("expected array at index %d", t[0].Index)
 			return true
 		}
-		t = t[1 : len(t)-1]
+
 		// Preallocate slice since we know the number of objects in advance.
 		data = make([]Vector3D, t[0].Elements)
+		t = t[1 : len(t)-1]
 
 		mustParseField := func(defined bool, val jscan.Token[string]) (float64, error) {
 			if defined {
 				return 0, fmt.Errorf("duplicated field at index %d", t[0].Index)
 			}
-			if val.Type != jscan.TokenTypeNumber && val.Type != jscan.TokenTypeInteger {
-				return 0, fmt.Errorf("expected number at index %d", t[0].Index)
-			}
-			v, errParse := strconv.ParseFloat(src[val.Index:val.End], 64)
-			if errParse != nil {
-				return 0, fmt.Errorf("parsing number at index %d: %v",
-					t[0].Index, err)
+			v, err := val.Float64(src)
+			if err != nil {
+				return 0, fmt.Errorf("parsing number at index %d: %v", t[0].Index, err)
 			}
 			return v, nil
 		}
