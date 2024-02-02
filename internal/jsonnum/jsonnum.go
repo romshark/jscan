@@ -4,8 +4,8 @@ type ReturnCode byte
 
 const (
 	ReturnCodeErr     ReturnCode = 0
-	ReturnCodeInteger ReturnCode = 9
-	ReturnCodeNumber  ReturnCode = 10
+	ReturnCodeInteger ReturnCode = 9  // Translates to jscan.TokenTypeInteger
+	ReturnCodeNumber  ReturnCode = 10 // Translates to jscan.TokenTypeNumber
 )
 
 // ReadNumber returns s with the read number value cut off
