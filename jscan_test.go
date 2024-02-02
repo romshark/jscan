@@ -2571,3 +2571,84 @@ func testValueToken[S ~string | ~[]byte](
 	})
 	require.False(t, err.IsErr())
 }
+
+func TestRawTokenValue(t *testing.T) {
+	tk := jscan.NewTokenizer[string](4, 64)
+	for _, td := range []struct {
+		Name       string
+		Src        string
+		TokenIndex int
+		Expect     string
+	}{
+		{
+			Name: "null", Src: `[true, null, true]`,
+			TokenIndex: 2, Expect: `null`,
+		},
+		{
+			Name: "true", Src: `[false, true, false]`,
+			TokenIndex: 2, Expect: `true`,
+		},
+		{
+			Name: "false", Src: `[true, false, true]`,
+			TokenIndex: 2, Expect: `false`,
+		},
+		{
+			Name: "integer", Src: `[1, 123, 12345]`,
+			TokenIndex: 2, Expect: `123`,
+		},
+		{
+			Name: "float", Src: `[3e4, 3.14e4, 3.1415e4]`,
+			TokenIndex: 2, Expect: `3.14e4`,
+		},
+		{
+			Name: "string", Src: `["", "some text", "more text"]`,
+			TokenIndex: 2, Expect: `"some text"`,
+		},
+		{
+			Name: "string_escaped", Src: `["\"x\"", "\"some\\text\r\n\"", "more text"]`,
+			TokenIndex: 2, Expect: `"\"some\\text\r\n\""`,
+		},
+		{
+			Name: "array_empty", Src: `["", [ ], "more text"]`,
+			TokenIndex: 2, Expect: `[ ]`,
+		},
+		{
+			Name: "array_empty_end", Src: `["", [ ], "more text"]`,
+			TokenIndex: 3, Expect: `[ ]`,
+		},
+		{
+			Name: "array", Src: `["", [ true, "okay", [], 1 ], "more text"]`,
+			TokenIndex: 2, Expect: `[ true, "okay", [], 1 ]`,
+		},
+		{
+			Name: "array", Src: `["", [ true, "okay", [], 1 ], "more text"]`,
+			TokenIndex: 8, Expect: `[ true, "okay", [], 1 ]`,
+		},
+		{
+			Name: "object_empty", Src: `["", { }, "more text"]`,
+			TokenIndex: 2, Expect: `{ }`,
+		},
+		{
+			Name: "object_empty_end", Src: `["", { }, "more text"]`,
+			TokenIndex: 3, Expect: `{ }`,
+		},
+		{
+			Name: "object", Src: `["", { "foo": [{"bar":"baz"}] }, "more text"]`,
+			TokenIndex: 2, Expect: `{ "foo": [{"bar":"baz"}] }`,
+		},
+		{
+			Name: "object_end", Src: `["", { "foo": [{"bar":"baz"}] }, "more text"]`,
+			TokenIndex: 10, Expect: `{ "foo": [{"bar":"baz"}] }`,
+		},
+	} {
+		t.Run(td.Name, func(t *testing.T) {
+			var actual string
+			errTk := tk.Tokenize(td.Src, func(tokens []jscan.Token[string]) (err bool) {
+				actual = jscan.RawTokenValue(td.Src, tokens, td.TokenIndex)
+				return false
+			})
+			require.False(t, errTk.IsErr())
+			require.Equal(t, td.Expect, actual)
+		})
+	}
+}

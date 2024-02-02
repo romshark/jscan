@@ -79,6 +79,21 @@ func (t TokenType) String() string {
 	return ""
 }
 
+// RawTokenValue returns the raw JSON of the value referenced by tokens[index].
+// Expects src to be the source string provided to the tokenizer.
+// Returns the whole composite value for TokenTypeObjectEnd and TokenTypeArrayEnd
+// same as for TokenTypeObject and TokenTypeArray.
+func RawTokenValue[S ~string | ~[]byte](src S, tokens []Token[S], index int) S {
+	switch tokens[index].Type {
+	case TokenTypeObject, TokenTypeArray: // Composite value
+		return src[tokens[index].Index : tokens[tokens[index].End].Index+1]
+	case TokenTypeObjectEnd, TokenTypeArrayEnd: // End of composite token
+		return src[tokens[tokens[index].End].Index : tokens[index].Index+1]
+	}
+	// Non-composite value
+	return src[tokens[index].Index:tokens[index].End]
+}
+
 // Token is any JSON token except comma, colon and space.
 type Token[S ~string | ~[]byte] struct {
 	// Index declares the start byte index in the source.
