@@ -8,6 +8,7 @@ import (
 	"github.com/romshark/jscan/v2/internal/atoi"
 	"github.com/romshark/jscan/v2/internal/jsonnum"
 	"github.com/romshark/jscan/v2/internal/strfind"
+	"github.com/romshark/jscan/v2/internal/unescape"
 )
 
 // TokenType defines a token type.
@@ -384,16 +385,18 @@ func (t Token[S]) Bool(src S) (bool, error) {
 	return false, ErrWrongType
 }
 
-// String returns the string value of the token.
+// String returns the unescaped string value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns string("") if the token is a null value.
 // Returns ErrWrongType if the token isn't a string value.
+//
+// Tip: Use RawTokenValue if you require the raw string value without unescaping.
 func (t Token[S]) String(src S) (string, error) {
 	switch t.Type {
 	case TokenTypeNull:
 		return "", nil
 	case TokenTypeString:
-		return string(src[t.Index+1 : t.End-1]), nil
+		return string(unescape.Valid(src[t.Index+1 : t.End-1])), nil
 	}
 	return "", ErrWrongType
 }

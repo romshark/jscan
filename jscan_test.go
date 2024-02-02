@@ -1949,6 +1949,13 @@ func TestTokenString(t *testing.T) {
 		require.Equal(t, "", v)
 	})
 
+	src = `"\"\r\n\t\b\f\u0050\u0416\uAAAA\uAaAa\"\/"`
+	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
+		v, err := token.String(src)
+		require.NoError(t, err)
+		require.Equal(t, "\"\r\n\t\b\fPЖꪪꪪ\"/", v)
+	})
+
 	src = `42`
 	testValueToken(t, src, func(t *testing.T, token jscan.Token[string]) {
 		v, err := token.String(src)
