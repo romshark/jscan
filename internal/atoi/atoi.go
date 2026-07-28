@@ -27,6 +27,8 @@ func U8[S ~string | ~[]byte](s S) (n uint8, overflow bool) {
 // only '-' is accepted). Returns (0, true) if the value would overflow.
 func I8[S ~string | ~[]byte](s S) (n int8, overflow bool) {
 	d := func(index int) int8 { return int8(s[index] - '0') }
+	// w widens a digit to avoid wrapping in the cases that can overflow.
+	w := func(index int) uint16 { return uint16(s[index] - '0') }
 	if s[0] == '-' {
 		switch len(s) {
 		case 2:
@@ -34,10 +36,11 @@ func I8[S ~string | ~[]byte](s S) (n int8, overflow bool) {
 		case 3:
 			return -(d(1)*1e1 + d(2)), false
 		case 4: // This case can overflow
-			if n = -(d(1)*1e2 + d(2)*1e1 + d(3)); n > 0 {
+			v := w(1)*1e2 + w(2)*1e1 + w(3)
+			if v > 128 {
 				return 0, true
 			}
-			return n, false
+			return int8(-int16(v)), false
 		}
 	} else {
 		switch len(s) {
@@ -46,10 +49,11 @@ func I8[S ~string | ~[]byte](s S) (n int8, overflow bool) {
 		case 2:
 			return d(0)*1e1 + d(1), false
 		case 3: // This case can overflow
-			if n = d(0)*1e2 + d(1)*1e1 + d(2); n < 0 {
+			v := w(0)*1e2 + w(1)*1e1 + w(2)
+			if v > 127 {
 				return 0, true
 			}
-			return n, false
+			return int8(v), false
 		}
 	}
 	return 0, true // Anything above 3 digits overflows int8
@@ -86,22 +90,24 @@ func U16[S ~string | ~[]byte](s S) (n uint16, overflow bool) {
 // only '-' is accepted). Returns (0, true) if the value would overflow.
 func I16[S ~string | ~[]byte](s S) (n int16, overflow bool) {
 	d := func(index int) int16 { return int16(s[index] - '0') }
+	// w widens a digit to avoid wrapping in the cases that can overflow.
+	w := func(index int) uint32 { return uint32(s[index] - '0') }
 	if s[0] == '-' {
 		switch len(s) {
 		case 2:
 			return -d(1), false
 		case 3:
-			return -(n*1e2 + d(1)*1e1 + d(2)), false
+			return -(d(1)*1e1 + d(2)), false
 		case 4:
 			return -(d(1)*1e2 + d(2)*1e1 + d(3)), false
 		case 5:
 			return -(d(1)*1e3 + d(2)*1e2 + d(3)*1e1 + d(4)), false
 		case 6: // This case can overflow
-			n = -(d(1)*1e4 + d(2)*1e3 + d(3)*1e2 + d(4)*1e1 + d(5))
-			if n > 0 {
+			v := w(1)*1e4 + w(2)*1e3 + w(3)*1e2 + w(4)*1e1 + w(5)
+			if v > 32768 {
 				return 0, true
 			}
-			return n, false
+			return int16(-int32(v)), false
 		}
 	} else {
 		switch len(s) {
@@ -114,11 +120,11 @@ func I16[S ~string | ~[]byte](s S) (n int16, overflow bool) {
 		case 4:
 			return d(0)*1e3 + d(1)*1e2 + d(2)*1e1 + d(3), false
 		case 5: // This case can overflow
-			n = d(0)*1e4 + d(1)*1e3 + d(2)*1e2 + d(3)*1e1 + d(4)
-			if n < 0 {
+			v := w(0)*1e4 + w(1)*1e3 + w(2)*1e2 + w(3)*1e1 + w(4)
+			if v > 32767 {
 				return 0, true
 			}
-			return n, false
+			return int16(v), false
 		}
 	}
 	return 0, true // Anything above 5 digits overflows int16
@@ -181,12 +187,14 @@ func U32[S ~string | ~[]byte](s S) (n uint32, overflow bool) {
 // only '-' is accepted). Returns (0, true) if the value would overflow.
 func I32[S ~string | ~[]byte](s S) (n int32, overflow bool) {
 	d := func(index int) int32 { return int32(s[index] - '0') }
+	// w widens a digit to avoid wrapping in the cases that can overflow.
+	w := func(index int) uint64 { return uint64(s[index] - '0') }
 	if s[0] == '-' {
 		switch len(s) {
 		case 2:
 			return -d(1), false
 		case 3:
-			return -(n*1e2 + d(1)*1e1 + d(2)), false
+			return -(d(1)*1e1 + d(2)), false
 		case 4:
 			return -(d(1)*1e2 + d(2)*1e1 + d(3)), false
 		case 5:
@@ -214,16 +222,15 @@ func I32[S ~string | ~[]byte](s S) (n int32, overflow bool) {
 				d(7)*1e2 + d(8)*1e1 +
 				d(9)), false
 		case 11: // This case can overflow
-			n = d(1)*1e9 + d(2)*1e8 +
-				d(3)*1e7 + d(4)*1e6 +
-				d(5)*1e5 + d(6)*1e4 +
-				d(7)*1e3 + d(8)*1e2 +
-				d(9)*1e1 + d(10)
-			n = -n
-			if n > 0 {
+			v := w(1)*1e9 + w(2)*1e8 +
+				w(3)*1e7 + w(4)*1e6 +
+				w(5)*1e5 + w(6)*1e4 +
+				w(7)*1e3 + w(8)*1e2 +
+				w(9)*1e1 + w(10)
+			if v > 2147483648 {
 				return 0, true
 			}
-			return n, false
+			return int32(-int64(v)), false
 		}
 	} else {
 		switch len(s) {
@@ -258,15 +265,15 @@ func I32[S ~string | ~[]byte](s S) (n int32, overflow bool) {
 				d(6)*1e2 + d(7)*1e1 +
 				d(8), false
 		case 10: // This case can overflow
-			n = d(0)*1e9 + d(1)*1e8 +
-				d(2)*1e7 + d(3)*1e6 +
-				d(4)*1e5 + d(5)*1e4 +
-				d(6)*1e3 + d(7)*1e2 +
-				d(8)*1e1 + d(9)
-			if n < 0 {
+			v := w(0)*1e9 + w(1)*1e8 +
+				w(2)*1e7 + w(3)*1e6 +
+				w(4)*1e5 + w(5)*1e4 +
+				w(6)*1e3 + w(7)*1e2 +
+				w(8)*1e1 + w(9)
+			if v > 2147483647 {
 				return 0, true
 			}
-			return n, false
+			return int32(v), false
 		}
 	}
 	return 0, true // Anything above 10 digits overflows int32

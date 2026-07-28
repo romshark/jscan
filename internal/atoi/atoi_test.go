@@ -255,6 +255,18 @@ func TestI32(t *testing.T) {
 
 		{name: "overflow_int32_lo", input: `-2147483649`, err: true},
 		{name: "overflow_int32_hi", input: `2147483648`, err: true},
+
+		// Values that wrap around int32 more than once and were
+		// previously mistaken for in-range results.
+		{name: "overflow_wrap_hi", input: `4294967296`, err: true},
+		{name: "overflow_wrap_lo", input: `-4294967296`, err: true},
+		{name: "overflow_wrap_hi2", input: `5000000000`, err: true},
+		{name: "overflow_wrap_lo2", input: `-5000000000`, err: true},
+		{name: "overflow_wrap_hi3", input: `9000000000`, err: true},
+		{name: "overflow_wrap_lo3", input: `-9000000000`, err: true},
+		{name: "overflow_hi_max10", input: `9999999999`, err: true},
+		{name: "overflow_lo_max10", input: `-9999999999`, err: true},
+
 		{name: "overflow_int64_min", input: `-9223372036854775808`, err: true},
 		{name: "overflow_int64_max", input: `9223372036854775807`, err: true},
 		{name: "overflow_int64_lo", input: `-9223372036854775809`, err: true},
@@ -295,6 +307,20 @@ func TestI8(t *testing.T) {
 
 		{name: "overflow_lo", input: `-129`, err: true},
 		{name: "overflow_hi", input: `128`, err: true},
+
+		// Values that wrap around int8 more than once and were
+		// previously mistaken for in-range results.
+		{name: "overflow_wrap1_hi", input: `256`, err: true},
+		{name: "overflow_wrap1_lo", input: `-256`, err: true},
+		{name: "overflow_wrap1_hi2", input: `300`, err: true},
+		{name: "overflow_wrap1_lo2", input: `-300`, err: true},
+		{name: "overflow_wrap2_hi", input: `512`, err: true},
+		{name: "overflow_wrap2_lo", input: `-512`, err: true},
+		{name: "overflow_wrap3_hi", input: `768`, err: true},
+		{name: "overflow_wrap3_lo", input: `-768`, err: true},
+		{name: "overflow_hi_max3", input: `999`, err: true},
+		{name: "overflow_lo_max3", input: `-999`, err: true},
+
 		{name: "overflow_int32_lo", input: `-2147483649`, err: true},
 		{name: "overflow_int32_hi", input: `2147483648`, err: true},
 		{name: "overflow_int64_min", input: `-9223372036854775808`, err: true},
@@ -330,7 +356,7 @@ func TestU8(t *testing.T) {
 
 		{name: "overflow_hi", input: `256`, err: true},
 		{name: "overflow_hi1", input: `300`, err: true},
-		{name: "overflow_hi1", input: `999`, err: true},
+		{name: "overflow_hi2", input: `999`, err: true},
 		{name: "overflow_l4", input: `1111`, err: true},
 	} {
 		t.Run(td.name, func(t *testing.T) {
@@ -370,6 +396,18 @@ func TestI16(t *testing.T) {
 
 		{name: "overflow_lo", input: `-32769`, err: true},
 		{name: "overflow_hi", input: `32768`, err: true},
+
+		// Values that wrap around int16 more than once and were
+		// previously mistaken for in-range results.
+		{name: "overflow_wrap_hi", input: `65536`, err: true},
+		{name: "overflow_wrap_lo", input: `-65536`, err: true},
+		{name: "overflow_wrap_hi2", input: `70000`, err: true},
+		{name: "overflow_wrap_lo2", input: `-70000`, err: true},
+		{name: "overflow_wrap_hi3", input: `98303`, err: true},
+		{name: "overflow_wrap_lo3", input: `-98303`, err: true},
+		{name: "overflow_hi_max5", input: `99999`, err: true},
+		{name: "overflow_lo_max5", input: `-99999`, err: true},
+
 		{name: "overflow_int32_lo", input: `-2147483649`, err: true},
 		{name: "overflow_int32_hi", input: `2147483648`, err: true},
 		{name: "overflow_int64_min", input: `-9223372036854775808`, err: true},
