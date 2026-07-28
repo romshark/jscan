@@ -347,7 +347,9 @@ func (t Token[S]) Uint64(src S) (uint64, error) {
 // Float32 returns the float32 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns float32(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't a number value.
+// Returns ErrWrongType if the token is neither an integer nor a number value.
+// Returns the error of strconv.ParseFloat if the value
+// can't be represented as a float32.
 func (t Token[S]) Float32(src S) (float32, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -373,7 +375,9 @@ func (t Token[S]) Float32(src S) (float32, error) {
 // Float64 returns the float64 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns float64(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't a number value.
+// Returns ErrWrongType if the token is neither an integer nor a number value.
+// Returns the error of strconv.ParseFloat if the value
+// can't be represented as a float64.
 func (t Token[S]) Float64(src S) (float64, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil

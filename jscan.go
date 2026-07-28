@@ -93,8 +93,10 @@ func (i *Iterator[S]) KeyIndex() int { return i.keyIndex }
 // or -1 when the value isn't a member of an object and hence doesn't have a key.
 func (i *Iterator[S]) KeyIndexEnd() int { return i.keyIndexEnd }
 
-// Key returns either the object member key or "" when the value
-// isn't a member of an object and hence doesn't have a key.
+// Key returns either the raw object member key including the surrounding
+// quotes or a zero value when the value isn't a member of an object and
+// hence doesn't have a key. Escape sequences aren't decoded,
+// use (*Iterator[S]).Pointer() for a decoded reference to the value.
 func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
@@ -102,7 +104,9 @@ func (i *Iterator[S]) Key() (key S) {
 	return fromStr[S](i.src[i.keyIndex:i.keyIndexEnd])
 }
 
-// Value returns the value if any.
+// Value returns the raw value if any.
+// String values include the surrounding quotes
+// and their escape sequences aren't decoded.
 func (i *Iterator[S]) Value() (value S) {
 	if i.valueIndexEnd == -1 {
 		return
@@ -152,6 +156,10 @@ func appendKey(dest []byte, key string) []byte {
 // ViewPointer calls fn and provides the buffer holding the
 // JSON pointer in RFC-6901 format.
 // Consider using (*Iterator[S]).Pointer() instead for safety and convenience.
+//
+// Keys containing escape sequences must be decoded first,
+// which requires a dynamic memory allocation per such key.
+// Keys without escape sequences are processed without allocating.
 //
 // WARNING: do not use or alias p after fn returns,
 // only reading and copying p are considered safe!
@@ -247,7 +255,7 @@ const (
 	ErrorCodeCallback
 )
 
-// ValueType defines a JSON value type
+// ValueType defines a JSON value type.
 type ValueType int8
 
 // JSON value types
@@ -330,8 +338,8 @@ var lutStr = [256]byte{
 	'"': 1, '\\': 1,
 }
 
-// lutEscape maps escapable characters to 1,
-// all other ASCII characters are mapped to 0.
+// lutEscape maps escapable characters to 1
+// and all other bytes to 0.
 var lutEscape = [256]byte{
 	'"':  1,
 	'\\': 1,
@@ -345,8 +353,8 @@ var lutEscape = [256]byte{
 
 // toStr returns s as a string without copying.
 //
-// WARNING: The returned string aliases s, hence s must neither be mutated
-// while the string is in use nor outlived by it.
+// WARNING: The returned string aliases s. Don't mutate s while the
+// string is still in use and don't let the string outlive s.
 func toStr[S string | []byte](s S) string {
 	switch v := any(s).(type) {
 	case string:
@@ -370,9 +378,9 @@ func fromStr[S string | []byte](s string) S {
 	return any(s).(S)
 }
 
-// srcErr is an error reported by the non-generic engines.
-// It's relative to the source and is turned into an Error[S]
-// by the generic wrappers.
+// srcErr is an error reported by the scanning engines.
+// It's relative to the source and is turned into
+// an Error[S] by the generic wrappers.
 type srcErr struct {
 	Index int
 	Code  ErrorCode

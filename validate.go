@@ -67,8 +67,8 @@ func NewValidator[S string | []byte](preallocStackFrames int) *Validator[S] {
 
 // Validator is a reusable validator instance.
 // The validator is more efficient than the parser at JSON validation.
-// A validator instance can be more efficient than global Valid, Validate and ValidateOne
-// function calls due to potential stack frame allocation avoidance.
+// A validator instance can be more efficient than global Valid, Validate and
+// ValidateOne function calls because it avoids the global stack pool.
 type Validator[S string | []byte] struct{ stack []stackNodeType }
 
 // Valid returns true if s is a valid JSON value, otherwise returns false.

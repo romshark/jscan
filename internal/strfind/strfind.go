@@ -10,7 +10,7 @@ const (
 )
 
 // charMap maps space characters such as whitespace, tab, line-break and
-// carriage-return to 1, valid hex digits to 2 and all other ASCII characters to 0.
+// carriage-return to 1, valid hex digits to 2 and all other bytes to 0.
 var charMap = [256]byte{
 	' ': 1, '\n': 1, '\t': 1, '\r': 1,
 
