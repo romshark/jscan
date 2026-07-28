@@ -138,13 +138,13 @@ func testOKOrErr[S string | []byte](t *testing.T, input S) {
 }
 
 // testStrictErr runs tests with the "n_" prefix that parsers must reject.
-// (*Validator).ValidateOne, (*Parser).ScanOne, jscan.ValidateOne and jscan.ScanOne
+// (*Validator).ValidateOne, (*Scanner).ScanOne, jscan.ValidateOne and jscan.ScanOne
 // aren't tested because https://github.com/nst/JSONTestSuite
 // assumes EOF after a valid JSON value.
 func testStrictErr[S string | []byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
-		t.Run("ParserScan", func(t *testing.T) {
-			err := jscan.NewParser[S](1024).Scan(
+		t.Run("ScannerScan", func(t *testing.T) {
+			err := jscan.NewScanner[S](1024).Scan(
 				input, func(i *jscan.Iterator[S]) (err bool) { return false },
 			)
 			require.True(t, err.IsErr())
@@ -906,9 +906,9 @@ func testParsingValid[S string | []byte](t *testing.T, td ScanTest[S]) {
 			err := jscan.Scan(S(td.input), check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
-		t.Run("ParserScan", func(t *testing.T) {
+		t.Run("ScannerScan", func(t *testing.T) {
 			j = 0
-			p := jscan.NewParser[S](64)
+			p := jscan.NewScanner[S](64)
 			err := p.Scan(S(td.input), check(t))
 			require.False(t, err.IsErr(), "unexpected error: %s", err)
 		})
@@ -1317,8 +1317,8 @@ func testError[S string | []byte](t *testing.T, td ErrorTest) {
 			require.Equal(t, td.expect, err.Error())
 			require.True(t, err.IsErr())
 		})
-		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](64)
+		t.Run("ScannerScan", func(t *testing.T) {
+			p := jscan.NewScanner[S](64)
 			err := p.Scan(
 				S(td.input),
 				func(i *jscan.Iterator[S]) (err bool) { return false },
@@ -1517,8 +1517,8 @@ func testControlCharacters[S string | []byte](t *testing.T, input S, expectErr s
 		t.Run("Valid", func(t *testing.T) {
 			require.False(t, jscan.Valid(S(input)))
 		})
-		t.Run("ParserScanOne", func(t *testing.T) {
-			p := jscan.NewParser[S](64)
+		t.Run("ScannerScanOne", func(t *testing.T) {
+			p := jscan.NewScanner[S](64)
 			_, err := p.ScanOne(
 				S(input),
 				func(i *jscan.Iterator[S]) (err bool) { return false },
@@ -1527,8 +1527,8 @@ func testControlCharacters[S string | []byte](t *testing.T, input S, expectErr s
 			require.True(t, err.IsErr())
 			require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
 		})
-		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](64)
+		t.Run("ScannerScan", func(t *testing.T) {
+			p := jscan.NewScanner[S](64)
 			err := p.Scan(
 				S(input),
 				func(i *jscan.Iterator[S]) (err bool) { return false },
@@ -1744,8 +1744,8 @@ func TestStrings(t *testing.T) {
 func testStrings[S string | []byte](t *testing.T, input S) {
 	t.Run(testDataType(input), func(t *testing.T) {
 		inputObject := S(fmt.Sprintf(`{%s:%s}`, input, input))
-		t.Run("ParserScan", func(t *testing.T) {
-			p := jscan.NewParser[S](64)
+		t.Run("ScannerScan", func(t *testing.T) {
+			p := jscan.NewScanner[S](64)
 			c := 0
 			err := p.Scan(inputObject, func(i *jscan.Iterator[S]) (err bool) {
 				if c < 1 {
@@ -1759,8 +1759,8 @@ func testStrings[S string | []byte](t *testing.T, input S) {
 			})
 			require.False(t, err.IsErr())
 		})
-		t.Run("ParserScanOne", func(t *testing.T) {
-			p := jscan.NewParser[S](64)
+		t.Run("ScannerScanOne", func(t *testing.T) {
+			p := jscan.NewScanner[S](64)
 			c := 0
 			trailing, err := p.ScanOne(
 				inputObject,

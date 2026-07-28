@@ -13,14 +13,14 @@ import (
 
 // Default stack and buffer sizes
 const (
-	DefaultStackSizeIterator  = 64
+	DefaultStackSizeScanner   = 64
 	DefaultStackSizeValidator = 128
 	DefaultStackSizeTokenizer = 128
 	DefaultTokenBufferSize    = 1024
 )
 
 func newIterator[S string | []byte]() *Iterator[S] {
-	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeIterator)}
+	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeScanner)}
 }
 
 var (
@@ -104,9 +104,8 @@ func (i *Iterator[S]) Key() (key S) {
 	return fromStr[S](i.src[i.keyIndex:i.keyIndexEnd])
 }
 
-// Value returns the raw value if any.
-// String values include the surrounding quotes
-// and their escape sequences aren't decoded.
+// Value returns the raw value if any. String values include the surrounding quotes and
+// their escape sequences aren't decoded.
 func (i *Iterator[S]) Value() (value S) {
 	if i.valueIndexEnd == -1 {
 		return
@@ -338,8 +337,7 @@ var lutStr = [256]byte{
 	'"': 1, '\\': 1,
 }
 
-// lutEscape maps escapable characters to 1
-// and all other bytes to 0.
+// lutEscape maps escapable characters to 1 and all other bytes to 0.
 var lutEscape = [256]byte{
 	'"':  1,
 	'\\': 1,
@@ -353,8 +351,8 @@ var lutEscape = [256]byte{
 
 // toStr returns s as a string without copying.
 //
-// WARNING: The returned string aliases s. Don't mutate s while the
-// string is still in use and don't let the string outlive s.
+// WARNING: The returned string aliases s.
+// Don't mutate s while the string is still in use and don't let the string outlive s.
 func toStr[S string | []byte](s S) string {
 	switch v := any(s).(type) {
 	case string:
@@ -379,8 +377,7 @@ func fromStr[S string | []byte](s string) S {
 }
 
 // srcErr is an error reported by the scanning engines.
-// It's relative to the source and is turned into
-// an Error[S] by the generic wrappers.
+// It's relative to the source and is turned into an Error[S] by the generic wrappers.
 type srcErr struct {
 	Index int
 	Code  ErrorCode

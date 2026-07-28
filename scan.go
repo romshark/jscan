@@ -15,9 +15,9 @@ import (
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
 //
-// Unlike (*Parser).ScanOne this function will take an iterator instance
+// Unlike (*Scanner).ScanOne this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Parser instance instead.
+// Consider reusing a Scanner instance instead.
 //
 // NOTE: Types derived from string or []byte such as json.RawMessage
 // must be converted explicitly.
@@ -50,9 +50,9 @@ func ScanOne[S string | []byte](
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike (*Parser).Scan this function will take an iterator instance
+// Unlike (*Scanner).Scan this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Parser instance instead.
+// Consider reusing a Scanner instance instead.
 //
 // NOTE: Types derived from string or []byte such as json.RawMessage
 // must be converted explicitly.
@@ -80,21 +80,21 @@ func Scan[S string | []byte](
 	return scanAll(i, s, fn)
 }
 
-// Parser wraps an iterator in a reusable instance.
-// Reusing a parser instance is more efficient than global functions
+// Scanner wraps an iterator in a reusable instance.
+// Reusing a scanner instance is more efficient than global functions
 // that rely on a global iterator pool.
-type Parser[S string | []byte] struct{ i *Iterator[S] }
+type Scanner[S string | []byte] struct{ i *Iterator[S] }
 
-// NewParser creates a new reusable parser instance.
+// NewScanner creates a new reusable scanner instance.
 // A higher preallocStackFrames value implies greater memory usage but also reduces
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
 // preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
 // (1 frame = ~32 bytes).
-// Use DefaultStackSizeIterator when not sure.
-func NewParser[S string | []byte](preallocStackFrames int) *Parser[S] {
+// Use DefaultStackSizeScanner when not sure.
+func NewScanner[S string | []byte](preallocStackFrames int) *Scanner[S] {
 	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
-	return &Parser[S]{i: i}
+	return &Scanner[S]{i: i}
 }
 
 // ScanOne calls fn for every encountered value including objects and arrays.
@@ -108,12 +108,12 @@ func NewParser[S string | []byte](preallocStackFrames int) *Parser[S] {
 // where the error was encountered.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
-func (p *Parser[S]) ScanOne(
+func (sc *Scanner[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
-	reset(p.i)
-	p.i.src = toStr(s)
-	t, e := scan(p.i, fn)
+	reset(sc.i)
+	sc.i.src = toStr(s)
+	t, e := scan(sc.i, fn)
 	return fromStr[S](t), Error[S]{Src: s, Index: e.Index, Code: e.Code}
 }
 
@@ -122,12 +122,12 @@ func (p *Parser[S]) ScanOne(
 // member and element values.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
-func (p *Parser[S]) Scan(
+func (sc *Scanner[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
 ) Error[S] {
-	reset(p.i)
-	p.i.src = toStr(s)
-	return scanAll(p.i, s, fn)
+	reset(sc.i)
+	sc.i.src = toStr(s)
+	return scanAll(sc.i, s, fn)
 }
 
 // scan calls fn for every value encountered.

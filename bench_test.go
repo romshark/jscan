@@ -28,7 +28,7 @@ type Stats struct {
 	MaxArrayLen   int
 }
 
-func MustCalcStatsJscan(p *jscan.Parser[[]byte], str []byte) (s Stats) {
+func MustCalcStatsJscan(p *jscan.Scanner[[]byte], str []byte) (s Stats) {
 	if err := p.Scan(
 		str,
 		func(i *jscan.Iterator[[]byte]) (err bool) {
@@ -147,7 +147,7 @@ func TestCalcStats(t *testing.T) {
 		MaxArrayLen:   5,
 	}
 
-	p := jscan.NewParser[[]byte](64)
+	p := jscan.NewScanner[[]byte](64)
 	require.Equal(t, expect, MustCalcStatsJscan(p, []byte(input)))
 
 	k := jscan.NewTokenizer[[]byte](128, 10)
@@ -173,11 +173,11 @@ func BenchmarkCalcStats(b *testing.B) {
 		{"array_str_1024_639k___", SrcFile("array_str_1024_639k.json")},
 	} {
 		b.Run(bd.name, func(b *testing.B) {
-			b.Run("parser", func(b *testing.B) {
+			b.Run("scanner", func(b *testing.B) {
 				src, err := bd.input.GetJSON()
 				require.NoError(b, err)
 
-				p := jscan.NewParser[[]byte](1024)
+				p := jscan.NewScanner[[]byte](1024)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					gs = MustCalcStatsJscan(p, src)
