@@ -1,6 +1,6 @@
 module github.com/romshark/jscan/v2
 
-go 1.21
+go 1.25
 
 toolchain go1.26.5
 

@@ -5,29 +5,36 @@ import (
 	"strconv"
 	"sync"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
+	"github.com/romshark/jscan/v2/internal/unescape"
 )
 
-// Default stack sizes
+// Default stack and buffer sizes
 const (
-	DefaultStackSizeIterator  = 64
+	DefaultStackSizeScanner   = 64
 	DefaultStackSizeValidator = 128
+	DefaultStackSizeTokenizer = 128
+	DefaultTokenBufferSize    = 1024
 )
 
-func newIterator[S ~string | ~[]byte]() *Iterator[S] {
-	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeIterator)}
-}
-
-func newValidator[S ~string | ~[]byte]() *Validator[S] {
-	return &Validator[S]{stack: make([]stackNodeType, 0, DefaultStackSizeValidator)}
+func newIterator[S string | []byte]() *Iterator[S] {
+	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeScanner)}
 }
 
 var (
-	iteratorPoolString  = sync.Pool{New: func() any { return newIterator[string]() }}
-	iteratorPoolBytes   = sync.Pool{New: func() any { return newIterator[[]byte]() }}
-	validatorPoolString = sync.Pool{New: func() any { return newValidator[string]() }}
-	validatorPoolBytes  = sync.Pool{New: func() any { return newValidator[[]byte]() }}
+	// The iterator is pooled per instantiation because the callback receives an
+	// *Iterator[S] and hence the pooled value must be of exactly that type.
+	iteratorPoolString = sync.Pool{New: func() any { return newIterator[string]() }}
+	iteratorPoolBytes  = sync.Pool{New: func() any { return newIterator[[]byte]() }}
+
+	// The validator needs nothing but its stack,
+	// which is independent of S, hence a single pool suffices.
+	validatorStackPool = sync.Pool{New: func() any {
+		s := make([]stackNodeType, 0, DefaultStackSizeValidator)
+		return &s
+	}}
 )
 
 type stackNodeType int8
@@ -45,9 +52,9 @@ type stackNode struct {
 }
 
 // Iterator provides access to the recently encountered value.
-type Iterator[S ~string | ~[]byte] struct {
+type Iterator[S string | []byte] struct {
 	stack   []stackNode
-	src     S
+	src     string
 	pointer []byte
 
 	valueType             ValueType
@@ -86,21 +93,24 @@ func (i *Iterator[S]) KeyIndex() int { return i.keyIndex }
 // or -1 when the value isn't a member of an object and hence doesn't have a key.
 func (i *Iterator[S]) KeyIndexEnd() int { return i.keyIndexEnd }
 
-// Key returns either the object member key or "" when the value
-// isn't a member of an object and hence doesn't have a key.
+// Key returns either the raw object member key including the surrounding
+// quotes or a zero value when the value isn't a member of an object and
+// hence doesn't have a key. Escape sequences aren't decoded,
+// use [Iterator.Pointer] for a decoded reference to the value.
 func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
 	}
-	return i.src[i.keyIndex:i.keyIndexEnd]
+	return fromStr[S](i.src[i.keyIndex:i.keyIndexEnd])
 }
 
-// Value returns the value if any.
+// Value returns the raw value if any. String values include the surrounding quotes and
+// their escape sequences aren't decoded.
 func (i *Iterator[S]) Value() (value S) {
 	if i.valueIndexEnd == -1 {
 		return
 	}
-	return i.src[i.valueIndex:i.valueIndexEnd]
+	return fromStr[S](i.src[i.valueIndex:i.valueIndexEnd])
 }
 
 // ScanStack calls fn for every element in the stack.
@@ -132,9 +142,23 @@ func (i *Iterator[S]) Pointer() (s S) {
 	return
 }
 
+// appendKey appends the RFC-6901 encoded reference token for the raw
+// source key (without the surrounding quotes) to dest.
+//
+// The key is unescaped first because a JSON pointer references the decoded member name,
+// hence the keys of `{"a\/b":1}` and `{"a/b":1}` are equal and
+// must produce the same pointer.
+func appendKey(dest []byte, key string) []byte {
+	return keyescape.Append(dest, unescape.Valid(key))
+}
+
 // ViewPointer calls fn and provides the buffer holding the
 // JSON pointer in RFC-6901 format.
-// Consider using (*Iterator[S]).Pointer() instead for safety and convenience.
+// Consider using [Iterator.Pointer] instead for safety and convenience.
+//
+// Keys containing escape sequences must be decoded first,
+// which requires a dynamic memory allocation per such key.
+// Keys without escape sequences are processed without allocating.
 //
 // WARNING: do not use or alias p after fn returns,
 // only reading and copying p are considered safe!
@@ -143,7 +167,7 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 		if keyIndex != -1 {
 			// Object key
 			i.pointer = append(i.pointer, '/')
-			i.pointer = keyescape.Append(i.pointer, i.src[keyIndex+1:keyEnd-1])
+			i.pointer = appendKey(i.pointer, i.src[keyIndex+1:keyEnd-1])
 			return
 		}
 		// Array index
@@ -152,25 +176,17 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	})
 	if i.keyIndex != -1 {
 		i.pointer = append(i.pointer, '/')
-		i.pointer = keyescape.Append(i.pointer, i.src[i.keyIndex+1:i.keyIndexEnd-1])
+		i.pointer = appendKey(i.pointer, i.src[i.keyIndex+1:i.keyIndexEnd-1])
 	}
 	fn(i.pointer)
 	i.pointer = i.pointer[:0]
 }
 
-func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
-	return Error[S]{
-		Code:  c,
-		Src:   i.src,
-		Index: i.valueIndex,
-	}
-}
-
 // Error is a syntax error encountered during validation or iteration.
-// The only exception is ErrorCodeCallback which indicates a callback
+// The only exception is [ErrorCodeCallback] which indicates a callback
 // explicitly breaking by returning true instead of a syntax error.
-// (Error).IsErr() returning false is equivalent to err == nil.
-type Error[S ~string | ~[]byte] struct {
+// [Error.IsErr] returning false is equivalent to err == nil.
+type Error[S string | []byte] struct {
 	// Src refers to the original source.
 	Src S
 
@@ -203,7 +219,7 @@ func (e Error[S]) Error() string {
 	return errorMessage(e.Code, e.Index, 0)
 }
 
-func reset[S ~string | ~[]byte](i *Iterator[S]) {
+func reset[S string | []byte](i *Iterator[S]) {
 	i.stack = i.stack[:0]
 	i.pointer = i.pointer[:0]
 	i.valueType = 0
@@ -225,7 +241,7 @@ const (
 	// an illegal control character in the source.
 	ErrorCodeIllegalControlChar
 
-	// ErrorCodeUnexpectedEOF indicates the encounter an unexpected end of file.
+	// ErrorCodeUnexpectedEOF indicates the encounter of an unexpected end of file.
 	ErrorCodeUnexpectedEOF
 
 	// ErrorCodeUnexpectedToken indicates the encounter of an unexpected token.
@@ -238,7 +254,7 @@ const (
 	ErrorCodeCallback
 )
 
-// ValueType defines a JSON value type
+// ValueType defines a JSON value type.
 type ValueType int8
 
 // JSON value types
@@ -313,16 +329,15 @@ var lutSX = [256]byte{
 	'A': 2, 'B': 2, 'C': 2, 'D': 2, 'E': 2, 'F': 2,
 }
 
-// lutStr maps 0 to all bytes that don't require checking during string traversal.
-// 1 is mapped to control, quotation mark (") and reverse solidus ("\").
+// lutStr maps control characters, the quotation mark (") and the reverse solidus ("\")
+// to 1 and all bytes that don't require checking during string traversal to 0.
 var lutStr = [256]byte{
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	'"': 1, '\\': 1,
 }
 
-// lutEscape maps escapable characters to 1,
-// all other ASCII characters are mapped to 0.
+// lutEscape maps escapable characters to 1 and all other bytes to 0.
 var lutEscape = [256]byte{
 	'"':  1,
 	'\\': 1,
@@ -334,11 +349,45 @@ var lutEscape = [256]byte{
 	't':  1,
 }
 
-// getError returns the stringified error, if any.
-func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
-	return Error[S]{
-		Code:  c,
-		Src:   src,
-		Index: len(src) - len(s),
+// toStr returns s as a string without copying.
+//
+// WARNING: The returned string aliases s.
+// Don't mutate s while the string is still in use and don't let the string outlive s.
+func toStr[S string | []byte](s S) string {
+	switch v := any(s).(type) {
+	case string:
+		return v
+	case []byte:
+		return unsafe.String(unsafe.SliceData(v), len(v))
 	}
+	return ""
+}
+
+// fromStr reverses toStr returning s as S without copying.
+//
+// WARNING: The returned value aliases s.
+func fromStr[S string | []byte](s string) S {
+	var zero S
+	switch any(zero).(type) {
+	case []byte:
+		b := unsafe.Slice(unsafe.StringData(s), len(s))
+		return any(b).(S)
+	}
+	return any(s).(S)
+}
+
+// srcErr is an error reported by the scanning engines.
+// It's relative to the source and is turned into an Error[S] by the generic wrappers.
+type srcErr struct {
+	Index int
+	Code  ErrorCode
+}
+
+// IsErr returns true if there is an error, otherwise returns false.
+func (e srcErr) IsErr() bool { return e.Code != 0 }
+
+// errAt returns a srcErr with the index pointing at
+// the start of the remainder s within src.
+func errAt(c ErrorCode, src, s string) srcErr {
+	return srcErr{Index: len(src) - len(s), Code: c}
 }

@@ -10,7 +10,7 @@ const (
 )
 
 // charMap maps space characters such as whitespace, tab, line-break and
-// carriage-return to 1, valid hex digits to 2 and all other ASCII characters to 0.
+// carriage-return to 1, valid hex digits to 2 and all other bytes to 0.
 var charMap = [256]byte{
 	' ': 1, '\n': 1, '\t': 1, '\r': 1,
 
@@ -19,11 +19,10 @@ var charMap = [256]byte{
 	'A': 2, 'B': 2, 'C': 2, 'D': 2, 'E': 2, 'F': 2,
 }
 
-// EndOfWhitespaceSeq returns the index of the end of
-// the whitespace sequence.
-// If the returned ctrlChar == true then index points at an
+// EndOfWhitespaceSeq returns trailing as the remainder of s with the leading whitespace
+// sequence cut off. If the returned ctrlChar == true then trailing begins with an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
+func EndOfWhitespaceSeq[S string | []byte](s S) (trailing S, ctrlChar bool) {
 	for ; len(s) > 15; s = s[16:] {
 		if charMap[s[0]] != 1 {
 			goto NONSPACE

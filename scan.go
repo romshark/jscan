@@ -9,25 +9,24 @@ import (
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike [Scan], ScanOne doesn't return [ErrorCodeUnexpectedToken] when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns an error if any and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
 //
-// Unlike (*Parser).ScanOne this function will take an iterator instance
+// Unlike [Scanner.ScanOne] this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Parser instance instead.
+// Consider reusing a [Scanner] instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unecessary iterator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as [encoding/json.RawMessage]
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.ScanOne([]byte(m), // Cast m to []byte to avoid allocation!
+//	jscan.ScanOne([]byte(m), // Convert m to []byte.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
-func ScanOne[S ~string | ~[]byte](
+// WARNING: Don't use or alias [*Iterator] after fn returns!
+func ScanOne[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
 	var i *Iterator[S]
@@ -40,31 +39,29 @@ func ScanOne[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
 	}
-	i.src = s
+	i.src = toStr(s)
 	reset(i)
-	return scan(i, fn)
+	t, e := scan(i, fn)
+	return fromStr[S](t), Error[S]{Src: s, Index: e.Index, Code: e.Code}
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike (*Parser).Scan this function will take an iterator instance
+// Unlike [Scanner.Scan] this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Parser instance instead.
+// Consider reusing a [Scanner] instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unecessary iterator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as [encoding/json.RawMessage]
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.Scan([]byte(m), // Cast m to []byte to avoid allocation!
+//	jscan.Scan([]byte(m), // Convert m to []byte.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
-func Scan[S ~string | ~[]byte](
+// WARNING: Don't use or alias [*Iterator] after fn returns!
+func Scan[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (err Error[S]) {
 	var i *Iterator[S]
@@ -77,95 +74,69 @@ func Scan[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
 	}
-	i.src = s
+	i.src = toStr(s)
 	reset(i)
-	t, err := scan(i, fn)
-	if err.IsErr() {
-		return err
-	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
-	}
-	return Error[S]{}
+	return scanAll(i, s, fn)
 }
 
-// Parser wraps an iterator in a reusable instance.
-// Reusing a parser instance is more efficient than global functions
+// Scanner wraps an iterator in a reusable instance.
+// Reusing a scanner instance is more efficient than global functions
 // that rely on a global iterator pool.
-type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
+type Scanner[S string | []byte] struct{ i *Iterator[S] }
 
-// NewParser creates a new reusable parser instance.
+// NewScanner creates a new reusable scanner instance.
 // A higher preallocStackFrames value implies greater memory usage but also reduces
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
 // preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
 // (1 frame = ~32 bytes).
-// Use DefaultStackSizeIterator when not sure.
-func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
+// Use [DefaultStackSizeScanner] when not sure.
+func NewScanner[S string | []byte](preallocStackFrames int) *Scanner[S] {
 	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
-	return &Parser[S]{i: i}
+	return &Scanner[S]{i: i}
 }
 
 // ScanOne calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike [Scanner.Scan], ScanOne doesn't return [ErrorCodeUnexpectedToken] when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns an error if any and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
-func (p *Parser[S]) ScanOne(
+// WARNING: Don't use or alias [*Iterator] after fn returns!
+func (sc *Scanner[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
-	reset(p.i)
-	p.i.src = s
-	return scan(p.i, fn)
+	reset(sc.i)
+	sc.i.src = toStr(s)
+	t, e := scan(sc.i, fn)
+	return fromStr[S](t), Error[S]{Src: s, Index: e.Index, Code: e.Code}
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
-func (p *Parser[S]) Scan(
+// WARNING: Don't use or alias [*Iterator] after fn returns!
+func (sc *Scanner[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
 ) Error[S] {
-	reset(p.i)
-	p.i.src = s
-
-	t, err := scan(p.i, fn)
-	if err.IsErr() {
-		return err
-	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
-	}
-	return Error[S]{}
+	reset(sc.i)
+	sc.i.src = toStr(s)
+	return scanAll(sc.i, s, fn)
 }
 
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
-func scan[S ~string | ~[]byte](
+func scan[S string | []byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
-) (S, Error[S]) {
+) (string, srcErr) {
 	var (
-		rollback S // Used as fallback for error report
+		rollback string // Used as fallback for error report
 		s        = i.src
 		b        bool
 		ks, ke   int
@@ -173,18 +144,18 @@ func scan[S ~string | ~[]byte](
 
 VALUE:
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	switch s[0] {
@@ -204,27 +175,27 @@ VALUE:
 		goto VALUE_TRUE
 	}
 	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+		return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 	}
-	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+	return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 
 VALUE_OBJECT:
 	i.valueType = ValueTypeObject
 	i.valueIndex, i.valueIndexEnd = len(i.src)-len(s), -1
 	s = s[1:]
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	ks, ke = i.keyIndex, i.keyIndexEnd
@@ -237,7 +208,7 @@ VALUE_OBJECT:
 			i.stack[len(i.stack)-1].ArrLen++
 		}
 		if fn(i) {
-			return s, i.getError(ErrorCodeCallback)
+			return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 		}
 		i.keyIndex = -1
 	}
@@ -267,7 +238,7 @@ VALUE_ARRAY:
 			i.stack[len(i.stack)-1].ArrLen++
 		}
 		if fn(i) {
-			return s, i.getError(ErrorCodeCallback)
+			return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 		}
 		i.keyIndex = -1
 	}
@@ -286,7 +257,7 @@ VALUE_NUMBER:
 			rollback = s
 			var rc jsonnum.ReturnCode
 			if s, rc = jsonnum.ReadNumber(s); rc == jsonnum.ReturnCodeErr {
-				return s, getError(ErrorCodeMalformedNumber, i.src, rollback)
+				return s, errAt(ErrorCodeMalformedNumber, i.src, rollback)
 			}
 		}
 		i.valueIndexEnd = len(i.src) - len(s)
@@ -300,7 +271,7 @@ VALUE_NUMBER:
 				i.stack[len(i.stack)-1].ArrLen++
 			}
 			if fn(i) {
-				return s, i.getError(ErrorCodeCallback)
+				return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 			}
 			i.keyIndex = -1
 		}
@@ -380,27 +351,27 @@ VALUE_STRING:
 
 	CHECK_STRING_CHARACTER:
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
 				s = s[1:]
-				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 			}
 			if lutEscape[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				return s, errAt(ErrorCodeInvalidEscape, i.src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				return s, errAt(ErrorCodeInvalidEscape, i.src, s)
 			}
 			s = s[5:]
 		case '"':
@@ -416,7 +387,7 @@ VALUE_STRING:
 					i.stack[len(i.stack)-1].ArrLen++
 				}
 				if fn(i) {
-					return s, i.getError(ErrorCodeCallback)
+					return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 				}
 				i.keyIndex = -1
 			}
@@ -424,7 +395,7 @@ VALUE_STRING:
 			goto AFTER_VALUE
 		default:
 			if s[0] < 0x20 {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 			s = s[1:]
 		}
@@ -432,7 +403,7 @@ VALUE_STRING:
 
 VALUE_NULL:
 	if len(s) < 4 || string(s[:4]) != "null" {
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	i.valueType = ValueTypeNull
 	i.valueIndex = len(i.src) - len(s)
@@ -447,7 +418,7 @@ VALUE_NULL:
 			i.stack[len(i.stack)-1].ArrLen++
 		}
 		if fn(i) {
-			return s, i.getError(ErrorCodeCallback)
+			return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 		}
 		i.keyIndex = -1
 	}
@@ -456,7 +427,7 @@ VALUE_NULL:
 
 VALUE_FALSE:
 	if len(s) < 5 || string(s[:5]) != "false" {
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	i.valueType = ValueTypeFalse
 	i.valueIndex = len(i.src) - len(s)
@@ -471,7 +442,7 @@ VALUE_FALSE:
 			i.stack[len(i.stack)-1].ArrLen++
 		}
 		if fn(i) {
-			return s, i.getError(ErrorCodeCallback)
+			return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 		}
 		i.keyIndex = -1
 	}
@@ -480,7 +451,7 @@ VALUE_FALSE:
 
 VALUE_TRUE:
 	if s := s; len(s) < 4 || string(s[:4]) != "true" {
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	i.valueType = ValueTypeTrue
 	i.valueIndex = len(i.src) - len(s)
@@ -495,7 +466,7 @@ VALUE_TRUE:
 			i.stack[len(i.stack)-1].ArrLen++
 		}
 		if fn(i) {
-			return s, i.getError(ErrorCodeCallback)
+			return s, srcErr{Index: i.valueIndex, Code: ErrorCodeCallback}
 		}
 		i.keyIndex = -1
 	}
@@ -504,25 +475,25 @@ VALUE_TRUE:
 
 OBJ_KEY:
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	if s[0] != '"' {
 		if s[0] < 0x20 {
-			return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+			return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 		}
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 	}
 
 	s = s[1:]
@@ -598,27 +569,27 @@ OBJ_KEY:
 
 	CHECK_FIELDNAME_STRING_CHARACTER:
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 		switch s[0] {
 		case '\\':
 			if len(s) < 2 {
 				s = s[1:]
-				return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+				return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 			}
 			if lutEscape[s[1]] == 1 {
 				s = s[2:]
 				continue
 			}
 			if s[1] != 'u' {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				return s, errAt(ErrorCodeInvalidEscape, i.src, s)
 			}
 			if len(s) < 6 ||
 				lutSX[s[5]] != 2 ||
 				lutSX[s[4]] != 2 ||
 				lutSX[s[3]] != 2 ||
 				lutSX[s[2]] != 2 {
-				return s, getError(ErrorCodeInvalidEscape, i.src, s)
+				return s, errAt(ErrorCodeInvalidEscape, i.src, s)
 			}
 			s = s[5:]
 		case '"':
@@ -627,50 +598,50 @@ OBJ_KEY:
 			goto AFTER_OBJ_KEY_STRING
 		default:
 			if s[0] < 0x20 {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 			s = s[1:]
 		}
 	}
 AFTER_OBJ_KEY_STRING:
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	if s[0] != ':' {
 		if s[0] < 0x20 {
-			return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+			return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 		}
-		return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 	}
 	s = s[1:]
 	goto VALUE
 
 VALUE_OR_ARR_TERM:
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	switch s[0] {
@@ -694,27 +665,27 @@ VALUE_OR_ARR_TERM:
 		goto VALUE_NUMBER
 	}
 	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+		return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 	}
-	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+	return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 
 AFTER_VALUE:
 	if len(i.stack) == 0 {
-		return s, Error[S]{}
+		return s, srcErr{}
 	}
 	if len(s) < 1 {
-		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+		return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 	}
 	if s[0] <= ' ' {
 		switch s[0] {
 		case ' ', '\t', '\r', '\n':
 			s, b = strfind.EndOfWhitespaceSeq(s)
 			if b {
-				return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+				return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 			}
 		}
 		if len(s) < 1 {
-			return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedEOF, i.src, s)
 		}
 	}
 	switch s[0] {
@@ -726,7 +697,7 @@ AFTER_VALUE:
 		goto OBJ_KEY
 	case '}':
 		if i.stack[len(i.stack)-1].Type != stackNodeTypeObject {
-			return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 		}
 		s = s[1:]
 		i.stack = i.stack[:len(i.stack)-1]
@@ -734,7 +705,7 @@ AFTER_VALUE:
 		goto AFTER_VALUE
 	case ']':
 		if i.stack[len(i.stack)-1].Type != stackNodeTypeArray {
-			return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+			return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
 		}
 		s = s[1:]
 		i.stack = i.stack[:len(i.stack)-1]
@@ -742,7 +713,36 @@ AFTER_VALUE:
 		goto AFTER_VALUE
 	}
 	if s[0] < 0x20 {
-		return s, getError(ErrorCodeIllegalControlChar, i.src, s)
+		return s, errAt(ErrorCodeIllegalControlChar, i.src, s)
 	}
-	return s, getError(ErrorCodeUnexpectedToken, i.src, s)
+	return s, errAt(ErrorCodeUnexpectedToken, i.src, s)
+}
+
+// scanAll scans i.src expecting it to contain
+// exactly one JSON value and nothing but whitespace after it.
+// src must be the original source i.src was derived from.
+func scanAll[S string | []byte](
+	i *Iterator[S], src S, fn func(*Iterator[S]) (err bool),
+) Error[S] {
+	t, e := scan(i, fn)
+	if e.IsErr() {
+		return Error[S]{Src: src, Index: e.Index, Code: e.Code}
+	}
+	var illegalChar bool
+	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+	if illegalChar {
+		return Error[S]{
+			Src:   src,
+			Index: len(i.src) - len(t),
+			Code:  ErrorCodeIllegalControlChar,
+		}
+	}
+	if len(t) > 0 {
+		return Error[S]{
+			Src:   src,
+			Index: len(i.src) - len(t),
+			Code:  ErrorCodeUnexpectedToken,
+		}
+	}
+	return Error[S]{}
 }
