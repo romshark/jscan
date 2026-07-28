@@ -109,7 +109,7 @@ func main() {
 	var data []Vector3D
 
 	var err error
-	errTokenizer := tokenizer.Tokenize(src, func(tokens []jscan.Token) (errTok bool) {
+	errTokenizer := tokenizer.Tokenize(src, func(tokens []jscan.Token[string]) (errTok bool) {
 		if tokens[0].Type != jscan.TokenTypeArray {
 			err = fmt.Errorf("expected array at index %d", tokens[0].Index)
 			return true
@@ -118,7 +118,7 @@ func main() {
 		// Preallocate slice since we know the number of objects in advance.
 		data = make([]Vector3D, tokens[0].Elements)
 
-		mustParseField := func(defined bool, val jscan.Token) (float64, error) {
+		mustParseField := func(defined bool, val jscan.Token[string]) (float64, error) {
 			if defined {
 				return 0, fmt.Errorf("duplicated field at index %d", tokens[0].Index)
 			}

@@ -20,7 +20,7 @@ import (
 // Consider reusing a Parser instance instead.
 //
 // TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unecessary iterator allocation such as when dealing with
+// and avoid an unnecessary iterator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
 //
 //	m := json.RawMessage(`1`)
@@ -57,7 +57,7 @@ func ScanOne[S ~string | ~[]byte](
 // Consider reusing a Parser instance instead.
 //
 // TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unecessary iterator allocation such as when dealing with
+// and avoid an unnecessary iterator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
 //
 //	m := json.RawMessage(`1`)

@@ -1,7 +1,7 @@
 package jscan
 
 import (
-	"fmt"
+	"errors"
 	"strconv"
 	"unsafe"
 
@@ -120,12 +120,17 @@ type Token[S ~string | ~[]byte] struct {
 	// Elements is meaningless for non-array and non-object tokens.
 	Elements int
 
+	// Type declares the type of the token.
 	Type TokenType
 }
 
 var (
-	ErrOverflow  = fmt.Errorf("token value overflows integer type")
-	ErrWrongType = fmt.Errorf("token value has different type")
+	// ErrOverflow indicates that the token value doesn't fit the requested
+	// integer type.
+	ErrOverflow = errors.New("token value overflows integer type")
+
+	// ErrWrongType indicates that the token value isn't of the requested type.
+	ErrWrongType = errors.New("token value has different type")
 )
 
 const intSize = unsafe.Sizeof(int(0))
@@ -235,7 +240,8 @@ func (t Token[S]) Int64(src S) (int64, error) {
 // Uint returns the uint value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrWrongType if the token isn't an integer value
+// or if it's a negative integer.
 // Returns ErrOverflow if the value would overflow type uint.
 func (t Token[S]) Uint(src S) (uint, error) {
 	if t.Type == TokenTypeNull {
@@ -261,7 +267,8 @@ func (t Token[S]) Uint(src S) (uint, error) {
 // Uint8 returns the uint8 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint8(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrWrongType if the token isn't an integer value
+// or if it's a negative integer.
 // Returns ErrOverflow if the value would overflow type uint8.
 func (t Token[S]) Uint8(src S) (uint8, error) {
 	if t.Type == TokenTypeNull {
@@ -280,7 +287,8 @@ func (t Token[S]) Uint8(src S) (uint8, error) {
 // Uint16 returns the uint16 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint16(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrWrongType if the token isn't an integer value
+// or if it's a negative integer.
 // Returns ErrOverflow if the value would overflow type uint16.
 func (t Token[S]) Uint16(src S) (uint16, error) {
 	if t.Type == TokenTypeNull {
@@ -299,7 +307,8 @@ func (t Token[S]) Uint16(src S) (uint16, error) {
 // Uint32 returns the uint32 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint32(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrWrongType if the token isn't an integer value
+// or if it's a negative integer.
 // Returns ErrOverflow if the value would overflow type uint32.
 func (t Token[S]) Uint32(src S) (uint32, error) {
 	if t.Type == TokenTypeNull {
@@ -318,7 +327,8 @@ func (t Token[S]) Uint32(src S) (uint32, error) {
 // Uint64 returns the uint64 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint64(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
+// Returns ErrWrongType if the token isn't an integer value
+// or if it's a negative integer.
 // Returns ErrOverflow if the value would overflow type uint64.
 func (t Token[S]) Uint64(src S) (uint64, error) {
 	if t.Type == TokenTypeNull {
@@ -387,7 +397,7 @@ func (t Token[S]) Float64(src S) (float64, error) {
 }
 
 // Bool returns the bool value of the token.
-// Expects src to be the source string provided to the tokenizer.
+// src is ignored and accepted only for consistency with the other getters.
 // Returns bool(false) if the token is a null value.
 // Returns ErrWrongType if the token isn't a boolean value.
 func (t Token[S]) Bool(src S) (bool, error) {
@@ -427,9 +437,9 @@ type Tokenizer[S ~string | ~[]byte] struct {
 //
 // A higher preallocStackFrames value implies greater memory usage but also reduces
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
-// Use DefaultStackSizeTokenizer when not sure, which is equivalent to ~1KiB bytes of
+// Use DefaultStackSizeTokenizer when not sure, which is equivalent to ~1KiB of
 // memory usage on 64-bit systems (1 frame = 8 bytes).
-
+//
 // A higher preallocTokenBuffer value also implies greater memory usage and also reduces
 // the chance of dynamic memory allocations if the number of JSON tokens encountered
 // surpasses the buffer size. Use DefaultTokenBufferSize when not sure, which is

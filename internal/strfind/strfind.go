@@ -19,9 +19,8 @@ var charMap = [256]byte{
 	'A': 2, 'B': 2, 'C': 2, 'D': 2, 'E': 2, 'F': 2,
 }
 
-// EndOfWhitespaceSeq returns the index of the end of
-// the whitespace sequence.
-// If the returned ctrlChar == true then index points at an
+// EndOfWhitespaceSeq returns trailing as the remainder of s with the leading whitespace
+// sequence cut off. If the returned ctrlChar == true then trailing begins with an
 // illegal character that was encountered during the scan.
 func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
 	for ; len(s) > 15; s = s[16:] {

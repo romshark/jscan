@@ -9,7 +9,7 @@ import (
 	"github.com/romshark/jscan/v2/internal/keyescape"
 )
 
-// Default stack sizes
+// Default stack and buffer sizes
 const (
 	DefaultStackSizeIterator  = 64
 	DefaultStackSizeValidator = 128
@@ -227,7 +227,7 @@ const (
 	// an illegal control character in the source.
 	ErrorCodeIllegalControlChar
 
-	// ErrorCodeUnexpectedEOF indicates the encounter an unexpected end of file.
+	// ErrorCodeUnexpectedEOF indicates the encounter of an unexpected end of file.
 	ErrorCodeUnexpectedEOF
 
 	// ErrorCodeUnexpectedToken indicates the encounter of an unexpected token.
@@ -315,8 +315,8 @@ var lutSX = [256]byte{
 	'A': 2, 'B': 2, 'C': 2, 'D': 2, 'E': 2, 'F': 2,
 }
 
-// lutStr maps 0 to all bytes that don't require checking during string traversal.
-// 1 is mapped to control, quotation mark (") and reverse solidus ("\").
+// lutStr maps control characters, the quotation mark (") and the reverse solidus ("\")
+// to 1 and all bytes that don't require checking during string traversal to 0.
 var lutStr = [256]byte{
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -336,7 +336,8 @@ var lutEscape = [256]byte{
 	't':  1,
 }
 
-// getError returns the stringified error, if any.
+// getError returns an error with the index pointing at
+// the start of the remainder s within src.
 func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
 	return Error[S]{
 		Code:  c,

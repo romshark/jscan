@@ -24,7 +24,7 @@ func Valid[S ~string | ~[]byte](s S) bool {
 // Consider reusing a Validator instance instead.
 //
 // TIP: Explicitly cast s to string or []byte to use the global validator pools
-// and avoid an unecessary validator allocation such as when dealing with
+// and avoid an unnecessary validator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
 //
 //	m := json.RawMessage(`1`)
@@ -55,7 +55,7 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 // Consider reusing a Validator instance instead.
 //
 // TIP: Explicitly cast s to string or []byte to use the global validator pools
-// and avoid an unecessary validator allocation such as when dealing with
+// and avoid an unnecessary validator allocation such as when dealing with
 // json.RawMessage and similar types derived from string or []byte.
 //
 //	m := json.RawMessage(`1`)
@@ -139,7 +139,7 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 	return Error[S]{}
 }
 
-// validate returns the remainder of i.src and an error if any is encountered.
+// validate returns the remainder of s and an error if any is encountered.
 func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
 	var (
 		rollback S // Used as fallback for error report
