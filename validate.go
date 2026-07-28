@@ -29,20 +29,10 @@ func Valid[S string | []byte](s S) bool {
 //	m := json.RawMessage(`1`)
 //	jscan.ValidateOne([]byte(m), // Convert m to []byte.
 func ValidateOne[S string | []byte](s S) (trailing S, err Error[S]) {
-	var v *Validator[S]
-	switch any(s).(type) {
-	case string:
-		x := validatorPoolString.Get()
-		defer validatorPoolString.Put(x)
-		v = x.(*Validator[S])
-	case []byte:
-		x := validatorPoolBytes.Get()
-		defer validatorPoolBytes.Put(x)
-		v = x.(*Validator[S])
-	}
-	v.stack = v.stack[:0]
+	st := validatorStackPool.Get().(*[]stackNodeType)
+	defer validatorStackPool.Put(st)
 
-	t, e := validate(v.stack, toStr(s))
+	t, e := validate((*st)[:0], toStr(s))
 	return fromStr[S](t), Error[S]{Src: s, Index: e.Index, Code: e.Code}
 }
 
@@ -58,20 +48,10 @@ func ValidateOne[S string | []byte](s S) (trailing S, err Error[S]) {
 //	m := json.RawMessage(`1`)
 //	jscan.Validate([]byte(m), // Convert m to []byte.
 func Validate[S string | []byte](s S) Error[S] {
-	var v *Validator[S]
-	switch any(s).(type) {
-	case string:
-		x := validatorPoolString.Get()
-		defer validatorPoolString.Put(x)
-		v = x.(*Validator[S])
-	case []byte:
-		x := validatorPoolBytes.Get()
-		defer validatorPoolBytes.Put(x)
-		v = x.(*Validator[S])
-	}
-	v.stack = v.stack[:0]
+	st := validatorStackPool.Get().(*[]stackNodeType)
+	defer validatorStackPool.Put(st)
 
-	return validateAll(v.stack, s)
+	return validateAll((*st)[:0], s)
 }
 
 // NewValidator creates a new reusable validator instance.
