@@ -81,8 +81,8 @@ func (t TokenType) String() string {
 
 // RawTokenValue returns the raw JSON of the value referenced by tokens[index].
 // Expects src to be the source string provided to the tokenizer.
-// Returns the whole composite value for TokenTypeObjectEnd and TokenTypeArrayEnd
-// same as for TokenTypeObject and TokenTypeArray.
+// Returns the whole composite value for [TokenTypeObjectEnd] and [TokenTypeArrayEnd]
+// same as for [TokenTypeObject] and [TokenTypeArray].
 func RawTokenValue[S string | []byte](src S, tokens []Token[S], index int) S {
 	switch tokens[index].Type {
 	case TokenTypeObject, TokenTypeArray: // Composite value
@@ -99,14 +99,14 @@ type Token[S string | []byte] struct {
 	// Index declares the start byte index in the source.
 	Index int
 
-	// End behaves differently for composite (TokenTypeObject, TokenTypeObjectEnd,
-	// TokenTypeArray, TokenTypeArrayEnd) types and non-composite token types.
+	// End behaves differently for composite ([TokenTypeObject], [TokenTypeObjectEnd],
+	// [TokenTypeArray], [TokenTypeArrayEnd]) types and non-composite token types.
 	//
-	// For TokenTypeObject and TokenTypeArray End declares the index of the end token (
-	// TokenTypeObjectEnd and TokenTypeArrayEnd respectively) in the token buffer.
+	// For [TokenTypeObject] and [TokenTypeArray] End declares the index of the end token (
+	// [TokenTypeObjectEnd] and [TokenTypeArrayEnd] respectively) in the token buffer.
 	//
-	// For TokenTypeObjectEnd and TokenTypeArrayEnd End declares the index of the
-	// start token (TokenTypeObject and TokenTypeArray respectively) in the token buffer.
+	// For [TokenTypeObjectEnd] and [TokenTypeArrayEnd] End declares the index of the
+	// start token ([TokenTypeObject] and [TokenTypeArray] respectively) in the token buffer.
 	//
 	// For all other token types, End declares the index of the end byte of the value
 	// in the source.
@@ -114,9 +114,9 @@ type Token[S string | []byte] struct {
 	// End can be used to quickly skip over large sections of JSON.
 	End int
 
-	// Elements behaves differently for TokenTypeObject and TokenTypeArray.
-	// For TokenTypeObject it declares the number of key-value pairs, whereas for
-	// TokenTypeArray it declares the number of elements in the array.
+	// Elements behaves differently for [TokenTypeObject] and [TokenTypeArray].
+	// For [TokenTypeObject] it declares the number of key-value pairs, whereas for
+	// [TokenTypeArray] it declares the number of elements in the array.
 	// Elements is meaningless for non-array and non-object tokens.
 	Elements int
 
@@ -138,8 +138,8 @@ const intSize = unsafe.Sizeof(int(0))
 // Int returns the int value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns int(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
-// Returns ErrOverflow if the value would overflow type int.
+// Returns [ErrWrongType] if the token isn't an integer value.
+// Returns [ErrOverflow] if the value would overflow type int.
 func (t Token[S]) Int(src S) (int, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -164,8 +164,8 @@ func (t Token[S]) Int(src S) (int, error) {
 // Int8 returns the int8 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns int8(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
-// Returns ErrOverflow if the value would overflow type int8.
+// Returns [ErrWrongType] if the token isn't an integer value.
+// Returns [ErrOverflow] if the value would overflow type int8.
 func (t Token[S]) Int8(src S) (int8, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -183,8 +183,8 @@ func (t Token[S]) Int8(src S) (int8, error) {
 // Int16 returns the int16 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns int16(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
-// Returns ErrOverflow if the value would overflow type int16.
+// Returns [ErrWrongType] if the token isn't an integer value.
+// Returns [ErrOverflow] if the value would overflow type int16.
 func (t Token[S]) Int16(src S) (int16, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -202,8 +202,8 @@ func (t Token[S]) Int16(src S) (int16, error) {
 // Int32 returns the int32 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns int32(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
-// Returns ErrOverflow if the value would overflow type int32.
+// Returns [ErrWrongType] if the token isn't an integer value.
+// Returns [ErrOverflow] if the value would overflow type int32.
 func (t Token[S]) Int32(src S) (int32, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -221,8 +221,8 @@ func (t Token[S]) Int32(src S) (int32, error) {
 // Int64 returns the int64 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns int64(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value.
-// Returns ErrOverflow if the value would overflow type int64.
+// Returns [ErrWrongType] if the token isn't an integer value.
+// Returns [ErrOverflow] if the value would overflow type int64.
 func (t Token[S]) Int64(src S) (int64, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -240,9 +240,9 @@ func (t Token[S]) Int64(src S) (int64, error) {
 // Uint returns the uint value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value
+// Returns [ErrWrongType] if the token isn't an integer value
 // or if it's a negative integer.
-// Returns ErrOverflow if the value would overflow type uint.
+// Returns [ErrOverflow] if the value would overflow type uint.
 func (t Token[S]) Uint(src S) (uint, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -267,9 +267,9 @@ func (t Token[S]) Uint(src S) (uint, error) {
 // Uint8 returns the uint8 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint8(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value
+// Returns [ErrWrongType] if the token isn't an integer value
 // or if it's a negative integer.
-// Returns ErrOverflow if the value would overflow type uint8.
+// Returns [ErrOverflow] if the value would overflow type uint8.
 func (t Token[S]) Uint8(src S) (uint8, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -287,9 +287,9 @@ func (t Token[S]) Uint8(src S) (uint8, error) {
 // Uint16 returns the uint16 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint16(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value
+// Returns [ErrWrongType] if the token isn't an integer value
 // or if it's a negative integer.
-// Returns ErrOverflow if the value would overflow type uint16.
+// Returns [ErrOverflow] if the value would overflow type uint16.
 func (t Token[S]) Uint16(src S) (uint16, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -307,9 +307,9 @@ func (t Token[S]) Uint16(src S) (uint16, error) {
 // Uint32 returns the uint32 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint32(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value
+// Returns [ErrWrongType] if the token isn't an integer value
 // or if it's a negative integer.
-// Returns ErrOverflow if the value would overflow type uint32.
+// Returns [ErrOverflow] if the value would overflow type uint32.
 func (t Token[S]) Uint32(src S) (uint32, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -327,9 +327,9 @@ func (t Token[S]) Uint32(src S) (uint32, error) {
 // Uint64 returns the uint64 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns uint64(0) if the token is a null value.
-// Returns ErrWrongType if the token isn't an integer value
+// Returns [ErrWrongType] if the token isn't an integer value
 // or if it's a negative integer.
-// Returns ErrOverflow if the value would overflow type uint64.
+// Returns [ErrOverflow] if the value would overflow type uint64.
 func (t Token[S]) Uint64(src S) (uint64, error) {
 	if t.Type == TokenTypeNull {
 		return 0, nil
@@ -347,8 +347,8 @@ func (t Token[S]) Uint64(src S) (uint64, error) {
 // Float32 returns the float32 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns float32(0) if the token is a null value.
-// Returns ErrWrongType if the token is neither an integer nor a number value.
-// Returns the error of strconv.ParseFloat if the value
+// Returns [ErrWrongType] if the token is neither an integer nor a number value.
+// Returns the error of [strconv.ParseFloat] if the value
 // can't be represented as a float32.
 func (t Token[S]) Float32(src S) (float32, error) {
 	if t.Type == TokenTypeNull {
@@ -375,8 +375,8 @@ func (t Token[S]) Float32(src S) (float32, error) {
 // Float64 returns the float64 value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns float64(0) if the token is a null value.
-// Returns ErrWrongType if the token is neither an integer nor a number value.
-// Returns the error of strconv.ParseFloat if the value
+// Returns [ErrWrongType] if the token is neither an integer nor a number value.
+// Returns the error of [strconv.ParseFloat] if the value
 // can't be represented as a float64.
 func (t Token[S]) Float64(src S) (float64, error) {
 	if t.Type == TokenTypeNull {
@@ -403,7 +403,7 @@ func (t Token[S]) Float64(src S) (float64, error) {
 // Bool returns the bool value of the token.
 // src is ignored and accepted only for consistency with the other getters.
 // Returns bool(false) if the token is a null value.
-// Returns ErrWrongType if the token isn't a boolean value.
+// Returns [ErrWrongType] if the token isn't a boolean value.
 func (t Token[S]) Bool(src S) (bool, error) {
 	switch t.Type {
 	case TokenTypeTrue:
@@ -417,9 +417,9 @@ func (t Token[S]) Bool(src S) (bool, error) {
 // String returns the unescaped string value of the token.
 // Expects src to be the source string provided to the tokenizer.
 // Returns string("") if the token is a null value.
-// Returns ErrWrongType if the token isn't a string value.
+// Returns [ErrWrongType] if the token isn't a string value.
 //
-// Tip: Use RawTokenValue if you require the raw string value without unescaping.
+// Tip: Use [RawTokenValue] if you require the raw string value without unescaping.
 func (t Token[S]) String(src S) (string, error) {
 	switch t.Type {
 	case TokenTypeNull:
@@ -441,12 +441,12 @@ type Tokenizer[S string | []byte] struct {
 //
 // A higher preallocStackFrames value implies greater memory usage but also reduces
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
-// Use DefaultStackSizeTokenizer when not sure, which is equivalent to ~1KiB of
+// Use [DefaultStackSizeTokenizer] when not sure, which is equivalent to ~1KiB of
 // memory usage on 64-bit systems (1 frame = 8 bytes).
 //
 // A higher preallocTokenBuffer value also implies greater memory usage and also reduces
 // the chance of dynamic memory allocations if the number of JSON tokens encountered
-// surpasses the buffer size. Use DefaultTokenBufferSize when not sure, which is
+// surpasses the buffer size. Use [DefaultTokenBufferSize] when not sure, which is
 // equivalent to ~32KiB of memory usage on 64-bit systems (1 token = 32 bytes).
 func NewTokenizer[S string | []byte](
 	preallocStackFrames, preallocTokenBuffer int,
@@ -460,7 +460,7 @@ func NewTokenizer[S string | []byte](
 
 // TokenizeOne calls fn with the tokens of the first value from s.
 //
-// Unlike Tokenize, TokenizeOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike [Tokenizer.Tokenize], TokenizeOne doesn't return [ErrorCodeUnexpectedToken] when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns an error if any and trailing as substring of s with the tokenized value cut.
 // In case of an error trailing will be a substring of s cut up until the index

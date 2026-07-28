@@ -9,23 +9,23 @@ import (
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike [Scan], ScanOne doesn't return [ErrorCodeUnexpectedToken] when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns an error if any and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
 //
-// Unlike (*Scanner).ScanOne this function will take an iterator instance
+// Unlike [Scanner.ScanOne] this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Scanner instance instead.
+// Consider reusing a [Scanner] instance instead.
 //
-// NOTE: Types derived from string or []byte such as json.RawMessage
+// NOTE: Types derived from string or []byte such as [encoding/json.RawMessage]
 // must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
 //	jscan.ScanOne([]byte(m), // Convert m to []byte.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
+// WARNING: Don't use or alias [*Iterator] after fn returns!
 func ScanOne[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
@@ -50,17 +50,17 @@ func ScanOne[S string | []byte](
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike (*Scanner).Scan this function will take an iterator instance
+// Unlike [Scanner.Scan] this function will take an iterator instance
 // from a global iterator pool and can therefore be less efficient.
-// Consider reusing a Scanner instance instead.
+// Consider reusing a [Scanner] instance instead.
 //
-// NOTE: Types derived from string or []byte such as json.RawMessage
+// NOTE: Types derived from string or []byte such as [encoding/json.RawMessage]
 // must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
 //	jscan.Scan([]byte(m), // Convert m to []byte.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
+// WARNING: Don't use or alias [*Iterator] after fn returns!
 func Scan[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (err Error[S]) {
@@ -90,7 +90,7 @@ type Scanner[S string | []byte] struct{ i *Iterator[S] }
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
 // preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
 // (1 frame = ~32 bytes).
-// Use DefaultStackSizeScanner when not sure.
+// Use [DefaultStackSizeScanner] when not sure.
 func NewScanner[S string | []byte](preallocStackFrames int) *Scanner[S] {
 	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
@@ -101,13 +101,13 @@ func NewScanner[S string | []byte](preallocStackFrames int) *Scanner[S] {
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// Unlike Scan, ScanOne doesn't return ErrorCodeUnexpectedToken when
+// Unlike [Scanner.Scan], ScanOne doesn't return [ErrorCodeUnexpectedToken] when
 // it encounters anything other than EOF after reading a valid JSON value.
 // Returns an error if any and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
+// WARNING: Don't use or alias [*Iterator] after fn returns!
 func (sc *Scanner[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
@@ -121,7 +121,7 @@ func (sc *Scanner[S]) ScanOne(
 // When an object or array is encountered fn will also be called for each of its
 // member and element values.
 //
-// WARNING: Don't use or alias *Iterator[S] after fn returns!
+// WARNING: Don't use or alias [*Iterator] after fn returns!
 func (sc *Scanner[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
 ) Error[S] {

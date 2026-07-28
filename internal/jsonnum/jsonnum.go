@@ -9,7 +9,7 @@ const (
 )
 
 // ReadNumber returns s with the read number value cut off
-// and err=ReturnCodeErr if a syntax error was encountered.
+// and err=[ReturnCodeErr] if a syntax error was encountered.
 func ReadNumber[S string | []byte](s S) (trailing S, err ReturnCode) {
 	var i int
 

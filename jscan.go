@@ -96,7 +96,7 @@ func (i *Iterator[S]) KeyIndexEnd() int { return i.keyIndexEnd }
 // Key returns either the raw object member key including the surrounding
 // quotes or a zero value when the value isn't a member of an object and
 // hence doesn't have a key. Escape sequences aren't decoded,
-// use (*Iterator[S]).Pointer() for a decoded reference to the value.
+// use [Iterator.Pointer] for a decoded reference to the value.
 func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
@@ -154,7 +154,7 @@ func appendKey(dest []byte, key string) []byte {
 
 // ViewPointer calls fn and provides the buffer holding the
 // JSON pointer in RFC-6901 format.
-// Consider using (*Iterator[S]).Pointer() instead for safety and convenience.
+// Consider using [Iterator.Pointer] instead for safety and convenience.
 //
 // Keys containing escape sequences must be decoded first,
 // which requires a dynamic memory allocation per such key.
@@ -183,9 +183,9 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 }
 
 // Error is a syntax error encountered during validation or iteration.
-// The only exception is ErrorCodeCallback which indicates a callback
+// The only exception is [ErrorCodeCallback] which indicates a callback
 // explicitly breaking by returning true instead of a syntax error.
-// (Error).IsErr() returning false is equivalent to err == nil.
+// [Error.IsErr] returning false is equivalent to err == nil.
 type Error[S string | []byte] struct {
 	// Src refers to the original source.
 	Src S
