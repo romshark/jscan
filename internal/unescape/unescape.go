@@ -123,9 +123,9 @@ const (
 	// Code points in the surrogate range are not valid for UTF-8.
 	surrogateMin, surrogateMax = 0xD800, 0xDFFF
 
-	tx, t2, t3, t4               = 0b10000000, 0b11000000, 0b11100000, 0b11110000
-	maskx                        = 0b00111111
-	rune1Max, rune2Max, rune3Max = 1<<7 - 1, 1<<11 - 1, 1<<16 - 1
+	tx, t2, t3         = 0b10000000, 0b11000000, 0b11100000
+	maskx              = 0b00111111
+	rune1Max, rune2Max = 1<<7 - 1, 1<<11 - 1
 
 	// maxRune is the maximum valid Unicode code point.
 	maxRune = '\U0010FFFF'
