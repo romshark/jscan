@@ -55,8 +55,8 @@ func BenchmarkInvalid(b *testing.B) {
 		"0.1234567890e",
 	} {
 		b.Run("", func(b *testing.B) {
-			// This rc will not be checked since "01" is not technically wrong
-			// according to jsonnum.ReadNumber, it would return ("1", false) instead.
+			// This rc will not be checked since "01" is not technically wrong according
+			// to jsonnum.ReadNumber, it would return ("1", ReturnCodeInteger) instead.
 			// All inputs are already tested in TestReadNumberErr and TestReadNumberZero.
 			var rc jsonnum.ReturnCode
 			var remainderString string

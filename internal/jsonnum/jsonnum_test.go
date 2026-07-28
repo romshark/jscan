@@ -3,6 +3,7 @@ package jsonnum_test
 import (
 	"math"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/romshark/jscan/v2/internal/jsonnum"
@@ -174,6 +175,13 @@ func TestReadNumber(t *testing.T) {
 		{"1E-1234567890", "", jsonnum.ReturnCodeNumber},
 		{"1234567890E-1234567890", "", jsonnum.ReturnCodeNumber},
 
+		// Exponent digits spanning multiple 8-byte batches.
+		{"1e12345678901234567", "", jsonnum.ReturnCodeNumber},
+		{"1e-12345678901234567", "", jsonnum.ReturnCodeNumber},
+		{"1e123456789012345678901234", "", jsonnum.ReturnCodeNumber},
+		{"1e12345678901234567xxxxxxxx", "xxxxxxxx", jsonnum.ReturnCodeNumber},
+		{"1e123456789012345678901234xxxxxxxx", "xxxxxxxx", jsonnum.ReturnCodeNumber},
+
 		{
 			"1234567890.1234567890E-1234567890",
 			"",
@@ -238,6 +246,14 @@ func TestReadNumberZero(t *testing.T) {
 	})
 }
 
+// TestReadNumberEmpty documents that ReadNumber requires a non-empty input.
+// Package jscan only invokes it after having encountered '-' or a digit,
+// so this can't be reached through the public API.
+func TestReadNumberEmpty(t *testing.T) {
+	require.Panics(t, func() { _, _ = jsonnum.ReadNumber("") })
+	require.Panics(t, func() { _, _ = jsonnum.ReadNumber([]byte{}) })
+}
+
 func TestReadNumberErr(t *testing.T) {
 	for _, tt := range []struct {
 		input       string
@@ -290,6 +306,28 @@ func TestReadNumberErr(t *testing.T) {
 						trailing, rc := jsonnum.ReadNumber([]byte(in))
 						require.Equal(t, jsonnum.ReturnCodeErr, rc)
 						require.Equal(t, tt.expectAfter+t2.term, string(trailing))
+					})
+
+					if strings.HasPrefix(tt.input, "-") {
+						// Prefixing an already signed input would make the minus itself
+						// the unexpected token and hence change the expected trailing.
+						return
+					}
+
+					t.Run("negative", func(t *testing.T) {
+						t.Run("string", func(t *testing.T) {
+							in := "-" + tt.input + t2.term
+							trailing, rc := jsonnum.ReadNumber(in)
+							require.Equal(t, jsonnum.ReturnCodeErr, rc)
+							require.Equal(t, tt.expectAfter+t2.term, trailing)
+						})
+
+						t.Run("bytes", func(t *testing.T) {
+							in := "-" + tt.input + t2.term
+							trailing, rc := jsonnum.ReadNumber([]byte(in))
+							require.Equal(t, jsonnum.ReturnCodeErr, rc)
+							require.Equal(t, tt.expectAfter+t2.term, string(trailing))
+						})
 					})
 				})
 			}
