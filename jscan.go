@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
 	"github.com/romshark/jscan/v2/internal/unescape"
@@ -50,7 +51,7 @@ type stackNode struct {
 // Iterator provides access to the recently encountered value.
 type Iterator[S string | []byte] struct {
 	stack   []stackNode
-	src     S
+	src     string
 	pointer []byte
 
 	valueType             ValueType
@@ -95,7 +96,7 @@ func (i *Iterator[S]) Key() (key S) {
 	if i.keyIndex == -1 {
 		return
 	}
-	return i.src[i.keyIndex:i.keyIndexEnd]
+	return fromStr[S](i.src[i.keyIndex:i.keyIndexEnd])
 }
 
 // Value returns the value if any.
@@ -103,7 +104,7 @@ func (i *Iterator[S]) Value() (value S) {
 	if i.valueIndexEnd == -1 {
 		return
 	}
-	return i.src[i.valueIndex:i.valueIndexEnd]
+	return fromStr[S](i.src[i.valueIndex:i.valueIndexEnd])
 }
 
 // ScanStack calls fn for every element in the stack.
@@ -141,7 +142,7 @@ func (i *Iterator[S]) Pointer() (s S) {
 // The key is unescaped first because a JSON pointer references the decoded member name,
 // hence the keys of `{"a\/b":1}` and `{"a/b":1}` are equal and
 // must produce the same pointer.
-func appendKey[S string | []byte](dest []byte, key S) []byte {
+func appendKey(dest []byte, key string) []byte {
 	return keyescape.Append(dest, unescape.Valid(key))
 }
 
@@ -169,14 +170,6 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	}
 	fn(i.pointer)
 	i.pointer = i.pointer[:0]
-}
-
-func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
-	return Error[S]{
-		Code:  c,
-		Src:   i.src,
-		Index: i.valueIndex,
-	}
 }
 
 // Error is a syntax error encountered during validation or iteration.
@@ -347,12 +340,46 @@ var lutEscape = [256]byte{
 	't':  1,
 }
 
-// getError returns an error with the index pointing at
-// the start of the remainder s within src.
-func getError[S string | []byte](c ErrorCode, src S, s S) Error[S] {
-	return Error[S]{
-		Code:  c,
-		Src:   src,
-		Index: len(src) - len(s),
+// toStr returns s as a string without copying.
+//
+// WARNING: The returned string aliases s, hence s must neither be mutated
+// while the string is in use nor outlived by it.
+func toStr[S string | []byte](s S) string {
+	switch v := any(s).(type) {
+	case string:
+		return v
+	case []byte:
+		return unsafe.String(unsafe.SliceData(v), len(v))
 	}
+	return ""
+}
+
+// fromStr reverses toStr returning s as S without copying.
+//
+// WARNING: The returned value aliases s.
+func fromStr[S string | []byte](s string) S {
+	var zero S
+	switch any(zero).(type) {
+	case []byte:
+		b := unsafe.Slice(unsafe.StringData(s), len(s))
+		return any(b).(S)
+	}
+	return any(s).(S)
+}
+
+// srcErr is an error reported by the non-generic engines.
+// It's relative to the source and is turned into an Error[S]
+// by the generic wrappers.
+type srcErr struct {
+	Index int
+	Code  ErrorCode
+}
+
+// IsErr returns true if there is an error, otherwise returns false.
+func (e srcErr) IsErr() bool { return e.Code != 0 }
+
+// errAt returns a srcErr with the index pointing at
+// the start of the remainder s within src.
+func errAt(c ErrorCode, src, s string) srcErr {
+	return srcErr{Index: len(src) - len(s), Code: c}
 }
