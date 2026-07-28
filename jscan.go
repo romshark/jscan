@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
+	"github.com/romshark/jscan/v2/internal/unescape"
 )
 
 // Default stack and buffer sizes
@@ -17,11 +18,11 @@ const (
 	DefaultTokenBufferSize    = 1024
 )
 
-func newIterator[S ~string | ~[]byte]() *Iterator[S] {
+func newIterator[S string | []byte]() *Iterator[S] {
 	return &Iterator[S]{stack: make([]stackNode, 0, DefaultStackSizeIterator)}
 }
 
-func newValidator[S ~string | ~[]byte]() *Validator[S] {
+func newValidator[S string | []byte]() *Validator[S] {
 	return &Validator[S]{stack: make([]stackNodeType, 0, DefaultStackSizeValidator)}
 }
 
@@ -47,7 +48,7 @@ type stackNode struct {
 }
 
 // Iterator provides access to the recently encountered value.
-type Iterator[S ~string | ~[]byte] struct {
+type Iterator[S string | []byte] struct {
 	stack   []stackNode
 	src     S
 	pointer []byte
@@ -134,6 +135,16 @@ func (i *Iterator[S]) Pointer() (s S) {
 	return
 }
 
+// appendKey appends the RFC-6901 encoded reference token for the raw
+// source key (without the surrounding quotes) to dest.
+//
+// The key is unescaped first because a JSON pointer references the decoded member name,
+// hence the keys of `{"a\/b":1}` and `{"a/b":1}` are equal and
+// must produce the same pointer.
+func appendKey[S string | []byte](dest []byte, key S) []byte {
+	return keyescape.Append(dest, unescape.Valid(key))
+}
+
 // ViewPointer calls fn and provides the buffer holding the
 // JSON pointer in RFC-6901 format.
 // Consider using (*Iterator[S]).Pointer() instead for safety and convenience.
@@ -145,7 +156,7 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 		if keyIndex != -1 {
 			// Object key
 			i.pointer = append(i.pointer, '/')
-			i.pointer = keyescape.Append(i.pointer, i.src[keyIndex+1:keyEnd-1])
+			i.pointer = appendKey(i.pointer, i.src[keyIndex+1:keyEnd-1])
 			return
 		}
 		// Array index
@@ -154,7 +165,7 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	})
 	if i.keyIndex != -1 {
 		i.pointer = append(i.pointer, '/')
-		i.pointer = keyescape.Append(i.pointer, i.src[i.keyIndex+1:i.keyIndexEnd-1])
+		i.pointer = appendKey(i.pointer, i.src[i.keyIndex+1:i.keyIndexEnd-1])
 	}
 	fn(i.pointer)
 	i.pointer = i.pointer[:0]
@@ -172,7 +183,7 @@ func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
 // The only exception is ErrorCodeCallback which indicates a callback
 // explicitly breaking by returning true instead of a syntax error.
 // (Error).IsErr() returning false is equivalent to err == nil.
-type Error[S ~string | ~[]byte] struct {
+type Error[S string | []byte] struct {
 	// Src refers to the original source.
 	Src S
 
@@ -205,7 +216,7 @@ func (e Error[S]) Error() string {
 	return errorMessage(e.Code, e.Index, 0)
 }
 
-func reset[S ~string | ~[]byte](i *Iterator[S]) {
+func reset[S string | []byte](i *Iterator[S]) {
 	i.stack = i.stack[:0]
 	i.pointer = i.pointer[:0]
 	i.valueType = 0
@@ -338,7 +349,7 @@ var lutEscape = [256]byte{
 
 // getError returns an error with the index pointing at
 // the start of the remainder s within src.
-func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
+func getError[S string | []byte](c ErrorCode, src S, s S) Error[S] {
 	return Error[S]{
 		Code:  c,
 		Src:   src,

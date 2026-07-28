@@ -19,15 +19,14 @@ import (
 // from a global iterator pool and can therefore be less efficient.
 // Consider reusing a Parser instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unnecessary iterator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as json.RawMessage
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.ScanOne([]byte(m), // Cast m to []byte to avoid allocation!
+//	jscan.ScanOne([]byte(m), // Convert m to []byte.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
-func ScanOne[S ~string | ~[]byte](
+func ScanOne[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (trailing S, err Error[S]) {
 	var i *Iterator[S]
@@ -40,8 +39,6 @@ func ScanOne[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
 	}
 	i.src = s
 	reset(i)
@@ -56,15 +53,14 @@ func ScanOne[S ~string | ~[]byte](
 // from a global iterator pool and can therefore be less efficient.
 // Consider reusing a Parser instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global iterator pools
-// and avoid an unnecessary iterator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as json.RawMessage
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.Scan([]byte(m), // Cast m to []byte to avoid allocation!
+//	jscan.Scan([]byte(m), // Convert m to []byte.
 //
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
-func Scan[S ~string | ~[]byte](
+func Scan[S string | []byte](
 	s S, fn func(*Iterator[S]) (err bool),
 ) (err Error[S]) {
 	var i *Iterator[S]
@@ -77,8 +73,6 @@ func Scan[S ~string | ~[]byte](
 		x := iteratorPoolBytes.Get()
 		defer iteratorPoolBytes.Put(x)
 		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
 	}
 	i.src = s
 	reset(i)
@@ -100,7 +94,7 @@ func Scan[S ~string | ~[]byte](
 // Parser wraps an iterator in a reusable instance.
 // Reusing a parser instance is more efficient than global functions
 // that rely on a global iterator pool.
-type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
+type Parser[S string | []byte] struct{ i *Iterator[S] }
 
 // NewParser creates a new reusable parser instance.
 // A higher preallocStackFrames value implies greater memory usage but also reduces
@@ -108,7 +102,7 @@ type Parser[S ~string | ~[]byte] struct{ i *Iterator[S] }
 // preallocStackFrames of 32 is equivalent to ~1KiB of memory usage on 64-bit systems
 // (1 frame = ~32 bytes).
 // Use DefaultStackSizeIterator when not sure.
-func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
+func NewParser[S string | []byte](preallocStackFrames int) *Parser[S] {
 	i := &Iterator[S]{stack: make([]stackNode, preallocStackFrames)}
 	reset(i)
 	return &Parser[S]{i: i}
@@ -161,7 +155,7 @@ func (p *Parser[S]) Scan(
 
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
-func scan[S ~string | ~[]byte](
+func scan[S string | []byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
 ) (S, Error[S]) {
 	var (

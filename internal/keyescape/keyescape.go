@@ -8,15 +8,15 @@ import (
 
 // Append appends key to dest replacing all occurrences of
 // '~' with '~0' and '/' with '~1'.
-func Append[S ~[]byte | ~string](dest []byte, key S) []byte {
+func Append[S []byte | string](dest []byte, key S) []byte {
 	// variantCheckAndReplaceUnrolled performed best in benchmarks
-	return variantCheckAndReplaceUnrolled[S](dest, key)
+	return variantCheckAndReplaceUnrolled(dest, key)
 }
 
 // variantCheckAndReplace is an implementation variant that checks
 // for tilde and slash characters using standard IndexByte
 // and if any is found replaces them in an append loop.
-func variantCheckAndReplace[S ~[]byte | ~string](dest []byte, key S) []byte {
+func variantCheckAndReplace[S []byte | string](dest []byte, key S) []byte {
 	var hasTilde, hasSlash bool
 	switch k := any(key).(type) {
 	case string:
@@ -45,7 +45,7 @@ func variantCheckAndReplace[S ~[]byte | ~string](dest []byte, key S) []byte {
 // variantCheckAndReplaceUnrolled is an implementation variant that checks
 // for tilde and slash characters using standard IndexByte
 // and if any is found replaces them in an unrolled append loop.
-func variantCheckAndReplaceUnrolled[S ~[]byte | ~string](
+func variantCheckAndReplaceUnrolled[S []byte | string](
 	dest []byte, key S,
 ) []byte {
 	if len(key) < 8 {
@@ -164,7 +164,9 @@ func variantCheckAndReplaceUnrolled[S ~[]byte | ~string](
 }
 
 // variantStdReplacer uses the standard library strings replacer.
-func variantStdReplacer[S ~[]byte | ~string](r *strings.Replacer, dest []byte, key S) []byte {
+func variantStdReplacer[S []byte | string](
+	r *strings.Replacer, dest []byte, key S,
+) []byte {
 	switch key := any(key).(type) {
 	case []byte:
 		return append(dest, r.Replace(unsafeB2S(key))...)

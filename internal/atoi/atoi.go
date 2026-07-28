@@ -2,7 +2,7 @@ package atoi
 
 // U8 assumes that s is a valid unsigned 8-bit integer.
 // Returns (0, true) if the value would overflow.
-func U8[S ~string | ~[]byte](s S) (n uint8, overflow bool) {
+func U8[S string | []byte](s S) (n uint8, overflow bool) {
 	d := func(index int) uint8 { return uint8(s[index] - '0') }
 	switch len(s) {
 	case 1:
@@ -25,7 +25,7 @@ func U8[S ~string | ~[]byte](s S) (n uint8, overflow bool) {
 
 // I8 assumes that s is a valid 8-bit signed or unsigned integer (where
 // only '-' is accepted). Returns (0, true) if the value would overflow.
-func I8[S ~string | ~[]byte](s S) (n int8, overflow bool) {
+func I8[S string | []byte](s S) (n int8, overflow bool) {
 	d := func(index int) int8 { return int8(s[index] - '0') }
 	// w widens a digit to avoid wrapping in the cases that can overflow.
 	w := func(index int) uint16 { return uint16(s[index] - '0') }
@@ -61,7 +61,7 @@ func I8[S ~string | ~[]byte](s S) (n int8, overflow bool) {
 
 // U16 assumes that s is a valid unsigned 16-bit integer.
 // Returns (0, true) if the value would overflow.
-func U16[S ~string | ~[]byte](s S) (n uint16, overflow bool) {
+func U16[S string | []byte](s S) (n uint16, overflow bool) {
 	d := func(index int) uint16 { return uint16(s[index] - '0') }
 	switch len(s) {
 	case 1:
@@ -88,7 +88,7 @@ func U16[S ~string | ~[]byte](s S) (n uint16, overflow bool) {
 
 // I16 assumes that s is a valid 16-bit signed or unsigned integer (where
 // only '-' is accepted). Returns (0, true) if the value would overflow.
-func I16[S ~string | ~[]byte](s S) (n int16, overflow bool) {
+func I16[S string | []byte](s S) (n int16, overflow bool) {
 	d := func(index int) int16 { return int16(s[index] - '0') }
 	// w widens a digit to avoid wrapping in the cases that can overflow.
 	w := func(index int) uint32 { return uint32(s[index] - '0') }
@@ -132,7 +132,7 @@ func I16[S ~string | ~[]byte](s S) (n int16, overflow bool) {
 
 // U32 assumes that s is a valid unsigned 32-bit integer.
 // Returns (0, true) if the value would overflow.
-func U32[S ~string | ~[]byte](s S) (n uint32, overflow bool) {
+func U32[S string | []byte](s S) (n uint32, overflow bool) {
 	d := func(index int) uint32 { return uint32(s[index] - '0') }
 	switch len(s) {
 	case 1:
@@ -185,7 +185,7 @@ func U32[S ~string | ~[]byte](s S) (n uint32, overflow bool) {
 
 // I32 assumes that s is a valid 32-bit signed or unsigned integer (where
 // only '-' is accepted). Returns (0, true) if the value would overflow.
-func I32[S ~string | ~[]byte](s S) (n int32, overflow bool) {
+func I32[S string | []byte](s S) (n int32, overflow bool) {
 	d := func(index int) int32 { return int32(s[index] - '0') }
 	// w widens a digit to avoid wrapping in the cases that can overflow.
 	w := func(index int) uint64 { return uint64(s[index] - '0') }
@@ -281,7 +281,7 @@ func I32[S ~string | ~[]byte](s S) (n int32, overflow bool) {
 
 // U64 assumes that s is a valid unsigned 64-bit integer.
 // Returns (0, true) if the value would overflow.
-func U64[S ~string | ~[]byte](s S) (n uint64, overflow bool) {
+func U64[S string | []byte](s S) (n uint64, overflow bool) {
 	d := func(index int) uint64 { return uint64(s[index] - '0') }
 	switch len(s) {
 	case 1:
@@ -427,7 +427,7 @@ func U64[S ~string | ~[]byte](s S) (n uint64, overflow bool) {
 
 // I64 assumes that s is a valid 64-bit signed or unsigned integer (where
 // only '-' is accepted). Returns (0, true) if the value would overflow.
-func I64[S ~string | ~[]byte](s S) (n int64, overflow bool) {
+func I64[S string | []byte](s S) (n int64, overflow bool) {
 	d := func(index int) int64 { return int64(s[index] - '0') }
 	if s[0] == '-' {
 		switch len(s) {

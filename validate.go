@@ -10,7 +10,7 @@ import (
 // Unlike (*Validator).Valid this function will take a validator instance
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
-func Valid[S ~string | ~[]byte](s S) bool {
+func Valid[S string | []byte](s S) bool {
 	return !Validate(s).IsErr()
 }
 
@@ -23,13 +23,12 @@ func Valid[S ~string | ~[]byte](s S) bool {
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global validator pools
-// and avoid an unnecessary validator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as json.RawMessage
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
-func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
+//	jscan.ValidateOne([]byte(m), // Convert m to []byte.
+func ValidateOne[S string | []byte](s S) (trailing S, err Error[S]) {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -40,8 +39,6 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 		x := validatorPoolBytes.Get()
 		defer validatorPoolBytes.Put(x)
 		v = x.(*Validator[S])
-	default:
-		v = newValidator[S]()
 	}
 	v.stack = v.stack[:0]
 
@@ -54,13 +51,12 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 // from a global pool and can therefore be less efficient.
 // Consider reusing a Validator instance instead.
 //
-// TIP: Explicitly cast s to string or []byte to use the global validator pools
-// and avoid an unnecessary validator allocation such as when dealing with
-// json.RawMessage and similar types derived from string or []byte.
+// NOTE: Types derived from string or []byte such as json.RawMessage
+// must be converted explicitly.
 //
 //	m := json.RawMessage(`1`)
-//	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
-func Validate[S ~string | ~[]byte](s S) Error[S] {
+//	jscan.Validate([]byte(m), // Convert m to []byte.
+func Validate[S string | []byte](s S) Error[S] {
 	var v *Validator[S]
 	switch any(s).(type) {
 	case string:
@@ -71,8 +67,6 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 		x := validatorPoolBytes.Get()
 		defer validatorPoolBytes.Put(x)
 		v = x.(*Validator[S])
-	default:
-		v = newValidator[S]()
 	}
 	v.stack = v.stack[:0]
 
@@ -96,7 +90,7 @@ func Validate[S ~string | ~[]byte](s S) Error[S] {
 // the chance of dynamic memory allocations if the JSON depth surpasses the stack size.
 // preallocStackFrames of 1024 is equivalent to ~1KiB of memory usage (1 frame = 1 byte).
 // Use DefaultStackSizeValidator when not sure.
-func NewValidator[S ~string | ~[]byte](preallocStackFrames int) *Validator[S] {
+func NewValidator[S string | []byte](preallocStackFrames int) *Validator[S] {
 	return &Validator[S]{
 		stack: make([]stackNodeType, 0, preallocStackFrames),
 	}
@@ -106,7 +100,7 @@ func NewValidator[S ~string | ~[]byte](preallocStackFrames int) *Validator[S] {
 // The validator is more efficient than the parser at JSON validation.
 // A validator instance can be more efficient than global Valid, Validate and ValidateOne
 // function calls due to potential stack frame allocation avoidance.
-type Validator[S ~string | ~[]byte] struct{ stack []stackNodeType }
+type Validator[S string | []byte] struct{ stack []stackNodeType }
 
 // Valid returns true if s is a valid JSON value, otherwise returns false.
 func (v *Validator[S]) Valid(s S) bool {
@@ -140,7 +134,7 @@ func (v *Validator[S]) Validate(s S) Error[S] {
 }
 
 // validate returns the remainder of s and an error if any is encountered.
-func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
+func validate[S string | []byte](st []stackNodeType, s S) (S, Error[S]) {
 	var (
 		rollback S // Used as fallback for error report
 		src      = s

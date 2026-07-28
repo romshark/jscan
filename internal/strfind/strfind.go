@@ -22,7 +22,7 @@ var charMap = [256]byte{
 // EndOfWhitespaceSeq returns trailing as the remainder of s with the leading whitespace
 // sequence cut off. If the returned ctrlChar == true then trailing begins with an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
+func EndOfWhitespaceSeq[S string | []byte](s S) (trailing S, ctrlChar bool) {
 	for ; len(s) > 15; s = s[16:] {
 		if charMap[s[0]] != 1 {
 			goto NONSPACE

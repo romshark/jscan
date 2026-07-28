@@ -83,7 +83,7 @@ func (t TokenType) String() string {
 // Expects src to be the source string provided to the tokenizer.
 // Returns the whole composite value for TokenTypeObjectEnd and TokenTypeArrayEnd
 // same as for TokenTypeObject and TokenTypeArray.
-func RawTokenValue[S ~string | ~[]byte](src S, tokens []Token[S], index int) S {
+func RawTokenValue[S string | []byte](src S, tokens []Token[S], index int) S {
 	switch tokens[index].Type {
 	case TokenTypeObject, TokenTypeArray: // Composite value
 		return src[tokens[index].Index : tokens[tokens[index].End].Index+1]
@@ -95,7 +95,7 @@ func RawTokenValue[S ~string | ~[]byte](src S, tokens []Token[S], index int) S {
 }
 
 // Token is any JSON token except comma, colon and space.
-type Token[S ~string | ~[]byte] struct {
+type Token[S string | []byte] struct {
 	// Index declares the start byte index in the source.
 	Index int
 
@@ -428,7 +428,7 @@ func (t Token[S]) String(src S) (string, error) {
 
 // Tokenizer is a reusable tokenizer instance holding a stack and a token buffer
 // which are reused across method calls.
-type Tokenizer[S ~string | ~[]byte] struct {
+type Tokenizer[S string | []byte] struct {
 	buffer []Token[S]
 	stack  []int // Buffer index
 }
@@ -444,7 +444,7 @@ type Tokenizer[S ~string | ~[]byte] struct {
 // the chance of dynamic memory allocations if the number of JSON tokens encountered
 // surpasses the buffer size. Use DefaultTokenBufferSize when not sure, which is
 // equivalent to ~32KiB of memory usage on 64-bit systems (1 token = 32 bytes).
-func NewTokenizer[S ~string | ~[]byte](
+func NewTokenizer[S string | []byte](
 	preallocStackFrames, preallocTokenBuffer int,
 ) *Tokenizer[S] {
 	t := &Tokenizer[S]{

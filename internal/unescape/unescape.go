@@ -8,7 +8,7 @@ import (
 // Valid returns the unescaped version of str relying on str to be valid.
 // Don't use this function if str isn't guaranteed to contain no
 // invalid escape sequences.
-func Valid[S ~[]byte | ~string](str S) string {
+func Valid[S []byte | string](str S) string {
 	if len(str) < 1 {
 		return ""
 	}
@@ -20,8 +20,6 @@ func Valid[S ~[]byte | ~string](str S) string {
 		// Avoid copying str to a string, treat the bytes as read-only instead
 		// since str is guaranteed to remain immutable.
 		s = unsafe.String(unsafe.SliceData(in), len(in))
-	default:
-		s = string(str)
 	}
 	i := strings.IndexByte(s, '\\')
 	if i < 0 {
