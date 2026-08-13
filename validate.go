@@ -29,23 +29,23 @@ func Valid[S ~string | ~[]byte](s S) bool {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.ValidateOne([]byte(m), // Cast m to []byte to avoid allocation!
-func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
-	var v *Validator[S]
-	switch any(s).(type) {
+func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error) {
+	var str string
+	switch v := any(s).(type) {
 	case string:
-		x := validatorPoolString.Get()
-		defer validatorPoolString.Put(x)
-		v = x.(*Validator[S])
+		str = v
 	case []byte:
-		x := validatorPoolBytes.Get()
-		defer validatorPoolBytes.Put(x)
-		v = x.(*Validator[S])
+		str = unsafeBytesToString(v)
 	default:
-		v = newValidator[S]()
+		str = string(s)
 	}
-	v.stack = v.stack[:0]
 
-	return validate(v.stack, s)
+	x := validatorPool.Get()
+	defer validatorPool.Put(x)
+	v := x.(*Validator[S])
+	v.stack = v.stack[:0]
+	t, err := validate[S](v.stack, str)
+	return S(t), err
 }
 
 // Validate returns an error if s is invalid JSON.
@@ -60,35 +60,35 @@ func ValidateOne[S ~string | ~[]byte](s S) (trailing S, err Error[S]) {
 //
 //	m := json.RawMessage(`1`)
 //	jscan.Validate([]byte(m), // Cast m to []byte to avoid allocation!
-func Validate[S ~string | ~[]byte](s S) Error[S] {
-	var v *Validator[S]
-	switch any(s).(type) {
+func Validate[S ~string | ~[]byte](s S) Error {
+	var str string
+	switch v := any(s).(type) {
 	case string:
-		x := validatorPoolString.Get()
-		defer validatorPoolString.Put(x)
-		v = x.(*Validator[S])
+		str = v
 	case []byte:
-		x := validatorPoolBytes.Get()
-		defer validatorPoolBytes.Put(x)
-		v = x.(*Validator[S])
+		str = unsafeBytesToString(v)
 	default:
-		v = newValidator[S]()
+		str = string(s)
 	}
+
+	x := validatorPool.Get()
+	defer validatorPool.Put(x)
+	v := x.(*Validator[string])
 	v.stack = v.stack[:0]
 
-	t, err := validate(v.stack, s)
+	t, err := validate[string](v.stack, str)
 	if err.IsErr() {
-		return err
+		return Error{}
 	}
 	var illegalChar bool
 	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
+		return getError(ErrorCodeIllegalControlChar, str, t)
 	}
 	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
+		return getError(ErrorCodeUnexpectedToken, str, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // NewValidator creates a new reusable validator instance.
@@ -117,32 +117,54 @@ func (v *Validator[S]) Valid(s S) bool {
 // and trailing as substring of s with the scanned value cut.
 // In case of an error trailing will be a substring of s cut up until the index
 // where the error was encountered.
-func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error[S]) {
-	return validate(v.stack, s)
+func (v *Validator[S]) ValidateOne(s S) (trailing S, err Error) {
+	if s, ok := any(s).([]byte); ok {
+		t, err := validate[S](v.stack, unsafeBytesToString(s))
+		return S(unsafeStringToBytes(t)), err
+	}
+	t, err := validate[S](v.stack, string(s))
+	return S(t), err
 }
 
 // Validate returns an error if s is invalid JSON,
-// otherwise returns a zero value of Error[S].
-func (v *Validator[S]) Validate(s S) Error[S] {
-	t, err := validate(v.stack, s)
-	if err.IsErr() {
-		return err
+// otherwise returns a zero value of Error.
+func (v *Validator[S]) Validate(s S) Error {
+	switch s := any(s).(type) {
+	case string:
+		t, err := validate[S](v.stack, s)
+		if err.IsErr() {
+			return err
+		}
+		var illegalChar bool
+		t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+		if illegalChar {
+			return getError(ErrorCodeIllegalControlChar, s, t)
+		}
+		if len(t) > 0 {
+			return getError(ErrorCodeUnexpectedToken, s, t)
+		}
+	case []byte:
+		ss := unsafeBytesToString(s)
+		t, err := validate[S](v.stack, ss)
+		if err.IsErr() {
+			return err
+		}
+		var illegalChar bool
+		t, illegalChar = strfind.EndOfWhitespaceSeq(t)
+		if illegalChar {
+			return getError(ErrorCodeIllegalControlChar, ss, t)
+		}
+		if len(t) > 0 {
+			return getError(ErrorCodeUnexpectedToken, ss, t)
+		}
 	}
-	var illegalChar bool
-	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
-	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
-	}
-	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
-	}
-	return Error[S]{}
+	return Error{}
 }
 
 // validate returns the remainder of i.src and an error if any is encountered.
-func validate[S ~string | ~[]byte](st []stackNodeType, s S) (S, Error[S]) {
+func validate[S ~string | ~[]byte](st []stackNodeType, s string) (string, Error) {
 	var (
-		rollback S // Used as fallback for error report
+		rollback string // Used as fallback for error report
 		src      = s
 		top      stackNodeType
 		b        bool
@@ -557,7 +579,7 @@ VALUE_OR_ARR_TERM:
 AFTER_VALUE:
 	stTop()
 	if top == 0 {
-		return s, Error[S]{}
+		return s, Error{}
 	}
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, src, s)

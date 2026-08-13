@@ -23,7 +23,7 @@ var charMap = [256]byte{
 // the whitespace sequence.
 // If the returned ctrlChar == true then index points at an
 // illegal character that was encountered during the scan.
-func EndOfWhitespaceSeq[S ~string | ~[]byte](s S) (trailing S, ctrlChar bool) {
+func EndOfWhitespaceSeq(s string) (trailing string, ctrlChar bool) {
 	for ; len(s) > 15; s = s[16:] {
 		if charMap[s[0]] != 1 {
 			goto NONSPACE

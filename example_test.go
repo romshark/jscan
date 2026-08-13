@@ -181,7 +181,7 @@ func ExampleValidateOne() {
 		`null`
 
 	for offset, x := 0, s; x != ""; offset = len(s) - len(x) {
-		var err jscan.Error[string]
+		var err jscan.Error
 		if x, err = jscan.ValidateOne(x); err.IsErr() {
 			panic(fmt.Errorf("unexpected error: %w", err))
 		}

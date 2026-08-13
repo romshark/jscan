@@ -29,23 +29,28 @@ import (
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func ScanOne[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
-) (trailing S, err Error[S]) {
-	var i *Iterator[S]
-	switch any(s).(type) {
-	case string:
-		x := iteratorPoolString.Get()
-		defer iteratorPoolString.Put(x)
-		i = x.(*Iterator[S])
-	case []byte:
-		x := iteratorPoolBytes.Get()
-		defer iteratorPoolBytes.Put(x)
-		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
-	}
-	i.src = s
+) (trailing S, err Error) {
+	x := iteratorPool.Get()
+	defer iteratorPool.Put(x)
+	i := x.(*Iterator[S])
 	reset(i)
-	return scan(i, fn)
+
+	switch v := any(s).(type) {
+	case string:
+		i.src = v
+	case []byte:
+		i.src = unsafeBytesToString(v)
+	default:
+		i.src = string(s)
+	}
+
+	if v, ok := any(s).([]byte); ok {
+		i.src = unsafeBytesToString(v)
+		t, err := scan(i, fn)
+		return S(unsafeStringToBytes(t)), err
+	}
+	t, err := scan(i, fn)
+	return S(t), err
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -66,22 +71,21 @@ func ScanOne[S ~string | ~[]byte](
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func Scan[S ~string | ~[]byte](
 	s S, fn func(*Iterator[S]) (err bool),
-) (err Error[S]) {
-	var i *Iterator[S]
-	switch any(s).(type) {
-	case string:
-		x := iteratorPoolString.Get()
-		defer iteratorPoolString.Put(x)
-		i = x.(*Iterator[S])
-	case []byte:
-		x := iteratorPoolBytes.Get()
-		defer iteratorPoolBytes.Put(x)
-		i = x.(*Iterator[S])
-	default:
-		i = newIterator[S]()
-	}
-	i.src = s
+) (err Error) {
+	x := iteratorPool.Get()
+	defer iteratorPool.Put(x)
+	i := x.(*Iterator[S])
 	reset(i)
+
+	switch v := any(s).(type) {
+	case string:
+		i.src = v
+	case []byte:
+		i.src = unsafeBytesToString(v)
+	default:
+		i.src = string(s)
+	}
+
 	t, err := scan(i, fn)
 	if err.IsErr() {
 		return err
@@ -89,12 +93,12 @@ func Scan[S ~string | ~[]byte](
 	var illegalChar bool
 	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
+		return getError(ErrorCodeIllegalControlChar, i.src, t)
 	}
 	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
+		return getError(ErrorCodeUnexpectedToken, i.src, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // Parser wraps an iterator in a reusable instance.
@@ -127,10 +131,16 @@ func NewParser[S ~string | ~[]byte](preallocStackFrames int) *Parser[S] {
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) ScanOne(
 	s S, fn func(*Iterator[S]) (err bool),
-) (trailing S, err Error[S]) {
+) (trailing S, err Error) {
 	reset(p.i)
-	p.i.src = s
-	return scan(p.i, fn)
+	if s, ok := any(s).([]byte); ok {
+		p.i.src = unsafeBytesToString(s)
+		t, err := scan(p.i, fn)
+		return S(unsafeStringToBytes(t)), err
+	}
+	p.i.src = string(s)
+	t, err := scan(p.i, fn)
+	return S(t), err
 }
 
 // Scan calls fn for every encountered value including objects and arrays.
@@ -140,9 +150,15 @@ func (p *Parser[S]) ScanOne(
 // WARNING: Don't use or alias *Iterator[S] after fn returns!
 func (p *Parser[S]) Scan(
 	s S, fn func(*Iterator[S]) (err bool),
-) Error[S] {
+) Error {
 	reset(p.i)
-	p.i.src = s
+
+	switch v := any(s).(type) {
+	case string:
+		p.i.src = v
+	case []byte:
+		p.i.src = unsafeBytesToString(v)
+	}
 
 	t, err := scan(p.i, fn)
 	if err.IsErr() {
@@ -151,21 +167,21 @@ func (p *Parser[S]) Scan(
 	var illegalChar bool
 	t, illegalChar = strfind.EndOfWhitespaceSeq(t)
 	if illegalChar {
-		return getError(ErrorCodeIllegalControlChar, s, t)
+		return getError(ErrorCodeIllegalControlChar, p.i.src, t)
 	}
 	if len(t) > 0 {
-		return getError(ErrorCodeUnexpectedToken, s, t)
+		return getError(ErrorCodeUnexpectedToken, p.i.src, t)
 	}
-	return Error[S]{}
+	return Error{}
 }
 
 // scan calls fn for every value encountered.
 // Returns the remainder of i.src and an error if any is encountered.
 func scan[S ~string | ~[]byte](
 	i *Iterator[S], fn func(*Iterator[S]) (err bool),
-) (S, Error[S]) {
+) (string, Error) {
 	var (
-		rollback S // Used as fallback for error report
+		rollback string // Used as fallback for error report
 		s        = i.src
 		b        bool
 		ks, ke   int
@@ -700,7 +716,7 @@ VALUE_OR_ARR_TERM:
 
 AFTER_VALUE:
 	if len(i.stack) == 0 {
-		return s, Error[S]{}
+		return s, Error{}
 	}
 	if len(s) < 1 {
 		return s, getError(ErrorCodeUnexpectedEOF, i.src, s)
