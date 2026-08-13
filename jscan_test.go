@@ -1191,7 +1191,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 				require.True(t, err.IsErr())
 				require.Equal(t, expectErr, err.Error())
 				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-				require.Equal(t, err.Src[err.Index:], trailing)
+				require.Equal(t, input[err.Index:], trailing)
 				s = trailing
 				if err.IsErr() {
 					break
@@ -1214,7 +1214,7 @@ func testControlCharacters[S ~string | ~[]byte](t *testing.T, input S, expectErr
 				require.True(t, err.IsErr())
 				require.Equal(t, expectErr, err.Error())
 				require.Equal(t, jscan.ErrorCodeIllegalControlChar, err.Code)
-				require.Equal(t, err.Src[err.Index:], trailing)
+				require.Equal(t, input[err.Index:], trailing)
 				s = trailing
 				if err.IsErr() {
 					break

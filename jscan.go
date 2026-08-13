@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/romshark/jscan/v2/internal/keyescape"
 )
@@ -158,21 +159,25 @@ func (i *Iterator[S]) ViewPointer(fn func(p []byte)) {
 	i.pointer = i.pointer[:0]
 }
 
-func (i *Iterator[S]) getError(c ErrorCode) Error[S] {
-	return Error[S]{
+func (i *Iterator[S]) getError(c ErrorCode) Error {
+	e := Error{
 		Code:  c,
-		Src:   i.src,
 		Index: i.valueIndex,
 	}
+	if v, ok := any(i.src).([]byte); ok {
+		e.src = unsafe.String(unsafe.SliceData(v), len(v))
+	} else {
+		e.src = string(i.src)
+	}
+	return e
 }
 
 // Error is a syntax error encountered during validation or iteration.
 // The only exception is ErrorCodeCallback which indicates a callback
 // explicitly breaking by returning true instead of a syntax error.
 // (Error).IsErr() returning false is equivalent to err == nil.
-type Error[S ~string | ~[]byte] struct {
-	// Src refers to the original source.
-	Src S
+type Error struct {
+	src string
 
 	// Index points to the error start index in the source.
 	Index int
@@ -181,23 +186,18 @@ type Error[S ~string | ~[]byte] struct {
 	Code ErrorCode
 }
 
-var _ error = Error[string]{}
+var _ error = Error{}
 
 // IsErr returns true if there is an error, otherwise returns false.
-func (e Error[S]) IsErr() bool { return e.Code != 0 }
+func (e Error) IsErr() bool { return e.Code != 0 }
 
 // Error stringifies the error implementing the built-in error interface.
 // Calling Error should be avoided in performance-critical code as it
 // relies on dynamic memory allocation.
-func (e Error[S]) Error() string {
-	if e.Index < len(e.Src) {
+func (e Error) Error() string {
+	if e.Index < len(e.src) {
 		var r rune
-		switch x := any(e.Src).(type) {
-		case string:
-			r, _ = utf8.DecodeRuneInString(x[e.Index:])
-		case []byte:
-			r, _ = utf8.DecodeRune(x[e.Index:])
-		}
+		r, _ = utf8.DecodeRuneInString(e.src[e.Index:])
 		return errorMessage(e.Code, e.Index, r)
 	}
 	return errorMessage(e.Code, e.Index, 0)
@@ -335,10 +335,15 @@ var lutEscape = [256]byte{
 }
 
 // getError returns the stringified error, if any.
-func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error[S] {
-	return Error[S]{
+func getError[S ~string | ~[]byte](c ErrorCode, src S, s S) Error {
+	e := Error{
 		Code:  c,
-		Src:   src,
 		Index: len(src) - len(s),
 	}
+	if v, ok := any(src).([]byte); ok {
+		e.src = unsafe.String(unsafe.SliceData(v), len(v))
+	} else {
+		e.src = string(src)
+	}
+	return e
 }
